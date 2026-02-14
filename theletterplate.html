@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Letter Plate: Enhanced Version</title>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            /* Changed height and overflow to prevent buttons going off-screen */
+            min-height: 100vh;
+            margin: 0;
+            overflow-y: auto; 
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 60%;
+            min-width: 500px;
+        }
+
+        #level-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f1c40f;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        #plate {
+            width: 450px;
+            height: 450px;
+            background-color: #f8f9fa;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            border: 12px solid #95a5a6;
+            transition: width 0.5s, height 0.5s;
+            flex-shrink: 0; /* Prevents plate from squishing */
+        }
+
+        .letter {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: left 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                        top 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                        transform 0.2s, background 0.3s;
+            box-shadow: 0 3px 0 #2980b9;
+            z-index: 10;
+        }
+
+        .letter.selected {
+            background: #e67e22;
+            box-shadow: 0 3px 0 #d35400;
+            transform: scale(1.1);
+        }
+
+        #current-word {
+            font-size: 2.5rem;
+            margin: 15px 0 5px 0;
+            height: 50px;
+            letter-spacing: 4px;
+            color: #00d2ff;
+            text-shadow: 0 0 10px rgba(0,210,255,0.5);
+            font-weight: bold;
+        }
+
+        #definition-box {
+            height: 60px;
+            width: 80%;
+            text-align: center;
+            color: #bdc3c7;
+            font-style: italic;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Styling for the dictionary link */
+        #definition-box a {
+            color: #2ecc71;
+            text-decoration: underline;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        #jar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 200px;
+        }
+
+        #jar {
+            width: 130px;
+            height: 220px;
+            border: 5px solid #bdc3c7;
+            border-top: none;
+            border-radius: 0 0 45px 45px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-wrap: wrap-reverse;
+            align-content: flex-start;
+            justify-content: center;
+            padding: 5px;
+        }
+
+        #jar::before {
+            content: '';
+            position: absolute;
+            top: 0; width: 100%; height: 12px;
+            background: #bdc3c7;
+            border-radius: 10px;
+        }
+
+        #jar-fill {
+            position: absolute;
+            bottom: 0; width: 100%;
+            background: rgba(46, 204, 113, 0.4);
+            transition: height 0.5s ease;
+            height: 0%;
+            z-index: 0;
+        }
+
+        .jar-letter {
+            width: 20px;
+            height: 20px;
+            background: #e74c3c;
+            border-radius: 4px;
+            margin: 1px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 5;
+            animation: fall 0.4s ease-in;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-250px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .controls { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 10px;
+            padding-bottom: 20px; /* Space for the bottom of the screen */
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        button:hover { background: #2ecc71; }
+        button#scramble-btn { background: #8e44ad; }
+        button#clear-btn { background: #c0392b; }
+
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        @media (max-width: 800px) {
+            body { flex-direction: column; justify-content: flex-start; }
+            #jar-container { margin-top: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h1 style="font-size: 4rem; color: #f1c40f;">LEVEL UP!</h1>
+        <button onclick="startNextLevel()" style="font-size: 1.5rem; padding: 20px 40px;">CONTINUE</button>
+    </div>
+
+    <div id="game-area">
+        <div id="level-display">Level 1</div>
+        <div id="plate"></div>
+        <div id="current-word"></div>
+        <div id="definition-box">Select letters! Scramble refreshes the board for -5 points.</div>
+        <div class="controls">
+            <button onclick="submitWord()">SUBMIT WORD</button>
+            <button id="scramble-btn" onclick="scramblePlate()">SCRAMBLE (-5)</button>
+            <button id="clear-btn" onclick="clearWord()">CLEAR</button>
+        </div>
+    </div>
+
+    <div id="jar-container">
+        <h3 style="color:#bdc3c7">LETTER JAR</h3>
+        <div id="jar">
+            <div id="jar-fill"></div>
+        </div>
+        <p id="jar-count" style="font-weight:bold; margin-top:15px; color:#2ecc71">0 / 15 Letters</p>
+    </div>
+
+    <script>
+        const plate = document.getElementById('plate');
+        const wordDisplay = document.getElementById('current-word');
+        const definitionBox = document.getElementById('definition-box');
+        const jar = document.getElementById('jar');
+        const jarFill = document.getElementById('jar-fill');
+        const jarCountDisplay = document.getElementById('jar-count');
+        const levelDisplay = document.getElementById('level-display');
+        const overlay = document.getElementById('overlay');
+
+        let currentLevel = 1;
+        let lettersInJar = 0;
+        let goal = 15;
+        let selectedLetters = [];
+        let currentWordString = "";
+        let plateLetters = [];
+
+        const alphabet = "EEEEEEEEEEEEAAAAAAAAAIIIIIIIIIOOOOOOOONNNNNNRRRRRRTTTTTTLLLLSSSSUUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ";
+
+        function getPlateRadius() {
+            return (parseInt(window.getComputedStyle(plate).width) / 2) || 225;
+        }
+
+        function createPlate(count = 45) {
+            plate.innerHTML = ''; 
+            plateLetters = [];
+            for (let i = 0; i < count; i++) {
+                addLetterToPlate();
+            }
+        }
+
+        function getValidPosition(existingLetters) {
+            const radius = getPlateRadius();
+            const radiusLimit = radius - 35;
+            const minDistance = 44; 
+            let attempts = 0;
+
+            while (attempts < 300) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = Math.sqrt(Math.random()) * radiusLimit;
+                const x = (radius - 20) + dist * Math.cos(angle);
+                const y = (radius - 20) + dist * Math.sin(angle);
+
+                let overlapping = false;
+                for (let other of existingLetters) {
+                    const dx = x - parseFloat(other.style.left);
+                    const dy = y - parseFloat(other.style.top);
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    if (distance < minDistance) {
+                        overlapping = true;
+                        break;
+                    }
+                }
+
+                if (!overlapping) return { x, y };
+                attempts++;
+            }
+            return null;
+        }
+
+        function addLetterToPlate() {
+            const pos = getValidPosition(plateLetters);
+            if (!pos) return;
+
+            const char = alphabet[Math.floor(Math.random() * alphabet.length)];
+            const letterEl = document.createElement('div');
+            letterEl.className = 'letter';
+            letterEl.innerText = char;
+            letterEl.style.left = pos.x + 'px';
+            letterEl.style.top = pos.y + 'px';
+            
+            letterEl.onclick = () => selectLetter(letterEl, letterEl.innerText);
+            
+            plate.appendChild(letterEl);
+            plateLetters.push(letterEl);
+        }
+
+        function scramblePlate() {
+            if (lettersInJar > 0) {
+                const countToRemove = Math.min(5, lettersInJar);
+                lettersInJar -= countToRemove;
+                for(let i=0; i < countToRemove; i++) {
+                    const jarItems = document.querySelectorAll('.jar-letter');
+                    if(jarItems.length > 0) jarItems[jarItems.length - 1].remove();
+                }
+                updateJarUI();
+                definitionBox.innerText = "Letters refreshed! (-5 points)";
+            }
+
+            const newList = [];
+            plateLetters.forEach(el => {
+                const pos = getValidPosition(newList);
+                if (pos) {
+                    el.style.left = pos.x + 'px';
+                    el.style.top = pos.y + 'px';
+                    const newChar = alphabet[Math.floor(Math.random() * alphabet.length)];
+                    el.innerText = newChar;
+                    el.onclick = () => selectLetter(el, newChar);
+                    newList.push(el);
+                }
+            });
+            clearWord();
+        }
+
+        function selectLetter(el, char) {
+            if (el.classList.contains('selected')) return;
+            el.classList.add('selected');
+            currentWordString += char;
+            wordDisplay.innerText = currentWordString;
+            selectedLetters.push(el);
+        }
+
+        async function submitWord() {
+            if (currentWordString.length < 2) return;
+            definitionBox.innerText = "Checking...";
+            
+            try {
+                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${currentWordString.toLowerCase()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const meaning = data[0].meanings[0].definitions[0].definition;
+                    
+                    // NEW: Creates a link to the word's dictionary page (Wiktionary is the source for this API)
+                    const dictionaryUrl = `https://en.wiktionary.org/wiki/${currentWordString.toLowerCase()}`;
+                    definitionBox.innerHTML = `<a href="${dictionaryUrl}" target="_blank" title="View Full Definition">${currentWordString}:</a> ${meaning}`;
+                    
+                    putLettersInJar(currentWordString);
+                    
+                    selectedLetters.forEach(el => {
+                        plateLetters = plateLetters.filter(l => l !== el);
+                        el.remove();
+                    });
+                    
+                    let needed = selectedLetters.length;
+                    selectedLetters = [];
+                    currentWordString = "";
+                    wordDisplay.innerText = "";
+                    
+                    for(let i=0; i<needed; i++) addLetterToPlate();
+                    checkLevelUp();
+                } else {
+                    definitionBox.innerText = `"${currentWordString}" is not a word.`;
+                    clearWord();
+                }
+            } catch (e) { definitionBox.innerText = "Dictionary Error."; }
+        }
+
+        function clearWord() {
+            selectedLetters.forEach(el => el.classList.remove('selected'));
+            selectedLetters = [];
+            currentWordString = "";
+            wordDisplay.innerText = "";
+        }
+
+        function putLettersInJar(word) {
+            for (let char of word) {
+                lettersInJar++;
+                const jLetter = document.createElement('div');
+                jLetter.className = 'jar-letter';
+                jLetter.innerText = char;
+                jar.appendChild(jLetter);
+            }
+            updateJarUI();
+        }
+
+        function updateJarUI() {
+            const percent = Math.min((lettersInJar / goal) * 100, 100);
+            jarFill.style.height = percent + "%";
+            jarCountDisplay.innerText = `${lettersInJar} / ${goal} Letters`;
+        }
+
+        function checkLevelUp() {
+            if (lettersInJar >= goal) {
+                setTimeout(() => overlay.style.display = 'flex', 800);
+            }
+        }
+
+        function startNextLevel() {
+            currentLevel++;
+            lettersInJar = 0;
+            goal += 10;
+            overlay.style.display = 'none';
+            levelDisplay.innerText = `Level ${currentLevel}`;
+            
+            const newSize = 450 + (currentLevel * 20);
+            plate.style.width = newSize + "px";
+            plate.style.height = newSize + "px";
+            
+            document.querySelectorAll('.jar-letter').forEach(l => l.remove());
+            updateJarUI();
+            
+            setTimeout(() => createPlate(45 + (currentLevel * 5)), 600);
+        }
+
+        window.onload = () => createPlate(45);
+    </script>
+</body>
+</html>

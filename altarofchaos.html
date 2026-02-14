@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Altar of Chaos: Persistent RNG</title>
+    <style>
+        :root {
+            --common: #a0a0a0;
+            --rare: #3498db;
+            --epic: #9b59b6;
+            --legendary: #f1c40f;
+            --mythic: #e74c3c;
+            --divine: #ffffff;
+            --bg: #0d0d11;
+            --panel: #16161e;
+            --accent: #00ffcc;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 500px;
+            background: var(--panel);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.7);
+            text-align: center;
+            border: 1px solid #2a2a35;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .stat-box { font-size: 0.9rem; color: #bbb; }
+        .stat-value { display: block; font-size: 1.3rem; color: var(--accent); font-weight: bold; }
+
+        .timer-container {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 4px;
+            background: #222;
+            margin-top: 5px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #timer-fill {
+            width: 100%;
+            height: 100%;
+            background: var(--accent);
+            transition: width 1s linear;
+        }
+
+        .altar-display {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #09090c;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            border: 2px solid #333;
+            transition: all 0.2s;
+            padding: 10px;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            border: none;
+            padding: 15px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s, filter 0.2s;
+            text-transform: uppercase;
+        }
+
+        button:active { transform: scale(0.95); }
+        button:disabled { filter: grayscale(1); opacity: 0.3; cursor: not-allowed; }
+
+        #enchant-btn {
+            background: linear-gradient(135deg, #6d28d9, #4c1d95);
+            color: white;
+            box-shadow: 0 4px 15px rgba(109, 40, 217, 0.3);
+        }
+
+        #luck-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .log {
+            margin-top: 20px;
+            height: 150px;
+            overflow-y: auto;
+            background: #050507;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: left;
+            font-size: 0.85rem;
+            border: 1px solid #222;
+        }
+
+        .log-entry {
+            padding: 6px 0;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        /* Tiers */
+        .tier-Common { color: var(--common); }
+        .tier-Rare { color: var(--rare); font-weight: bold; }
+        .tier-Epic { color: var(--epic); font-weight: bold; }
+        .tier-Legendary { color: var(--legendary); font-weight: bold; text-shadow: 0 0 8px gold; }
+        .tier-Mythic { color: var(--mythic); font-weight: bold; text-shadow: 0 0 10px red; }
+        .tier-Divine { color: var(--divine); font-weight: bold; text-shadow: 0 0 15px cyan; letter-spacing: 2px; }
+
+        .rolling { animation: shake 0.1s infinite; border-color: var(--accent); }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -1px); }
+            100% { transform: translate(1px, -1px); }
+        }
+
+        .reset-btn {
+            margin-top: 20px;
+            background: transparent;
+            color: #444;
+            font-size: 0.7rem;
+            text-decoration: underline;
+            padding: 5px;
+        }
+        .reset-btn:hover { color: #f44; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="timer-container">
+            Chaos Infusion in: <span id="seconds">30</span>s
+            <div id="timer-bar"><div id="timer-fill"></div></div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-box">SHARDS<span id="shard-count" class="stat-value">100</span></div>
+            <div class="stat-box">LUCK MULTI<span id="luck-count" class="stat-value">1.0x</span></div>
+        </div>
+
+        <div id="altar" class="altar-display">The Curtain Awaits...</div>
+
+        <div class="btn-group">
+            <button id="enchant-btn" onclick="startEnchant()">Enchant (10)</button>
+            <button id="luck-btn" onclick="buyLuck()">+0.2 Luck (40)</button>
+        </div>
+
+        <div class="log" id="log"></div>
+        
+        <button class="reset-btn" onclick="resetGame()">Wipe Save Data</button>
+    </div>
+
+    <script>
+        // --- DATA INITIALIZATION ---
+        let shards = 100;
+        let luck = 1.0;
+        let timeLeft = 30;
+
+        // --- CORE FUNCTIONS ---
+
+        function saveGame() {
+            const gameData = {
+                shards: shards,
+                luck: luck,
+                timeLeft: timeLeft
+            };
+            localStorage.setItem('chaosAltarSave', JSON.stringify(gameData));
+        }
+
+        function loadGame() {
+            const savedData = localStorage.getItem('chaosAltarSave');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                shards = data.shards;
+                luck = data.luck;
+                timeLeft = data.timeLeft || 30;
+                addLog("✨ Progress restored from the void.", "Common");
+            } else {
+                addLog("🎰 Welcome to the Altar. Shards generate every 30s.", "Common");
+            }
+            updateUI();
+        }
+
+        function resetGame() {
+            if (confirm("Are you sure? This will delete all your Shards and Luck forever.")) {
+                localStorage.removeItem('chaosAltarSave');
+                location.reload();
+            }
+        }
+
+        // --- GAME LOGIC ---
+
+        const shardDisplay = document.getElementById('shard-count');
+        const luckDisplay = document.getElementById('luck-count');
+        const timerDisplay = document.getElementById('seconds');
+        const timerFill = document.getElementById('timer-fill');
+        const altar = document.getElementById('altar');
+        const log = document.getElementById('log');
+
+        const BASE_CHANCES = {
+            Divine: 0.0016,
+            Mythic: 0.01,
+            Legendary: 0.04,
+            Epic: 0.15,
+            Rare: 0.35,
+            Common: 1.0
+        };
+
+        const POOLS = {
+            "Common": ["Sharpness I", "Speed I", "Defense I"],
+            "Rare": ["Sharpness III", "Lifesteal I", "Fire Aspect II"],
+            "Epic": ["Sharpness V", "Lightning Strike", "Berserker Rage"],
+            "Legendary": ["Sharpness VII", "Shadow Dash", "Blood Drain"],
+            "Mythic": ["Sharpness X 👑", "Dragon Flame", "Time Slash"],
+            "Divine": ["Celestial Cleave", "Infinity Edge", "Reality Breaker 🌌"]
+        };
+
+        // Passive Income Timer
+        setInterval(() => {
+            timeLeft--;
+            if (timeLeft < 0) {
+                timeLeft = 30;
+                shards += 100;
+                addLog("✨ The Void grants you 100 Shards.", "Divine");
+                saveGame(); // Save when receiving shards
+            }
+            timerDisplay.innerText = timeLeft;
+            timerFill.style.width = (timeLeft / 30 * 100) + "%";
+            updateUI();
+        }, 1000);
+
+        function updateUI() {
+            shardDisplay.innerText = Math.floor(shards);
+            luckDisplay.innerText = luck.toFixed(1) + "x";
+            document.getElementById('enchant-btn').disabled = shards < 10;
+            document.getElementById('luck-btn').disabled = shards < 40;
+        }
+
+        function buyLuck() {
+            if (shards >= 40) {
+                shards -= 40;
+                luck += 0.2;
+                addLog("🔮 Your gaze pierces the curtain. Luck +0.2", "Rare");
+                saveGame();
+                updateUI();
+            }
+        }
+
+        function startEnchant() {
+            if (shards < 10) return;
+            shards -= 10;
+            updateUI();
+            
+            altar.innerText = "Bargaining...";
+            altar.className = "altar-display rolling";
+            
+            setTimeout(resolveEnchant, 800);
+        }
+
+        function resolveEnchant() {
+            altar.classList.remove('rolling');
+            
+            if (Math.random() < 0.10) {
+                altar.innerText = "💨 Shrugged";
+                altar.className = "altar-display";
+                addLog("Chaos ignored your plea.", "Common");
+                saveGame();
+                return;
+            }
+
+            const roll = Math.random();
+            let selectedTier = "Common";
+
+            if (roll <= BASE_CHANCES.Divine * luck) selectedTier = "Divine";
+            else if (roll <= BASE_CHANCES.Mythic * luck) selectedTier = "Mythic";
+            else if (roll <= BASE_CHANCES.Legendary * luck) selectedTier = "Legendary";
+            else if (roll <= BASE_CHANCES.Epic * luck) selectedTier = "Epic";
+            else if (roll <= BASE_CHANCES.Rare * luck) selectedTier = "Rare";
+            else selectedTier = "Common";
+
+            const effects = POOLS[selectedTier];
+            const effect = effects[Math.floor(Math.random() * effects.length)];
+
+            altar.innerText = effect;
+            altar.className = `altar-display tier-${selectedTier}`;
+            addLog(`Pulled: <strong>${effect}</strong>`, selectedTier);
+            saveGame(); // Save after every pull
+            updateUI();
+        }
+
+        function addLog(text, tier) {
+            const entry = document.createElement('div');
+            entry.className = `log-entry tier-${tier}`;
+            entry.innerHTML = text;
+            log.prepend(entry);
+            
+            // Keep log from getting too long
+            if (log.childNodes.length > 20) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        // Initialize on load
+        loadGame();
+    </script>
+</body>
+</html>

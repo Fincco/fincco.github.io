@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>fincco's slither</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        canvas { display: block; cursor: crosshair; transition: transform 0.5s ease-in-out; }
+        
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 100; background: rgba(0,0,0,0.8);
+        }
+
+        #menu {
+            background: #222; padding: 35px; border-radius: 20px;
+            border: 2px solid #444; text-align: center; color: white;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            width: 320px;
+        }
+
+        h1 { margin-top: 0; margin-bottom: 5px; color: #fff; font-size: 32px; letter-spacing: 2px; transition: color 0.3s; }
+        
+        /* Highscore Style */
+        #highscore-container {
+            font-size: 13px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .score-row { color: #feca57; }
+        /* Gun Highscore hidden by default */
+        #gun-score-row { color: #ff4757; display: none; }
+
+        input[type="text"] {
+            width: 100%; padding: 12px; margin: 15px 0; border-radius: 5px;
+            border: 1px solid #444; font-size: 16px; box-sizing: border-box;
+            background: #111; color: white; text-align: center;
+        }
+
+        .skin-label { font-size: 14px; color: #aaa; margin-bottom: 10px; display: block; text-transform: uppercase; }
+        #skin-list { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .skin-opt { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform 0.2s; }
+        .skin-opt:hover { transform: scale(1.2); }
+        .skin-opt.selected { border-color: white; transform: scale(1.1); }
+
+        .custom-color-container {
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #customColor {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 45px;
+            height: 45px;
+            background-color: transparent;
+            border: 2px solid #444;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            overflow: hidden;
+        }
+        #customColor::-webkit-color-swatch-wrapper { padding: 0; }
+        #customColor::-webkit-color-swatch { border: none; border-radius: 50%; }
+        #customColor::-moz-color-swatch { border: none; border-radius: 50%; }
+
+        button {
+            background: #00ff9d; color: #000; border: none; padding: 12px 30px;
+            font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer;
+            transition: all 0.2s; width: 100%;
+        }
+        button:hover { background: #00ffb3; transform: translateY(-2px); }
+
+        #startBtn.spectate-mode { background: #3498db; color: white; }
+        #startBtn.spectate-mode:hover { background: #2980b9; }
+
+        #stopSpectateBtn {
+            position: absolute; 
+            top: 20px; 
+            left: 20px;
+            background: #e74c3c; 
+            color: white; 
+            border: none;
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            font-weight: bold;
+            cursor: pointer; 
+            z-index: 150; 
+            display: none;
+            width: auto; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        #stopSpectateBtn:hover { background: #c0392b; transform: scale(1.05); }
+
+        #leaderboard {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(0, 0, 0, 0.5); color: white;
+            padding: 15px; border-radius: 8px; width: 180px;
+            pointer-events: none; border: 1px solid rgba(255,255,255,0.2);
+            z-index: 20; display: none;
+        }
+        #leaderboard h3 { margin: 0 0 10px 0; font-size: 16px; text-align: center; }
+        .entry { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; }
+        .player-entry { color: #ffff00; font-weight: bold; }
+        
+        #controls-hint {
+            position: absolute; bottom: 20px; left: 20px;
+            color: rgba(255,255,255,0.4); font-size: 12px; pointer-events: none;
+        }
+
+        #event-overlay {
+            position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
+            color: #00d2ff; font-size: 48px; font-weight: bold; text-align: center;
+            text-shadow: 0 0 20px #00d2ff; pointer-events: none; display: none;
+            font-style: italic; z-index: 10;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="ui-layer">
+    <div id="menu">
+        <h1 id="gameTitle">fincco's slither</h1>
+        <div id="highscore-container">
+            <div class="score-row">Best Score: <span id="highScoreValue">0</span></div>
+            <div id="gun-score-row">Gun Highscore: <span id="gunHighScoreValue">0</span></div>
+        </div>
+        
+        <input type="text" id="playerName" placeholder="Your Nickname" maxlength="12">
+        
+        <div id="skin-settings">
+            <span class="skin-label">Choose Skin</span>
+            <div id="skin-list">
+                <div class="skin-opt selected" style="background: #00ff9d;" data-color="#00ff9d"></div>
+                <div class="skin-opt" style="background: #ff4757;" data-color="#ff4757"></div>
+                <div class="skin-opt" style="background: #54a0ff;" data-color="#54a0ff"></div>
+                <div class="skin-opt" style="background: #feca57;" data-color="#feca57"></div>
+                <div class="skin-opt" style="background: #ff9ff3;" data-color="#ff9ff3"></div>
+                <div class="skin-opt" style="background: #5f27cd;" data-color="#5f27cd"></div>
+            </div>
+
+            <div class="custom-color-container">
+                <span class="skin-label">Custom Color</span>
+                <input type="color" id="customColor" value="#00ff9d">
+            </div>
+        </div>
+
+        <button id="startBtn">PLAY</button>
+    </div>
+</div>
+
+<button id="stopSpectateBtn">STOP SPECTATING</button>
+
+<div id="leaderboard">
+    <h3>Leaderboard</h3>
+    <div id="leaderboard-list"></div>
+</div>
+
+<div id="event-overlay">FOOD RAIN!</div>
+<div id="controls-hint">Boost: Hold Space/Left Click | <b>Shoot: Right Click (as "gunman")</b></div>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const lbList = document.getElementById('leaderboard-list');
+const uiLayer = document.getElementById('ui-layer');
+const nameInput = document.getElementById('playerName');
+const gameTitle = document.getElementById('gameTitle');
+const startBtn = document.getElementById('startBtn');
+const stopSpectateBtn = document.getElementById('stopSpectateBtn');
+const lbContainer = document.getElementById('leaderboard');
+const skinOpts = document.querySelectorAll('.skin-opt');
+const customColorPicker = document.getElementById('customColor');
+const eventOverlay = document.getElementById('event-overlay');
+const highScoreDisplay = document.getElementById('highScoreValue');
+const gunHighScoreDisplay = document.getElementById('gunHighScoreValue');
+const gunScoreRow = document.getElementById('gun-score-row');
+
+const WORLD_SIZE = 3000;
+const INITIAL_FOOD_COUNT = 500;
+const BOT_COUNT = 18;
+const SEGMENT_SPACING = 3; 
+const START_LENGTH = 15;   
+
+let mouse = { x: 0, y: 0 };
+let foods = [];
+let snakes = [];
+let bullets = [];
+let playerSnake = null;
+let gameState = 'MENU'; 
+let selectedColor = '#00ff9d';
+let isFlipped = false;
+
+// Highscore loading
+let highScore = parseInt(localStorage.getItem('fincco_slither_highscore')) || 0;
+let gunHighScore = parseInt(localStorage.getItem('fincco_slither_gun_highscore')) || 0;
+let gunUnlocked = localStorage.getItem('fincco_slither_gun_unlocked') === 'true';
+
+highScoreDisplay.innerText = highScore;
+gunHighScoreDisplay.innerText = gunHighScore;
+if (gunUnlocked) gunScoreRow.style.display = 'block';
+
+let spectatorPos = { x: WORLD_SIZE / 2, y: WORLD_SIZE / 2 };
+let keysPressed = {};
+
+let isRaining = false;
+let nextEventTime = Date.now() + (Math.random() * 45000 + 45000);
+
+class Bullet {
+    constructor(x, y, angle, owner) {
+        this.x = x;
+        this.y = y;
+        this.angle = angle;
+        this.speed = 15;
+        this.radius = 6;
+        this.active = true;
+        this.owner = owner;
+    }
+    update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        if (this.x < -100 || this.x > WORLD_SIZE + 100 || this.y < -100 || this.y > WORLD_SIZE + 100) {
+            this.active = false;
+        }
+    }
+    draw(camX, camY) {
+        ctx.save();
+        ctx.fillStyle = "#fffb00";
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#ffaa00";
+        ctx.beginPath();
+        ctx.arc(this.x - camX, this.y - camY, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+skinOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+        skinOpts.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selectedColor = opt.getAttribute('data-color');
+        customColorPicker.value = selectedColor;
+        if (gameState === 'MENU' && nameInput.value.toLowerCase() !== 'spectate') {
+            startBtn.style.background = selectedColor;
+        }
+    });
+});
+
+customColorPicker.addEventListener('input', (e) => {
+    selectedColor = e.target.value;
+    if (gameState === 'MENU' && nameInput.value.toLowerCase() !== 'spectate') {
+        startBtn.style.background = selectedColor;
+    }
+    skinOpts.forEach(o => o.classList.remove('selected'));
+});
+
+nameInput.addEventListener('input', () => {
+    const val = nameInput.value.toLowerCase();
+    if (val === 'sonmulti') {
+        gameTitle.innerText = "hi son :)";
+        gameTitle.style.color = "#00ff9d";
+    } else {
+        gameTitle.innerText = "fincco's slither";
+        gameTitle.style.color = "#fff";
+    }
+
+    if (val === 'spectate') {
+        startBtn.innerText = "SPECTATE";
+        startBtn.classList.add('spectate-mode');
+        startBtn.style.background = ""; 
+    } else {
+        startBtn.innerText = playerSnake ? "RESPAWN" : "PLAY";
+        startBtn.classList.remove('spectate-mode');
+        startBtn.style.background = selectedColor;
+    }
+});
+
+class Snake {
+    constructor(x, y, isBot = false, name = "Bot", color, isHitman = false) {
+        this.segments = [{x, y}];
+        this.history = []; 
+        this.length = START_LENGTH;
+        this.score = 0; 
+        this.baseSpeed = 3;
+        this.speed = 3;
+        this.angle = Math.random() * Math.PI * 2;
+        this.targetAngle = this.angle;
+        this.width = 20; 
+        this.color = color || (isBot ? `hsl(${Math.random() * 360}, 70%, 50%)` : '#00ff9d');
+        this.isBot = isBot;
+        this.isHitman = isHitman;
+        this.name = name;
+        this.dead = false;
+        this.isBoosting = false;
+        this.boostCounter = 0;
+
+        this.aiState = 'WANDER';
+        this.stateTimer = 0;
+
+        for(let i=0; i < this.length * SEGMENT_SPACING; i++) {
+            this.history.push({x, y});
+            if(i % SEGMENT_SPACING === 0 && i !== 0) this.segments.push({x, y});
+        }
+    }
+
+    update() {
+        if (this.dead) return;
+        let head = this.segments[0];
+        this.width = Math.min(60, 20 + (Math.floor(this.score / 10) * 2));
+
+        if (this.isBot) {
+            this.runAI();
+        } else {
+            let dx = mouse.x - canvas.width / 2;
+            let dy = mouse.y - canvas.height / 2;
+            if (isFlipped) dy = -dy;
+            this.targetAngle = Math.atan2(dy, dx);
+        }
+
+        if (this.isBoosting && (this.score > 2 || this.isHitman)) {
+            this.speed = this.baseSpeed * 2;
+            this.boostCounter++;
+            if (this.boostCounter % 15 === 0) {
+                if (this.score > 0) this.score--;
+                if (this.length > START_LENGTH) this.length--;
+                let tail = this.segments[this.segments.length - 1];
+                foods.push({ x: tail.x, y: tail.y, color: this.color, size: 3 });
+            }
+        } else {
+            this.speed = this.baseSpeed;
+            if (!this.isHitman) this.isBoosting = false;
+        }
+
+        let diff = this.targetAngle - this.angle;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        this.angle += diff * (this.isHitman ? 0.15 : 0.1); 
+
+        let newHeadPos = {
+            x: head.x + Math.cos(this.angle) * this.speed,
+            y: head.y + Math.sin(this.angle) * this.speed
+        };
+
+        if (newHeadPos.x < 0 || newHeadPos.x > WORLD_SIZE || newHeadPos.y < 0 || newHeadPos.y > WORLD_SIZE) {
+            this.die();
+            return;
+        }
+
+        this.history.unshift(newHeadPos);
+        this.segments[0] = newHeadPos;
+
+        while (this.segments.length < this.length) {
+            let last = this.segments[this.segments.length - 1];
+            this.segments.push({ x: last.x, y: last.y });
+        }
+        while (this.segments.length > this.length) {
+            this.segments.pop();
+        }
+
+        for (let i = 1; i < this.segments.length; i++) {
+            let index = i * SEGMENT_SPACING;
+            if (this.history[index]) {
+                this.segments[i].x = this.history[index].x;
+                this.segments[i].y = this.history[index].y;
+            }
+        }
+
+        if (this.history.length > this.length * SEGMENT_SPACING + 20) {
+            this.history.pop();
+        }
+
+        this.checkEating();
+    }
+
+    runAI() {
+        let head = this.segments[0];
+        if (this.isHitman && playerSnake && !playerSnake.dead) {
+            let pHead = playerSnake.segments[0];
+            this.targetAngle = Math.atan2(pHead.y - head.y, pHead.x - head.x);
+            this.isBoosting = true;
+            return;
+        }
+
+        this.stateTimer--;
+        let closestDanger = null;
+        let dMin = 130;
+        for (let other of snakes) {
+            if (other.dead) continue;
+            for (let j = 0; j < other.segments.length; j += 5) {
+                if (other === this && j < 25) continue; 
+                let d = Math.hypot(head.x - other.segments[j].x, head.y - other.segments[j].y);
+                if (d < dMin) { dMin = d; closestDanger = other.segments[j]; }
+            }
+        }
+
+        let wallDanger = (head.x < 150 || head.x > WORLD_SIZE - 150 || head.y < 150 || head.y > WORLD_SIZE - 150);
+
+        if (closestDanger || wallDanger) {
+            if (this.aiState !== 'AVOID' || this.stateTimer <= 0) {
+                this.aiState = 'AVOID';
+                this.stateTimer = 25; 
+                if (wallDanger) {
+                    this.targetAngle = Math.atan2(WORLD_SIZE/2 - head.y, WORLD_SIZE/2 - head.x);
+                } else {
+                    let angleToDanger = Math.atan2(closestDanger.y - head.y, closestDanger.x - head.x);
+                    this.targetAngle = angleToDanger + Math.PI + (Math.random() - 0.5);
+                }
+            }
+            if (this.score > 25) this.isBoosting = true;
+        } 
+        else if (this.stateTimer <= 0) {
+            this.isBoosting = false;
+            let closestFood = null;
+            let fMin = 450;
+            for (let f of foods) {
+                let d = Math.hypot(head.x - f.x, head.y - f.y);
+                if (d < fMin) { fMin = d; closestFood = f; }
+            }
+
+            if (closestFood) {
+                this.aiState = 'SEEK_FOOD';
+                this.targetAngle = Math.atan2(closestFood.y - head.y, closestFood.x - head.x);
+            } else {
+                this.aiState = 'WANDER';
+                if (Math.random() < 0.02) this.targetAngle += (Math.random() - 0.5) * 2;
+            }
+        }
+    }
+
+    checkEating() {
+        let head = this.segments[0];
+        let eatRadius = this.width / 2 + 6;
+        for (let i = foods.length - 1; i >= 0; i--) {
+            let f = foods[i];
+            if (Math.hypot(head.x - f.x, head.y - f.y) < eatRadius) {
+                this.score += 1;
+                this.length += 1; 
+                foods.splice(i, 1);
+                if (!isRaining) spawnFood(); 
+            }
+        }
+    }
+
+    die() {
+        if (this.dead) return;
+        this.dead = true;
+        this.segments.forEach((seg, i) => {
+            if (i % 3 === 0) foods.push({ x: seg.x, y: seg.y, color: this.color, size: Math.random() * 3 + 4 });
+        });
+        if (!this.isBot) gameOver();
+    }
+
+    getShot(segIdx) {
+        if (segIdx === 0) {
+            this.die();
+        } else {
+            for (let i = segIdx; i < this.segments.length; i++) {
+                if (i % 2 === 0) {
+                    foods.push({
+                        x: this.segments[i].x,
+                        y: this.segments[i].y,
+                        color: this.color,
+                        size: Math.random() * 3 + 4
+                    });
+                }
+            }
+            this.segments = this.segments.slice(0, segIdx);
+            this.length = this.segments.length;
+            this.score = Math.max(0, this.length - START_LENGTH);
+            this.history = this.history.slice(0, this.length * SEGMENT_SPACING);
+        }
+    }
+
+    draw(camX, camY) {
+        const head = this.segments[0];
+        
+        if (this.name.toLowerCase() === 'gunman') {
+            ctx.save();
+            ctx.translate(head.x - camX, head.y - camY);
+            ctx.rotate(this.angle);
+            ctx.fillStyle = "#222";
+            ctx.fillRect(5, this.width/4, 25, 8); 
+            ctx.fillStyle = "#444";
+            ctx.fillRect(2, this.width/4, 10, 15); 
+            ctx.restore();
+        }
+
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.width;
+
+        ctx.beginPath();
+        ctx.moveTo(head.x - camX, head.y - camY);
+        for (let i = 1; i < this.segments.length; i++) {
+            ctx.lineTo(this.segments[i].x - camX, this.segments[i].y - camY);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(head.x - camX, head.y - camY, this.width / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        const eyeOffset = 0.5; 
+        const eyeForward = this.width * 0.42;     
+        const eyeRadius = this.width * 0.22;
+        const drawEye = (side) => {
+            let ex = head.x - camX + Math.cos(this.angle + (eyeOffset * side)) * eyeForward;
+            let ey = head.y - camY + Math.sin(this.angle + (eyeOffset * side)) * eyeForward;
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.arc(ex, ey, eyeRadius, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'black';
+            ctx.beginPath(); ctx.arc(ex + Math.cos(this.angle) * (eyeRadius/2), ey + Math.sin(this.angle) * (eyeRadius/2), eyeRadius/2, 0, Math.PI * 2); ctx.fill();
+        };
+        drawEye(1); drawEye(-1); 
+
+        ctx.fillStyle = 'white';
+        ctx.font = `bold ${Math.max(12, this.width * 0.6)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText(this.name, head.x - camX, head.y - camY - (this.width/2 + 15));
+    }
+}
+
+function createBot() {
+    let isHitman = Math.random() < 0.01;
+    if (isHitman) {
+        return new Snake(Math.random() * WORLD_SIZE, Math.random() * WORLD_SIZE, true, "Hitman", "#888888", true);
+    } else {
+        return new Snake(Math.random() * WORLD_SIZE, Math.random() * WORLD_SIZE, true, "Bot " + Math.floor(Math.random()*100));
+    }
+}
+
+function spawnFood() {
+    if (!isRaining && foods.length > INITIAL_FOOD_COUNT + 150) return;
+    foods.push({
+        x: Math.random() * WORLD_SIZE,
+        y: Math.random() * WORLD_SIZE,
+        color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+        size: Math.random() * 3 + 2
+    });
+}
+
+function init() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    snakes = [];
+    foods = [];
+    bullets = [];
+    for (let i = 0; i < BOT_COUNT; i++) {
+        snakes.push(createBot());
+    }
+    for (let i = 0; i < INITIAL_FOOD_COUNT; i++) spawnFood();
+}
+
+function startGame() {
+    const name = nameInput.value.trim() || "Guest";
+
+    if (name.toLowerCase() === 'spectate') {
+        gameState = 'SPECTATING';
+        uiLayer.style.display = 'none';
+        lbContainer.style.display = 'block';
+        stopSpectateBtn.style.display = 'block';
+        spectatorPos = { x: WORLD_SIZE / 2, y: WORLD_SIZE / 2 };
+        return;
+    }
+
+    // Unlock gunman score if playing as gunman
+    if (name.toLowerCase() === 'gunman') {
+        gunUnlocked = true;
+        localStorage.setItem('fincco_slither_gun_unlocked', 'true');
+        gunScoreRow.style.display = 'block';
+    }
+
+    if (name.toLowerCase() === 'flip') {
+        isFlipped = true;
+        canvas.style.transform = 'scaleY(-1)';
+    } else {
+        isFlipped = false;
+        canvas.style.transform = 'scaleY(1)';
+    }
+
+    playerSnake = new Snake(WORLD_SIZE / 2, WORLD_SIZE / 2, false, name, selectedColor);
+    snakes.push(playerSnake);
+    gameState = 'PLAYING';
+    uiLayer.style.display = 'none';
+    lbContainer.style.display = 'block';
+}
+
+function stopSpectating() {
+    gameState = 'MENU';
+    uiLayer.style.display = 'flex';
+    lbContainer.style.display = 'none';
+    stopSpectateBtn.style.display = 'none';
+    nameInput.value = "";
+    startBtn.innerText = "PLAY";
+    startBtn.classList.remove('spectate-mode');
+    startBtn.style.background = selectedColor;
+}
+
+function gameOver() {
+    if (playerSnake) {
+        const lowerName = playerSnake.name.toLowerCase();
+        if (lowerName === 'gunman') {
+            if (playerSnake.score > gunHighScore) {
+                gunHighScore = playerSnake.score;
+                localStorage.setItem('fincco_slither_gun_highscore', gunHighScore);
+                gunHighScoreDisplay.innerText = gunHighScore;
+            }
+        } else {
+            if (playerSnake.score > highScore) {
+                highScore = playerSnake.score;
+                localStorage.setItem('fincco_slither_highscore', highScore);
+                highScoreDisplay.innerText = highScore;
+            }
+        }
+    }
+
+    gameState = 'MENU';
+    uiLayer.style.display = 'flex';
+    lbContainer.style.display = 'none';
+    startBtn.innerText = "RESPAWN";
+    playerSnake = null;
+    isRaining = false;
+    eventOverlay.style.display = 'none';
+    canvas.style.transform = 'scaleY(1)';
+    isFlipped = false;
+}
+
+function updateLeaderboard() {
+    let sorted = [...snakes].filter(s => !s.dead).sort((a, b) => b.score - a.score).slice(0, 10);
+    lbList.innerHTML = sorted.map((s, i) => `
+        <div class="entry ${!s.isBot ? 'player-entry' : ''}">
+            <span>${i+1}. ${s.name}</span>
+            <span>${s.score}</span>
+        </div>
+    `).join('');
+}
+
+function gameLoop() {
+    let now = Date.now();
+    
+    if (gameState === 'SPECTATING') {
+        const moveSpeed = 10;
+        if (keysPressed['KeyW'] || keysPressed['ArrowUp']) spectatorPos.y -= moveSpeed;
+        if (keysPressed['KeyS'] || keysPressed['ArrowDown']) spectatorPos.y += moveSpeed;
+        if (keysPressed['KeyA'] || keysPressed['ArrowLeft']) spectatorPos.x -= moveSpeed;
+        if (keysPressed['KeyD'] || keysPressed['ArrowRight']) spectatorPos.x += moveSpeed;
+
+        spectatorPos.x = Math.max(0, Math.min(WORLD_SIZE, spectatorPos.x));
+        spectatorPos.y = Math.max(0, Math.min(WORLD_SIZE, spectatorPos.y));
+    }
+
+    if (!isRaining && now > nextEventTime && gameState === 'PLAYING') {
+        isRaining = true;
+        eventOverlay.style.display = 'block';
+        setTimeout(() => {
+            isRaining = false;
+            eventOverlay.style.display = 'none';
+            nextEventTime = Date.now() + (Math.random() * 60000 + 60000); 
+        }, 15000);
+    }
+
+    ctx.fillStyle = '#400';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let camX, camY;
+    if (gameState === 'PLAYING' && playerSnake && !playerSnake.dead) {
+        camX = playerSnake.segments[0].x - canvas.width / 2;
+        camY = playerSnake.segments[0].y - canvas.height / 2;
+    } else if (gameState === 'SPECTATING') {
+        camX = spectatorPos.x - canvas.width / 2;
+        camY = spectatorPos.y - canvas.height / 2;
+    } else {
+        camX = WORLD_SIZE/2 - canvas.width/2;
+        camY = WORLD_SIZE/2 - canvas.height/2;
+    }
+
+    ctx.fillStyle = isRaining ? '#0a1a2a' : '#111';
+    ctx.fillRect(0 - camX, 0 - camY, WORLD_SIZE, WORLD_SIZE);
+
+    ctx.strokeStyle = isRaining ? '#1a3a5a' : '#222';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= WORLD_SIZE; x += 100) {
+        ctx.beginPath(); ctx.moveTo(x - camX, 0 - camY); ctx.lineTo(x - camX, WORLD_SIZE - camY); ctx.stroke();
+    }
+    for (let y = 0; y <= WORLD_SIZE; y += 100) {
+        ctx.beginPath(); ctx.moveTo(0 - camX, y - camY); ctx.lineTo(WORLD_SIZE - camX, y - camY); ctx.stroke();
+    }
+
+    if (isRaining && Math.random() < 0.4) spawnFood();
+
+    foods.forEach(f => {
+        ctx.fillStyle = f.color;
+        ctx.beginPath(); ctx.arc(f.x - camX, f.y - camY, f.size, 0, Math.PI * 2); ctx.fill();
+    });
+
+    for (let i = snakes.length - 1; i >= 0; i--) {
+        let s = snakes[i];
+        if (gameState !== 'MENU' || s.isBot) s.update();
+        if (s.dead) {
+            if(s.isBot) snakes[i] = createBot();
+            else snakes.splice(i, 1);
+            continue;
+        }
+        snakes.forEach(other => {
+            if (s === other || s.dead || other.dead) return;
+            let collisionThreshold = (s.width / 2) + (other.width / 2) - 2;
+            for(let j = 0; j < other.segments.length; j += 2) {
+                let seg = other.segments[j];
+                if (Math.hypot(s.segments[0].x - seg.x, s.segments[0].y - seg.y) < collisionThreshold) {
+                    s.die(); break;
+                }
+            }
+        });
+        s.draw(camX, camY);
+    }
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        b.update();
+        if (!b.active) { bullets.splice(i, 1); continue; }
+        for (let s of snakes) {
+            if (s === b.owner || s.dead) continue;
+            for (let j = 0; j < s.segments.length; j++) {
+                let seg = s.segments[j];
+                let dist = Math.hypot(b.x - seg.x, b.y - seg.y);
+                if (dist < (s.width / 2) + b.radius) {
+                    s.getShot(j);
+                    b.active = false;
+                    break;
+                }
+            }
+            if (!b.active) break;
+        }
+        b.draw(camX, camY);
+    }
+
+    if(gameState !== 'MENU' && Date.now() % 150 < 20) updateLeaderboard();
+    requestAnimationFrame(gameLoop);
+}
+
+window.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (gameState === 'PLAYING' && playerSnake && !playerSnake.dead && playerSnake.name.toLowerCase() === 'gunman') {
+        let head = playerSnake.segments[0];
+        let startX = head.x + Math.cos(playerSnake.angle) * (playerSnake.width + 5);
+        let startY = head.y + Math.sin(playerSnake.angle) * (playerSnake.width + 5);
+        bullets.push(new Bullet(startX, startY, playerSnake.angle, playerSnake));
+    }
+});
+
+window.addEventListener('mousedown', (e) => { 
+    if(e.button === 0 && playerSnake) playerSnake.isBoosting = true; 
+});
+window.addEventListener('mouseup', (e) => { 
+    if(e.button === 0 && playerSnake) playerSnake.isBoosting = false; 
+});
+window.addEventListener('keydown', (e) => { 
+    keysPressed[e.code] = true;
+    if(e.code === 'Space' && playerSnake) playerSnake.isBoosting = true; 
+});
+window.addEventListener('keyup', (e) => { 
+    keysPressed[e.code] = false;
+    if(e.code === 'Space' && playerSnake) playerSnake.isBoosting = false; 
+});
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+startBtn.addEventListener('click', startGame);
+stopSpectateBtn.addEventListener('click', stopSpectating);
+nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') startGame(); });
+
+init();
+gameLoop();
+</script>
+</body>
+</html>
