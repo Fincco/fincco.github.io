@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHUTTER COUNT</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0a0a;
+    --accent: #e8c84a;
+    --dim: #141414;
+    --panel: #0e0e0e;
+    --border: #1e1e1e;
+    --text: #f0ece0;
+    --muted: #555;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 34px 1fr 260px;
+    font-family: 'Space Mono', monospace;
+    color: var(--text);
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 999; opacity: 0.35;
+  }
+
+  #flash {
+    position: fixed; inset: 0; background: white; opacity: 0;
+    pointer-events: none; z-index: 998; transition: opacity 0.05s;
+  }
+
+  .strip {
+    background: #0c0c0c; border-right: 1px solid #161616;
+    display: flex; flex-direction: column;
+    justify-content: space-around; align-items: center;
+    padding: 8px 0; position: fixed;
+    top: 0; bottom: 0; left: 0; width: 34px; z-index: 2;
+  }
+  .sprocket { width: 13px; height: 9px; border: 1.5px solid #212121; border-radius: 2px; flex-shrink: 0; }
+
+  .main {
+    grid-column: 2;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px 24px 20px 20px;
+    min-height: 100vh;
+  }
+
+  .header {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(20px, 3.5vw, 42px);
+    letter-spacing: 0.18em; color: var(--accent);
+    text-shadow: 0 0 28px rgba(232,200,74,0.22);
+    margin-bottom: 4px;
+  }
+
+  .counter-wrap { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+  .counter {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 9vw, 90px);
+    color: var(--text); line-height: 1; letter-spacing: 0.04em;
+    transition: transform 0.05s ease;
+  }
+  .counter.bump { transform: scale(1.05); }
+  .counter-label { font-size: 9px; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; align-self: flex-end; padding-bottom: 10px; }
+
+  .sps-display { font-size: 10px; color: #555; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px; }
+  .sps-display span { color: var(--accent); }
+
+  .camera-wrap {
+    position: relative; cursor: pointer; user-select: none;
+    width: clamp(180px, 28vw, 320px);
+    transition: transform 0.08s cubic-bezier(.2,.8,.3,1.4);
+    /* No filter here — removes the gold glow on hover */
+  }
+  .camera-wrap.clicked { transform: scale(0.92) rotate(-1.5deg); }
+  .camera-wrap img { width: 100%; height: auto; display: block; pointer-events: none; }
+
+  .click-hint { font-size: 8px; letter-spacing: 0.3em; color: #2e2e2e; margin-top: 14px; text-transform: uppercase; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.8} }
+
+  .stats-row { display: flex; gap: 16px; margin-top: 12px; font-size: 8px; color: #3a3a3a; letter-spacing: 0.12em; text-transform: uppercase; }
+  .stat span { color: #585858; }
+
+  .pop { position: fixed; font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); pointer-events: none; z-index: 500; animation: floatUp 0.7s ease forwards; }
+  @keyframes floatUp { 0%{ opacity:1; transform:translateY(0) scale(1); } 100%{ opacity:0; transform:translateY(-65px) scale(1.2); } }
+
+  .milestone { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--dim); border: 1px solid var(--accent); padding: 8px 22px; font-size: 10px; letter-spacing: 0.18em; color: var(--accent); opacity: 0; transition: opacity 0.3s, transform 0.3s; white-space: nowrap; z-index: 600; }
+  .milestone.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── TOP BUTTONS ── */
+  .top-btns { position: fixed; top: 12px; left: 44px; display: flex; gap: 6px; z-index: 300; }
+  .top-btn {
+    background: #111; border: 1px solid #222; color: #555;
+    font-family: 'Space Mono', monospace; font-size: 8px;
+    letter-spacing: 0.15em; text-transform: uppercase; padding: 6px 11px;
+    cursor: pointer;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .top-btn { transition: border-color 0.2s, color 0.2s; }
+    .top-btn:hover { border-color: var(--accent); color: var(--accent); }
+  }
+
+  /* ── MODAL BASE ── */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 800; backdrop-filter: blur(3px); }
+  .modal-backdrop.open { display: block; }
+  .modal {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.94);
+    z-index: 900; background: #0f0f0f; border: 1px solid #252525;
+    width: min(380px, 92vw); padding: 24px 24px 20px;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+  }
+  .modal.open { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 18px; border-bottom: 1px solid #1e1e1e; padding-bottom: 10px; }
+
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #181818; }
+  .setting-row:last-of-type { border-bottom: none; }
+  .setting-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: #999; }
+  .setting-desc { font-size: 8px; color: #353535; letter-spacing: 0.06em; margin-top: 2px; }
+  .toggle { position: relative; width: 38px; height: 20px; flex-shrink: 0; }
+  .toggle input { display: none; }
+  .toggle-track { position: absolute; inset: 0; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+  .toggle-track::after { content: ''; position: absolute; left: 3px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; background: #383838; border-radius: 50%; transition: left 0.2s, background 0.2s; }
+  .toggle input:checked + .toggle-track { background: #182018; border-color: var(--accent); }
+  .toggle input:checked + .toggle-track::after { left: 21px; background: var(--accent); }
+
+  .modal-btn {
+    margin-top: 6px; width: 100%; background: none;
+    border: 1px solid #222; color: #484848;
+    font-family: 'Space Mono', monospace; font-size: 8px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 9px; cursor: pointer;
+  }
+  .modal-btn.accent { border-color: #3a3a2a; color: var(--accent); }
+  .modal-btn.danger { border-color: #3a1a1a; color: #c04040; }
+  @media (hover: hover) and (pointer: fine) {
+    .modal-btn { transition: border-color 0.2s, color 0.2s; }
+    .modal-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .modal-btn.accent:hover { border-color: var(--accent); background: #1a1a10; }
+    .modal-btn.danger:hover { border-color: #e84a4a; color: #e84a4a; }
+  }
+
+  .modal-textarea {
+    width: 100%; background: #0a0a0a; border: 1px solid #252525;
+    color: #777; font-family: 'Space Mono', monospace; font-size: 7px;
+    padding: 8px; margin-top: 8px; resize: vertical; min-height: 80px;
+    letter-spacing: 0.05em; outline: none;
+  }
+  .modal-textarea:focus { border-color: #3a3a2a; }
+
+  .save-indicator {
+    position: fixed; top: 12px; right: 14px; /* right of shop */
+    font-size: 7px; color: #333; letter-spacing: 0.1em;
+    text-transform: uppercase; z-index: 300; transition: color 0.3s;
+  }
+  .save-indicator.saved { color: #4a8a4a; }
+
+  /* ── SHOP ── */
+  .shop { grid-column: 3; background: var(--panel); border-left: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: fixed; right: 0; top: 0; bottom: 0; width: 260px; }
+  .shop-header { padding: 14px 16px 11px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .shop-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.22em; color: var(--accent); }
+  .shop-sub { font-size: 8px; color: #353535; letter-spacing: 0.08em; margin-top: 2px; }
+  .shop-list { flex: 1; overflow-y: auto; padding: 6px 0; scrollbar-width: thin; scrollbar-color: #1e1e1e transparent; }
+
+  .upgrade-card { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #141414; cursor: pointer; position: relative; }
+  /* Only enable hover effects on devices with true hover support (desktop) */
+  @media (hover: hover) and (pointer: fine) {
+    .upgrade-card { transition: background 0.12s; }
+    .upgrade-card:hover:not(.locked):not(.maxed) { background: #141414; }
+  }
+  .upgrade-card.locked { opacity: 0.3; cursor: not-allowed; }
+  .upgrade-card.maxed { opacity: 0.45; cursor: default; }
+  .upg-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+  .upg-info { flex: 1; min-width: 0; }
+  .upg-name { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .upg-desc { font-size: 7px; color: #484848; margin-top: 2px; line-height: 1.4; }
+  .upg-right { flex-shrink: 0; text-align: right; }
+  .upg-count { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #2e2e2e; line-height: 1; }
+  .upg-count.owned { color: var(--accent); }
+  .upg-cost { font-size: 8px; letter-spacing: 0.05em; color: var(--accent); margin-top: 2px; }
+  .upg-cost.red { color: #e84a4a; }
+  .upg-cost.grey { color: #3a3a3a; }
+  .upg-bar { position: absolute; bottom: 0; left: 0; height: 1px; background: var(--accent); opacity: 0.18; transition: width 0.4s; }
+
+  .cursor-dot { position: fixed; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; pointer-events: none; z-index: 10; transform: translate(-50%, -50%); opacity: 0.65; box-shadow: 0 0 5px rgba(232,200,74,0.4); }
+</style>
+</head>
+<body>
+
+<div class="strip" id="stripL"></div>
+<div id="flash"></div>
+
+<div class="top-btns">
+  <button class="top-btn" id="settingsBtn">⚙ Settings</button>
+  <button class="top-btn" id="saveBtn">💾 Save</button>
+  <button class="top-btn" id="exportBtn">⬇ Export</button>
+  <button class="top-btn" id="importBtn">⬆ Import</button>
+</div>
+
+<div class="save-indicator" id="saveIndicator">autosave on</div>
+
+<!-- Settings modal -->
+<div class="modal-backdrop" id="settingsBack"></div>
+<div class="modal" id="settingsPanel">
+  <div class="modal-title">Settings</div>
+  <div class="setting-row">
+    <div><div class="setting-label">🔊 Shutter Sound</div><div class="setting-desc">Random shutter sound per click</div></div>
+    <label class="toggle"><input type="checkbox" id="toggleSound" checked><div class="toggle-track"></div></label>
+  </div>
+  <div class="setting-row">
+    <div><div class="setting-label">⚡ Flash Effect</div><div class="setting-desc">White screen flash on click</div></div>
+    <label class="toggle"><input type="checkbox" id="toggleFlash" checked><div class="toggle-track"></div></label>
+  </div>
+  <div class="setting-row">
+    <div><div class="setting-label">✨ Floating +1</div><div class="setting-desc">Pop animation on click</div></div>
+    <label class="toggle"><input type="checkbox" id="togglePop" checked><div class="toggle-track"></div></label>
+  </div>
+  <button class="modal-btn danger" id="resetBtn" style="margin-top:14px">⚠ Reset All Progress</button>
+  <button class="modal-btn" id="settingsClose" style="margin-top:6px">— Close —</button>
+</div>
+
+<!-- Export modal -->
+<div class="modal-backdrop" id="exportBack"></div>
+<div class="modal" id="exportPanel">
+  <div class="modal-title">Export Save</div>
+  <div style="font-size:8px;color:#555;letter-spacing:0.1em;line-height:1.7;margin-bottom:10px;">
+    Your save is encoded as an encrypted string.<br>
+    Copy it and keep it safe — paste it back to restore.
+  </div>
+  <textarea class="modal-textarea" id="exportText" readonly></textarea>
+  <button class="modal-btn accent" id="copyExportBtn" style="margin-top:10px">📋 Copy to Clipboard</button>
+  <button class="modal-btn accent" id="downloadBtn">⬇ Download as .txt</button>
+  <button class="modal-btn" id="exportClose">— Close —</button>
+</div>
+
+<!-- Import modal -->
+<div class="modal-backdrop" id="importBack"></div>
+<div class="modal" id="importPanel">
+  <div class="modal-title">Import Save</div>
+  <div style="font-size:8px;color:#555;letter-spacing:0.1em;line-height:1.7;margin-bottom:10px;">
+    Paste your exported save string below and click Load.
+  </div>
+  <textarea class="modal-textarea" id="importText" placeholder="Paste save string here..."></textarea>
+  <button class="modal-btn accent" id="loadImportBtn" style="margin-top:10px">✅ Load Save</button>
+  <div id="importError" style="font-size:8px;color:#e84a4a;letter-spacing:0.1em;margin-top:8px;display:none;">Invalid or corrupted save file.</div>
+  <button class="modal-btn" id="importClose">— Close —</button>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="header">SHUTTER COUNT</div>
+  <div class="counter-wrap">
+    <div class="counter" id="counter">0</div>
+    <div class="counter-label">shots</div>
+  </div>
+  <div class="sps-display">
+    <span id="sps">0.0</span>/sec &nbsp;·&nbsp; <span id="perClick">1</span>/click
+  </div>
+  <div class="camera-wrap" id="camera">
+    <img src="https://fincco.github.io/assets/camera.png" alt="Camera" draggable="false">
+  </div>
+  <div class="click-hint">— tap to shoot —</div>
+  <div class="stats-row">
+    <div class="stat">BEST CPS <span id="best">0</span></div>
+    <div class="stat">ALL-TIME <span id="totalEl">0</span></div>
+    <div class="stat">TIME <span id="session">0s</span></div>
+  </div>
+</div>
+
+<!-- Shop -->
+<div class="shop">
+  <div class="shop-header">
+    <div class="shop-title">UPGRADES</div>
+    <div class="shop-sub">spend shots to grow the empire</div>
+  </div>
+  <div class="shop-list" id="shopList"></div>
+</div>
+
+<div class="milestone" id="milestone"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ENCRYPTION  (XOR + Base64, keyed with PBKDF2-style mix)
+//
+//  How it works:
+//  1. The save object is JSON-stringified.
+//  2. A version prefix + checksum (simple djb2 hash) is
+//     prepended so corrupted imports are caught.
+//  3. The string is XOR-encrypted byte-by-byte against a
+//     repeating key derived from a fixed app secret mixed
+//     with the data length — cheap but sufficient to make
+//     the output unreadable without the source.
+//  4. The resulting bytes are encoded as Base64 so the
+//     output is safe text you can copy/paste or save.
+//  Decryption is the exact reverse: Base64-decode →
+//  XOR with same derived key → verify checksum → parse JSON.
+// ═══════════════════════════════════════════════════════
+const SECRET = 'ShutterCount_v1_xK9#mP';
+
+function djb2(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return (h >>> 0).toString(16).padStart(8,'0');
+}
+
+function deriveKey(length) {
+  // Extend the secret to cover the full payload length
+  let key = SECRET;
+  while (key.length < length) key += SECRET;
+  return key;
+}
+
+function xorCrypt(str, keyStr) {
+  let out = '';
+  for (let i = 0; i < str.length; i++) {
+    out += String.fromCharCode(str.charCodeAt(i) ^ keyStr.charCodeAt(i % keyStr.length));
+  }
+  return out;
+}
+
+function encryptSave(obj) {
+  const json = JSON.stringify(obj);
+  const checksum = djb2(json);
+  const payload = checksum + ':' + json;          // prepend 8-char hex checksum
+  const key = deriveKey(payload.length);
+  const encrypted = xorCrypt(payload, key);
+  return btoa(unescape(encodeURIComponent(encrypted))); // → Base64
+}
+
+function decryptSave(str) {
+  try {
+    const encrypted = decodeURIComponent(escape(atob(str)));
+    const key = deriveKey(encrypted.length);
+    const payload = xorCrypt(encrypted, key);
+    const colon = payload.indexOf(':');
+    const checksum = payload.slice(0, colon);
+    const json = payload.slice(colon + 1);
+    if (djb2(json) !== checksum) return null;       // tampered / corrupted
+    return JSON.parse(json);
+  } catch { return null; }
+}
+
+// ── AUDIO ──────────────────────────────────────────────
+const sounds = [
+  'https://fincco.github.io/assets/camera1.mp3',
+  'https://fincco.github.io/assets/camera2.mp3',
+  'https://fincco.github.io/assets/camera3.mp3',
+  'https://fincco.github.io/assets/camera4.mp3',
+];
+const pool = [];
+sounds.forEach(src => {
+  for (let i = 0; i < 3; i++) { const a = new Audio(src); a.preload = 'auto'; pool.push(a); }
+});
+function playSound() {
+  const avail = pool.filter(a => a.paused || a.ended);
+  const a = avail.length ? avail[Math.floor(Math.random()*avail.length)] : pool[Math.floor(Math.random()*pool.length)];
+  a.currentTime = 0; a.volume = 0.6 + Math.random()*0.4; a.play().catch(()=>{});
+}
+
+// ── UPGRADES ───────────────────────────────────────────
+const UPGRADES = [
+  { id:'cursor',    icon:'🖱️', name:'Auto Cursor',      desc:'+1 shot/sec each. Orbits the camera.', type:'auto',  sps:1,    base:15,    mult:1.15, max:999 },
+  { id:'assistant', icon:'🤖', name:'Photo Assistant',  desc:'Enthusiastic intern. +5 shots/sec.',    type:'auto',  sps:5,    base:100,   mult:1.18, max:999 },
+  { id:'tripod',    icon:'🎬', name:'Motorized Tripod', desc:'Burst-fire rig. +20 shots/sec.',         type:'auto',  sps:20,   base:500,   mult:1.20, max:999 },
+  { id:'studio',    icon:'🏭', name:'Photo Studio',     desc:'Full production line. +100 shots/sec.',  type:'auto',  sps:100,  base:3000,  mult:1.22, max:999 },
+  { id:'satellite', icon:'🛰️', name:'Orbital Camera',  desc:'Clicks from orbit. +500 shots/sec.',     type:'auto',  sps:500,  base:20000, mult:1.25, max:999 },
+  { id:'ai',        icon:'🧠', name:'AI Photographer', desc:'Neural net shutter. +2000/sec.',          type:'auto',  sps:2000, base:100000,mult:1.28, max:999 },
+  { id:'lens1',     icon:'🔭', name:'Better Lens',     desc:'+2 shots per manual click.',              type:'click', bonus:2,  base:50,    mult:1.30, max:20  },
+  { id:'lens2',     icon:'💎', name:'Crystal Optics',  desc:'+10 shots per manual click.',             type:'click', bonus:10, base:500,   mult:1.40, max:10  },
+  { id:'burst',     icon:'⚡', name:'Burst Mode',      desc:'×2 all shots per click.',                type:'cmult', mult:2,   base:300,   mult2:4.0, max:6   },
+  { id:'goldhour',  icon:'🌅', name:'Golden Hour',     desc:'×2 all passive shots/sec.',              type:'smult', mult:2,   base:2500,  mult2:5.0, max:5   },
+  { id:'darkroom',  icon:'🌑', name:'Dark Room',       desc:'×1.5 everything — clicks AND passive.',  type:'all',   mult:1.5, base:50000, mult2:6.0, max:4   },
+];
+const owned = {};
+UPGRADES.forEach(u => owned[u.id] = 0);
+
+function cost(u) {
+  const m = u.mult2 || u.mult || 1;
+  return Math.ceil(u.base * Math.pow(u.type === 'auto' ? u.mult : m, owned[u.id]));
+}
+function getSPS() {
+  let base = 0;
+  UPGRADES.filter(u=>u.type==='auto').forEach(u => base += u.sps * owned[u.id]);
+  let sm=1; UPGRADES.filter(u=>u.type==='smult').forEach(u => sm *= Math.pow(u.mult, owned[u.id]));
+  let am=1; UPGRADES.filter(u=>u.type==='all').forEach(u => am *= Math.pow(u.mult, owned[u.id]));
+  return base * sm * am;
+}
+function getClickVal() {
+  let base = 1;
+  UPGRADES.filter(u=>u.type==='click').forEach(u => base += u.bonus * owned[u.id]);
+  let cm=1; UPGRADES.filter(u=>u.type==='cmult').forEach(u => cm *= Math.pow(u.mult, owned[u.id]));
+  let am=1; UPGRADES.filter(u=>u.type==='all').forEach(u => am *= Math.pow(u.mult, owned[u.id]));
+  return Math.max(1, Math.floor(base * cm * am));
+}
+
+// ── STATE ──────────────────────────────────────────────
+let shots = 0, totalShots = 0;
+let clickTimes = [], bestCPS = 0, sessionStart = Date.now();
+let soundOn = true, flashOn = true, popOn = true;
+let lastMS = 0, msTimeout;
+
+// ── SAVE / LOAD ────────────────────────────────────────
+const SAVE_KEY = 'shuttercount_save';
+
+function buildSaveObj() {
+  return { shots, totalShots, owned: {...owned}, bestCPS, lastMS, soundOn, flashOn, popOn, v: 1 };
+}
+
+function applySaveObj(s) {
+  if (!s || s.v !== 1) return false;
+  shots = s.shots || 0;
+  totalShots = s.totalShots || 0;
+  bestCPS = s.bestCPS || 0;
+  lastMS = s.lastMS || 0;
+  UPGRADES.forEach(u => { owned[u.id] = (s.owned && s.owned[u.id]) || 0; });
+  // Apply settings
+  if (s.soundOn !== undefined) soundOn = s.soundOn;
+  if (s.flashOn !== undefined) flashOn = s.flashOn;
+  if (s.popOn !== undefined) popOn = s.popOn;
+  // Update UI checkboxes
+  document.getElementById('toggleSound').checked = soundOn;
+  document.getElementById('toggleFlash').checked = flashOn;
+  document.getElementById('togglePop').checked = popOn;
+  return true;
+}
+
+function saveToLocalStorage() {
+  localStorage.setItem(SAVE_KEY, encryptSave(buildSaveObj()));
+  flashSaveIndicator();
+}
+
+function loadFromLocalStorage() {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (!raw) return;
+  const obj = decryptSave(raw);
+  if (obj) { applySaveObj(obj); updateCursorDots(); tick(); }
+}
+
+const saveIndicatorEl = document.getElementById('saveIndicator');
+let saveFlashTimeout;
+function flashSaveIndicator() {
+  saveIndicatorEl.textContent = '✓ saved';
+  saveIndicatorEl.classList.add('saved');
+  clearTimeout(saveFlashTimeout);
+  saveFlashTimeout = setTimeout(() => {
+    saveIndicatorEl.textContent = 'autosave on';
+    saveIndicatorEl.classList.remove('saved');
+  }, 1500);
+}
+
+// Autosave every 10 seconds
+setInterval(saveToLocalStorage, 10000);
+
+// ── DOM ────────────────────────────────────────────────
+const counterEl   = document.getElementById('counter');
+const cameraEl    = document.getElementById('camera');
+const flashEl     = document.getElementById('flash');
+const milestoneEl = document.getElementById('milestone');
+const spsEl       = document.getElementById('sps');
+const perClickEl  = document.getElementById('perClick');
+const bestEl      = document.getElementById('best');
+const totalElEl   = document.getElementById('totalEl');
+const sessionEl   = document.getElementById('session');
+const shopList    = document.getElementById('shopList');
+
+// Film strip
+const strip = document.getElementById('stripL');
+for (let i = 0; i < 60; i++) { const d = document.createElement('div'); d.className = 'sprocket'; strip.appendChild(d); }
+
+// ── FORMAT ─────────────────────────────────────────────
+function fmt(n) {
+  n = Math.floor(n);
+  if (n >= 1e12) return (n/1e12).toFixed(2)+'T';
+  if (n >= 1e9)  return (n/1e9).toFixed(2)+'B';
+  if (n >= 1e6)  return (n/1e6).toFixed(2)+'M';
+  if (n >= 1000) return (n/1000).toFixed(1)+'K';
+  return n.toString();
+}
+
+// ── SHOP ───────────────────────────────────────────────
+// Store card elements so we can update them without rebuilding
+const shopCards = {};
+
+function buildShop() {
+  shopList.innerHTML = '';
+  UPGRADES.forEach(u => {
+    const card = document.createElement('div');
+    card.className = 'upgrade-card';
+    card.dataset.id = u.id;
+    card.innerHTML = `
+      <div class="upg-icon">${u.icon}</div>
+      <div class="upg-info">
+        <div class="upg-name">${u.name}</div>
+        <div class="upg-desc">${u.desc}</div>
+      </div>
+      <div class="upg-right">
+        <div class="upg-count" data-count></div>
+        <div class="upg-cost" data-cost></div>
+      </div>
+      <div class="upg-bar" data-bar></div>`;
+    card.addEventListener('click', () => buy(u.id));
+    shopList.appendChild(card);
+    shopCards[u.id] = card;
+  });
+  updateShop(); // Initial update
+}
+
+function updateShop() {
+  UPGRADES.forEach(u => {
+    const card = shopCards[u.id];
+    if (!card) return;
+    
+    const c = cost(u);
+    const n = owned[u.id];
+    const isMax = n >= u.max;
+    const afford = shots >= c;
+    const pct = isMax ? 100 : Math.min(100, (shots/c)*100);
+    
+    // Update classes
+    card.className = 'upgrade-card' + (isMax ? ' maxed' : !afford ? ' locked' : '');
+    
+    // Update count
+    const countEl = card.querySelector('[data-count]');
+    countEl.textContent = n > 0 ? n : '—';
+    countEl.className = 'upg-count' + (n > 0 ? ' owned' : '');
+    
+    // Update cost
+    const costEl = card.querySelector('[data-cost]');
+    costEl.textContent = isMax ? 'MAX' : fmt(c);
+    costEl.className = 'upg-cost' + (isMax ? ' grey' : !afford ? ' red' : '');
+    
+    // Update progress bar
+    const barEl = card.querySelector('[data-bar]');
+    barEl.style.width = pct + '%';
+  });
+}
+
+function buy(id) {
+  const u = UPGRADES.find(x => x.id === id);
+  if (!u || owned[u.id] >= u.max) return;
+  const c = cost(u); if (shots < c) return;
+  shots -= c; owned[u.id]++;
+  updateCursorDots(); tick();
+}
+
+// ── CURSOR DOTS ────────────────────────────────────────
+let dots = [];
+function updateCursorDots() {
+  dots.forEach(d => d.remove()); dots = [];
+  const n = Math.min(owned['cursor'], 16);
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('div'); d.className = 'cursor-dot';
+    document.body.appendChild(d); dots.push(d);
+  }
+}
+function animateDots() {
+  if (dots.length) {
+    const rect = cameraEl.getBoundingClientRect();
+    const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+    const t = Date.now()/1000;
+    dots.forEach((d,i) => {
+      const angle = (i/dots.length)*Math.PI*2 + t*0.9;
+      const r = 75 + Math.sin(t*1.3+i*0.7)*18;
+      d.style.left = (cx + Math.cos(angle)*r)+'px';
+      d.style.top  = (cy + Math.sin(angle)*r)+'px';
+    });
+  }
+  requestAnimationFrame(animateDots);
+}
+animateDots();
+
+// ── TICK ───────────────────────────────────────────────
+function tick() {
+  counterEl.textContent = fmt(shots);
+  totalElEl.textContent = fmt(totalShots);
+  spsEl.textContent = getSPS().toFixed(1);
+  perClickEl.textContent = fmt(getClickVal());
+  updateShop(); // Update, don't rebuild
+}
+setInterval(() => {
+  const gain = getSPS()/10;
+  if (gain > 0) { shots += gain; totalShots += gain; }
+  tick();
+}, 100);
+
+// ── FLASH / POP ────────────────────────────────────────
+function triggerFlash() { flashEl.style.opacity='0.28'; setTimeout(()=>flashEl.style.opacity='0',70); }
+function spawnPop(x,y,v) {
+  const el = document.createElement('div'); el.className='pop';
+  el.textContent='+'+fmt(v);
+  el.style.left=(x+Math.random()*30-15)+'px'; el.style.top=(y-20)+'px';
+  document.body.appendChild(el); setTimeout(()=>el.remove(),700);
+}
+
+// ── MILESTONES ─────────────────────────────────────────
+const MILESTONES = [
+  [1,'📸 First shot!'],[10,'🎞 Ten frames exposed'],[50,'✨ Roll of 50'],
+  [100,'💯 100 shots'],[250,'🔥 250!'],[500,'⚡ 500 actuations'],
+  [1000,'🏆 1,000 — Legend'],[5000,'🌟 5,000 — Obsessed'],
+  [10000,'👁 10K — Photographer?'],[50000,'🚀 50K — Insane'],
+  [100000,'👑 100K — Immortal'],[1000000,'🌌 1 MILLION — GOD TIER']
+];
+function checkMS(n) {
+  n = Math.floor(n);
+  for (const [thr, msg] of MILESTONES) {
+    if (n >= thr && lastMS < thr) {
+      lastMS = thr;
+      milestoneEl.textContent = msg; milestoneEl.classList.add('show');
+      clearTimeout(msTimeout); msTimeout = setTimeout(()=>milestoneEl.classList.remove('show'),2500);
+    }
+  }
+}
+
+// ── CLICK ──────────────────────────────────────────────
+cameraEl.addEventListener('click', e => {
+  const v = getClickVal(); shots += v; totalShots += v;
+  const now = Date.now(); clickTimes.push(now);
+  clickTimes = clickTimes.filter(t => now-t < 1000);
+  if (soundOn) playSound();
+  if (flashOn) triggerFlash();
+  cameraEl.classList.add('clicked'); setTimeout(()=>cameraEl.classList.remove('clicked'),110);
+  counterEl.classList.add('bump'); setTimeout(()=>counterEl.classList.remove('bump'),75);
+  if (popOn) spawnPop(e.clientX, e.clientY, v);
+  checkMS(totalShots); tick();
+});
+
+// ── STATS ──────────────────────────────────────────────
+setInterval(() => {
+  const now = Date.now();
+  clickTimes = clickTimes.filter(t => now-t < 1000);
+  const cps = clickTimes.length;
+  if (cps > bestCPS) bestCPS = cps;
+  bestEl.textContent = bestCPS;
+  const e = Math.floor((now-sessionStart)/1000);
+  sessionEl.textContent = e < 60 ? e+'s' : Math.floor(e/60)+'m'+(e%60)+'s';
+}, 250);
+
+// ── MODAL HELPERS ──────────────────────────────────────
+function openModal(panelId, backId) {
+  document.getElementById(panelId).classList.add('open');
+  document.getElementById(backId).classList.add('open');
+}
+function closeModal(panelId, backId) {
+  document.getElementById(panelId).classList.remove('open');
+  document.getElementById(backId).classList.remove('open');
+}
+function setupModal(btnId, panelId, backId, closeId) {
+  document.getElementById(btnId).addEventListener('click', () => openModal(panelId, backId));
+  document.getElementById(closeId).addEventListener('click', () => closeModal(panelId, backId));
+  document.getElementById(backId).addEventListener('click', () => closeModal(panelId, backId));
+}
+
+// ── SETTINGS ───────────────────────────────────────────
+setupModal('settingsBtn','settingsPanel','settingsBack','settingsClose');
+document.getElementById('toggleSound').addEventListener('change', e => { soundOn = e.target.checked; saveToLocalStorage(); });
+document.getElementById('toggleFlash').addEventListener('change', e => { flashOn = e.target.checked; saveToLocalStorage(); });
+document.getElementById('togglePop').addEventListener('change', e => { popOn = e.target.checked; saveToLocalStorage(); });
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset ALL progress? This cannot be undone.')) return;
+  shots = 0; totalShots = 0; bestCPS = 0; lastMS = 0;
+  UPGRADES.forEach(u => owned[u.id] = 0);
+  updateCursorDots();
+  localStorage.removeItem(SAVE_KEY);
+  tick();
+  closeModal('settingsPanel','settingsBack');
+});
+
+// ── MANUAL SAVE ────────────────────────────────────────
+document.getElementById('saveBtn').addEventListener('click', saveToLocalStorage);
+
+// ── EXPORT ─────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', () => {
+  document.getElementById('exportText').value = encryptSave(buildSaveObj());
+  openModal('exportPanel','exportBack');
+});
+document.getElementById('exportClose').addEventListener('click', () => closeModal('exportPanel','exportBack'));
+document.getElementById('exportBack').addEventListener('click', () => closeModal('exportPanel','exportBack'));
+document.getElementById('copyExportBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('exportText').value)
+    .then(() => { document.getElementById('copyExportBtn').textContent = '✓ Copied!'; setTimeout(()=>document.getElementById('copyExportBtn').textContent='📋 Copy to Clipboard',1500); })
+    .catch(() => document.getElementById('exportText').select());
+});
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const text = document.getElementById('exportText').value;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'shuttercount_save.txt';
+  a.click(); URL.revokeObjectURL(a.href);
+});
+
+// ── IMPORT ─────────────────────────────────────────────
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importText').value = '';
+  document.getElementById('importError').style.display = 'none';
+  openModal('importPanel','importBack');
+});
+document.getElementById('importClose').addEventListener('click', () => closeModal('importPanel','importBack'));
+document.getElementById('importBack').addEventListener('click', () => closeModal('importPanel','importBack'));
+document.getElementById('loadImportBtn').addEventListener('click', () => {
+  const raw = document.getElementById('importText').value.trim();
+  const obj = decryptSave(raw);
+  if (!obj) {
+    document.getElementById('importError').style.display = 'block';
+    return;
+  }
+  applySaveObj(obj);
+  updateCursorDots();
+  tick();
+  closeModal('importPanel','importBack');
+  milestoneEl.textContent = '✅ Save loaded!';
+  milestoneEl.classList.add('show');
+  setTimeout(() => milestoneEl.classList.remove('show'), 2500);
+});
+
+// ── INIT ───────────────────────────────────────────────
+buildShop(); // Build shop cards once
+loadFromLocalStorage();
+tick();
+</script>
+</body>
+</html>
