@@ -67,6 +67,11 @@
     margin-bottom: 4px;
   }
 
+  .rebirth-badge {
+    font-size: 10px; color: #e87a4a; letter-spacing: 0.12em;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+
   .counter-wrap { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
   .counter {
     font-family: 'Bebas Neue', sans-serif;
@@ -84,7 +89,6 @@
     position: relative; cursor: pointer; user-select: none;
     width: clamp(180px, 28vw, 320px);
     transition: transform 0.08s cubic-bezier(.2,.8,.3,1.4);
-    /* No filter here — removes the gold glow on hover */
   }
   .camera-wrap.clicked { transform: scale(0.92) rotate(-1.5deg); }
   .camera-wrap img { width: 100%; height: auto; display: block; pointer-events: none; }
@@ -101,7 +105,7 @@
   .milestone { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--dim); border: 1px solid var(--accent); padding: 8px 22px; font-size: 10px; letter-spacing: 0.18em; color: var(--accent); opacity: 0; transition: opacity 0.3s, transform 0.3s; white-space: nowrap; z-index: 600; }
   .milestone.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ── TOP BUTTONS ── */
+  /* Top buttons */
   .top-btns { position: fixed; top: 12px; left: 44px; display: flex; gap: 6px; z-index: 300; }
   .top-btn {
     background: #111; border: 1px solid #222; color: #555;
@@ -114,7 +118,20 @@
     .top-btn:hover { border-color: var(--accent); color: var(--accent); }
   }
 
-  /* ── MODAL BASE ── */
+  /* Rebirth button */
+  .rebirth-btn {
+    background: #111; border: 1px solid #3a2a1a; color: #e87a4a;
+    font-family: 'Space Mono', monospace; font-size: 8px;
+    letter-spacing: 0.15em; text-transform: uppercase; padding: 6px 11px;
+    cursor: pointer;
+  }
+  .rebirth-btn.locked { opacity: 0.3; cursor: not-allowed; color: #444; border-color: #1a1a1a; }
+  @media (hover: hover) and (pointer: fine) {
+    .rebirth-btn:not(.locked) { transition: border-color 0.2s, background 0.2s; }
+    .rebirth-btn:not(.locked):hover { border-color: #e87a4a; background: #1a1010; }
+  }
+
+  /* Modal base */
   .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 800; backdrop-filter: blur(3px); }
   .modal-backdrop.open { display: block; }
   .modal {
@@ -162,14 +179,20 @@
   }
   .modal-textarea:focus { border-color: #3a3a2a; }
 
+  .rebirth-info {
+    font-size: 8px; color: #666; letter-spacing: 0.08em;
+    line-height: 1.7; margin: 12px 0;
+  }
+  .rebirth-info strong { color: #e87a4a; }
+
   .save-indicator {
-    position: fixed; top: 12px; right: 14px; /* right of shop */
+    position: fixed; top: 12px; right: 14px;
     font-size: 7px; color: #333; letter-spacing: 0.1em;
     text-transform: uppercase; z-index: 300; transition: color 0.3s;
   }
   .save-indicator.saved { color: #4a8a4a; }
 
-  /* ── SHOP ── */
+  /* Shop */
   .shop { grid-column: 3; background: var(--panel); border-left: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: fixed; right: 0; top: 0; bottom: 0; width: 260px; }
   .shop-header { padding: 14px 16px 11px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .shop-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.22em; color: var(--accent); }
@@ -177,7 +200,6 @@
   .shop-list { flex: 1; overflow-y: auto; padding: 6px 0; scrollbar-width: thin; scrollbar-color: #1e1e1e transparent; }
 
   .upgrade-card { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #141414; cursor: pointer; position: relative; }
-  /* Only enable hover effects on devices with true hover support (desktop) */
   @media (hover: hover) and (pointer: fine) {
     .upgrade-card { transition: background 0.12s; }
     .upgrade-card:hover:not(.locked):not(.maxed) { background: #141414; }
@@ -197,6 +219,20 @@
   .upg-bar { position: absolute; bottom: 0; left: 0; height: 1px; background: var(--accent); opacity: 0.18; transition: width 0.4s; }
 
   .cursor-dot { position: fixed; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; pointer-events: none; z-index: 10; transform: translate(-50%, -50%); opacity: 0.65; box-shadow: 0 0 5px rgba(232,200,74,0.4); }
+
+  /* Easter egg */
+  #slitherEgg {
+    position: fixed;
+    top: -10px;
+    right: -250px;
+    width: 240px;
+    pointer-events: none;
+    z-index: 9999;
+    transition: right 0.8s ease-in-out;
+  }
+  #slitherEgg.visible {
+    right: -10px;
+  }
 </style>
 </head>
 <body>
@@ -204,16 +240,19 @@
 <div class="strip" id="stripL"></div>
 <div id="flash"></div>
 
+<img id="slitherEgg" src="https://fincco.github.io/assets/slitherthing.png" alt="">
+
 <div class="top-btns">
   <button class="top-btn" id="settingsBtn">⚙ Settings</button>
   <button class="top-btn" id="saveBtn">💾 Save</button>
   <button class="top-btn" id="exportBtn">⬇ Export</button>
   <button class="top-btn" id="importBtn">⬆ Import</button>
+  <button class="rebirth-btn" id="rebirthBtn">🔄 Rebirth</button>
 </div>
 
 <div class="save-indicator" id="saveIndicator">autosave on</div>
 
-<!-- Settings modal -->
+<!-- Settings -->
 <div class="modal-backdrop" id="settingsBack"></div>
 <div class="modal" id="settingsPanel">
   <div class="modal-title">Settings</div>
@@ -233,7 +272,21 @@
   <button class="modal-btn" id="settingsClose" style="margin-top:6px">— Close —</button>
 </div>
 
-<!-- Export modal -->
+<!-- Rebirth -->
+<div class="modal-backdrop" id="rebirthBack"></div>
+<div class="modal" id="rebirthPanel">
+  <div class="modal-title" style="color:#e87a4a">Rebirth</div>
+  <div class="rebirth-info">
+    Rebirth resets your shots and upgrades but <strong>permanently multiplies</strong> all click value based on your rebirth level.<br><br>
+    Current rebirth level: <strong id="rebirthLevel">0</strong><br>
+    Next multiplier: <strong id="nextMult">×2</strong><br>
+    Cost: <strong id="rebirthCost">1,000,000</strong> shots
+  </div>
+  <button class="modal-btn accent" id="confirmRebirthBtn">🔄 Confirm Rebirth</button>
+  <button class="modal-btn" id="rebirthClose">— Cancel —</button>
+</div>
+
+<!-- Export -->
 <div class="modal-backdrop" id="exportBack"></div>
 <div class="modal" id="exportPanel">
   <div class="modal-title">Export Save</div>
@@ -247,7 +300,7 @@
   <button class="modal-btn" id="exportClose">— Close —</button>
 </div>
 
-<!-- Import modal -->
+<!-- Import -->
 <div class="modal-backdrop" id="importBack"></div>
 <div class="modal" id="importPanel">
   <div class="modal-title">Import Save</div>
@@ -263,6 +316,8 @@
 <!-- Main -->
 <div class="main">
   <div class="header">SHUTTER COUNT</div>
+  <div class="rebirth-badge" id="rebirthBadge" style="display:none;"></div>
+
   <div class="counter-wrap">
     <div class="counter" id="counter">0</div>
     <div class="counter-label">shots</div>
@@ -294,20 +349,7 @@
 
 <script>
 // ═══════════════════════════════════════════════════════
-//  ENCRYPTION  (XOR + Base64, keyed with PBKDF2-style mix)
-//
-//  How it works:
-//  1. The save object is JSON-stringified.
-//  2. A version prefix + checksum (simple djb2 hash) is
-//     prepended so corrupted imports are caught.
-//  3. The string is XOR-encrypted byte-by-byte against a
-//     repeating key derived from a fixed app secret mixed
-//     with the data length — cheap but sufficient to make
-//     the output unreadable without the source.
-//  4. The resulting bytes are encoded as Base64 so the
-//     output is safe text you can copy/paste or save.
-//  Decryption is the exact reverse: Base64-decode →
-//  XOR with same derived key → verify checksum → parse JSON.
+//  ENCRYPTION
 // ═══════════════════════════════════════════════════════
 const SECRET = 'ShutterCount_v1_xK9#mP';
 
@@ -318,7 +360,6 @@ function djb2(str) {
 }
 
 function deriveKey(length) {
-  // Extend the secret to cover the full payload length
   let key = SECRET;
   while (key.length < length) key += SECRET;
   return key;
@@ -335,10 +376,10 @@ function xorCrypt(str, keyStr) {
 function encryptSave(obj) {
   const json = JSON.stringify(obj);
   const checksum = djb2(json);
-  const payload = checksum + ':' + json;          // prepend 8-char hex checksum
+  const payload = checksum + ':' + json;
   const key = deriveKey(payload.length);
   const encrypted = xorCrypt(payload, key);
-  return btoa(unescape(encodeURIComponent(encrypted))); // → Base64
+  return btoa(unescape(encodeURIComponent(encrypted)));
 }
 
 function decryptSave(str) {
@@ -349,7 +390,7 @@ function decryptSave(str) {
     const colon = payload.indexOf(':');
     const checksum = payload.slice(0, colon);
     const json = payload.slice(colon + 1);
-    if (djb2(json) !== checksum) return null;       // tampered / corrupted
+    if (djb2(json) !== checksum) return null;
     return JSON.parse(json);
   } catch { return null; }
 }
@@ -373,17 +414,24 @@ function playSound() {
 
 // ── UPGRADES ───────────────────────────────────────────
 const UPGRADES = [
-  { id:'cursor',    icon:'🖱️', name:'Auto Cursor',      desc:'+1 shot/sec each. Orbits the camera.', type:'auto',  sps:1,    base:15,    mult:1.15, max:999 },
-  { id:'assistant', icon:'🤖', name:'Photo Assistant',  desc:'Enthusiastic intern. +5 shots/sec.',    type:'auto',  sps:5,    base:100,   mult:1.18, max:999 },
-  { id:'tripod',    icon:'🎬', name:'Motorized Tripod', desc:'Burst-fire rig. +20 shots/sec.',         type:'auto',  sps:20,   base:500,   mult:1.20, max:999 },
-  { id:'studio',    icon:'🏭', name:'Photo Studio',     desc:'Full production line. +100 shots/sec.',  type:'auto',  sps:100,  base:3000,  mult:1.22, max:999 },
-  { id:'satellite', icon:'🛰️', name:'Orbital Camera',  desc:'Clicks from orbit. +500 shots/sec.',     type:'auto',  sps:500,  base:20000, mult:1.25, max:999 },
-  { id:'ai',        icon:'🧠', name:'AI Photographer', desc:'Neural net shutter. +2000/sec.',          type:'auto',  sps:2000, base:100000,mult:1.28, max:999 },
-  { id:'lens1',     icon:'🔭', name:'Better Lens',     desc:'+2 shots per manual click.',              type:'click', bonus:2,  base:50,    mult:1.30, max:20  },
-  { id:'lens2',     icon:'💎', name:'Crystal Optics',  desc:'+10 shots per manual click.',             type:'click', bonus:10, base:500,   mult:1.40, max:10  },
-  { id:'burst',     icon:'⚡', name:'Burst Mode',      desc:'×2 all shots per click.',                type:'cmult', mult:2,   base:300,   mult2:4.0, max:6   },
-  { id:'goldhour',  icon:'🌅', name:'Golden Hour',     desc:'×2 all passive shots/sec.',              type:'smult', mult:2,   base:2500,  mult2:5.0, max:5   },
-  { id:'darkroom',  icon:'🌑', name:'Dark Room',       desc:'×1.5 everything — clicks AND passive.',  type:'all',   mult:1.5, base:50000, mult2:6.0, max:4   },
+  { id:'cursor',     icon:'🖱️', name:'Auto Cursor',       desc:'+1 shot/sec. Orbits the camera.',         type:'auto',  sps:1,     base:15,      mult:1.15, max:999 },
+  { id:'assistant',  icon:'🤖', name:'Photo Assistant',   desc:'Enthusiastic intern. +5 shots/sec.',       type:'auto',  sps:5,     base:100,     mult:1.18, max:999 },
+  { id:'tripod',     icon:'🎬', name:'Motorized Tripod',  desc:'Burst-fire rig. +20 shots/sec.',           type:'auto',  sps:20,    base:500,     mult:1.20, max:999 },
+  { id:'studio',     icon:'🏭', name:'Photo Studio',      desc:'Full production line. +100 shots/sec.',    type:'auto',  sps:100,   base:3000,    mult:1.22, max:999 },
+  { id:'satellite',  icon:'🛰️', name:'Orbital Camera',   desc:'Clicks from orbit. +500 shots/sec.',       type:'auto',  sps:500,   base:20000,   mult:1.25, max:999 },
+  { id:'ai',         icon:'🧠', name:'AI Photographer',  desc:'Neural net shutter. +2000/sec.',            type:'auto',  sps:2000,  base:100000,  mult:1.28, max:999 },
+  { id:'quantum',    icon:'⚛️', name:'Quantum Lens',     desc:'Entangled photons. +10K/sec.',              type:'auto',  sps:10000, base:1000000, mult:1.30, max:999 },
+  { id:'timewarp',   icon:'⏳', name:'Time Warp Studio', desc:'Bends spacetime. +50K/sec.',                type:'auto',  sps:50000, base:10000000,mult:1.32, max:999 },
+  
+  { id:'lens1',      icon:'🔭', name:'Better Lens',      desc:'+2 shots per manual click.',                type:'click', bonus:2,   base:50,      mult:1.30, max:20  },
+  { id:'lens2',      icon:'💎', name:'Crystal Optics',   desc:'+10 shots per manual click.',               type:'click', bonus:10,  base:500,     mult:1.40, max:10  },
+  { id:'lens3',      icon:'🌌', name:'Galaxy Glass',     desc:'+50 shots per manual click.',               type:'click', bonus:50,  base:50000,   mult:1.50, max:8   },
+  { id:'lens4',      icon:'💠', name:'Infinity Prism',   desc:'+200 shots per manual click.',              type:'click', bonus:200, base:500000,  mult:1.60, max:5   },
+  
+  { id:'burst',      icon:'⚡', name:'Burst Mode',       desc:'×2 all shots per click.',                   type:'cmult', mult:2,    base:300,     mult2:4.0, max:6   },
+  { id:'goldhour',   icon:'🌅', name:'Golden Hour',      desc:'×2 all passive shots/sec.',                 type:'smult', mult:2,    base:2500,    mult2:5.0, max:5   },
+  { id:'darkroom',   icon:'🌑', name:'Dark Room',        desc:'×1.5 everything — clicks AND passive.',     type:'all',   mult:1.5,  base:50000,   mult2:6.0, max:4   },
+  { id:'supernova',  icon:'💥', name:'Supernova',        desc:'×3 everything. Unleash cosmic power.',      type:'all',   mult:3,    base:5000000, mult2:10.0,max:3   },
 ];
 const owned = {};
 UPGRADES.forEach(u => owned[u.id] = 0);
@@ -392,6 +440,7 @@ function cost(u) {
   const m = u.mult2 || u.mult || 1;
   return Math.ceil(u.base * Math.pow(u.type === 'auto' ? u.mult : m, owned[u.id]));
 }
+
 function getSPS() {
   let base = 0;
   UPGRADES.filter(u=>u.type==='auto').forEach(u => base += u.sps * owned[u.id]);
@@ -399,12 +448,15 @@ function getSPS() {
   let am=1; UPGRADES.filter(u=>u.type==='all').forEach(u => am *= Math.pow(u.mult, owned[u.id]));
   return base * sm * am;
 }
+
 function getClickVal() {
   let base = 1;
   UPGRADES.filter(u=>u.type==='click').forEach(u => base += u.bonus * owned[u.id]);
   let cm=1; UPGRADES.filter(u=>u.type==='cmult').forEach(u => cm *= Math.pow(u.mult, owned[u.id]));
   let am=1; UPGRADES.filter(u=>u.type==='all').forEach(u => am *= Math.pow(u.mult, owned[u.id]));
-  return Math.max(1, Math.floor(base * cm * am));
+  // Apply rebirth multiplier
+  const rebirthMult = rebirths + 1;
+  return Math.max(1, Math.floor(base * cm * am * rebirthMult));
 }
 
 // ── STATE ──────────────────────────────────────────────
@@ -412,26 +464,77 @@ let shots = 0, totalShots = 0;
 let clickTimes = [], bestCPS = 0, sessionStart = Date.now();
 let soundOn = true, flashOn = true, popOn = true;
 let lastMS = 0, msTimeout;
+let rebirths = 0; // Rebirth count
+
+// ── REBIRTH ────────────────────────────────────────────
+function getRebirthCost() {
+  if (rebirths === 0) return 1000000;  // 1M for first rebirth
+  if (rebirths === 1) return 10000000; // 10M for second
+  return Math.ceil(10000000 * Math.pow(5, rebirths - 1)); // 10M * 5^(n-1)
+}
+
+function canRebirth() {
+  return totalShots >= getRebirthCost();
+}
+
+function doRebirth() {
+  if (!canRebirth()) return;
+  rebirths++;
+  shots = 0;
+  totalShots = 0;
+  UPGRADES.forEach(u => owned[u.id] = 0);
+  updateCursorDots();
+  buildShop();
+  tick();
+  updateRebirthUI();
+  milestoneEl.textContent = `🔄 Rebirth ${rebirths} — All clicks now ×${rebirths + 1}!`;
+  milestoneEl.classList.add('show');
+  setTimeout(() => milestoneEl.classList.remove('show'), 3000);
+}
+
+function updateRebirthUI() {
+  const btn = document.getElementById('rebirthBtn');
+  const badge = document.getElementById('rebirthBadge');
+  
+  if (rebirths > 0) {
+    badge.style.display = 'block';
+    badge.textContent = `Rebirth ${rebirths} — ${rebirths + 1}× Click Power`;
+  } else {
+    badge.style.display = 'none';
+  }
+  
+  if (canRebirth()) {
+    btn.classList.remove('locked');
+    btn.textContent = `🔄 Rebirth (${fmt(getRebirthCost())})`;
+  } else {
+    btn.classList.add('locked');
+    btn.textContent = `🔄 Rebirth (${fmt(getRebirthCost())})`;
+  }
+  
+  // Update modal info
+  document.getElementById('rebirthLevel').textContent = rebirths;
+  document.getElementById('nextMult').textContent = '×' + (rebirths + 2);
+  document.getElementById('rebirthCost').textContent = fmt(getRebirthCost());
+}
 
 // ── SAVE / LOAD ────────────────────────────────────────
 const SAVE_KEY = 'shuttercount_save';
 
 function buildSaveObj() {
-  return { shots, totalShots, owned: {...owned}, bestCPS, lastMS, soundOn, flashOn, popOn, v: 1 };
+  return { shots, totalShots, owned: {...owned}, bestCPS, lastMS, soundOn, flashOn, popOn, rebirths, v: 2 };
 }
 
 function applySaveObj(s) {
-  if (!s || s.v !== 1) return false;
+  if (!s || (s.v !== 1 && s.v !== 2)) return false;
   shots = s.shots || 0;
   totalShots = s.totalShots || 0;
   bestCPS = s.bestCPS || 0;
   lastMS = s.lastMS || 0;
+  rebirths = s.rebirths || 0;
   UPGRADES.forEach(u => { owned[u.id] = (s.owned && s.owned[u.id]) || 0; });
-  // Apply settings
   if (s.soundOn !== undefined) soundOn = s.soundOn;
   if (s.flashOn !== undefined) flashOn = s.flashOn;
   if (s.popOn !== undefined) popOn = s.popOn;
-  // Update UI checkboxes
   document.getElementById('toggleSound').checked = soundOn;
   document.getElementById('toggleFlash').checked = flashOn;
   document.getElementById('togglePop').checked = popOn;
@@ -447,7 +550,7 @@ function loadFromLocalStorage() {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) return;
   const obj = decryptSave(raw);
-  if (obj) { applySaveObj(obj); updateCursorDots(); tick(); }
+  if (obj) { applySaveObj(obj); updateCursorDots(); updateRebirthUI(); tick(); }
 }
 
 const saveIndicatorEl = document.getElementById('saveIndicator');
@@ -462,7 +565,6 @@ function flashSaveIndicator() {
   }, 1500);
 }
 
-// Autosave every 10 seconds
 setInterval(saveToLocalStorage, 10000);
 
 // ── DOM ────────────────────────────────────────────────
@@ -477,11 +579,9 @@ const totalElEl   = document.getElementById('totalEl');
 const sessionEl   = document.getElementById('session');
 const shopList    = document.getElementById('shopList');
 
-// Film strip
 const strip = document.getElementById('stripL');
 for (let i = 0; i < 60; i++) { const d = document.createElement('div'); d.className = 'sprocket'; strip.appendChild(d); }
 
-// ── FORMAT ─────────────────────────────────────────────
 function fmt(n) {
   n = Math.floor(n);
   if (n >= 1e12) return (n/1e12).toFixed(2)+'T';
@@ -492,7 +592,6 @@ function fmt(n) {
 }
 
 // ── SHOP ───────────────────────────────────────────────
-// Store card elements so we can update them without rebuilding
 const shopCards = {};
 
 function buildShop() {
@@ -516,7 +615,7 @@ function buildShop() {
     shopList.appendChild(card);
     shopCards[u.id] = card;
   });
-  updateShop(); // Initial update
+  updateShop();
 }
 
 function updateShop() {
@@ -530,20 +629,16 @@ function updateShop() {
     const afford = shots >= c;
     const pct = isMax ? 100 : Math.min(100, (shots/c)*100);
     
-    // Update classes
     card.className = 'upgrade-card' + (isMax ? ' maxed' : !afford ? ' locked' : '');
     
-    // Update count
     const countEl = card.querySelector('[data-count]');
     countEl.textContent = n > 0 ? n : '—';
     countEl.className = 'upg-count' + (n > 0 ? ' owned' : '');
     
-    // Update cost
     const costEl = card.querySelector('[data-cost]');
     costEl.textContent = isMax ? 'MAX' : fmt(c);
     costEl.className = 'upg-cost' + (isMax ? ' grey' : !afford ? ' red' : '');
     
-    // Update progress bar
     const barEl = card.querySelector('[data-bar]');
     barEl.style.width = pct + '%';
   });
@@ -589,7 +684,8 @@ function tick() {
   totalElEl.textContent = fmt(totalShots);
   spsEl.textContent = getSPS().toFixed(1);
   perClickEl.textContent = fmt(getClickVal());
-  updateShop(); // Update, don't rebuild
+  updateShop();
+  updateRebirthUI();
 }
 setInterval(() => {
   const gain = getSPS()/10;
@@ -612,7 +708,8 @@ const MILESTONES = [
   [100,'💯 100 shots'],[250,'🔥 250!'],[500,'⚡ 500 actuations'],
   [1000,'🏆 1,000 — Legend'],[5000,'🌟 5,000 — Obsessed'],
   [10000,'👁 10K — Photographer?'],[50000,'🚀 50K — Insane'],
-  [100000,'👑 100K — Immortal'],[1000000,'🌌 1 MILLION — GOD TIER']
+  [100000,'👑 100K — Immortal'],[1000000,'🌌 1 MILLION — GOD TIER'],
+  [10000000,'💫 10M — COSMIC'],[100000000,'🌠 100M — TRANSCENDENT']
 ];
 function checkMS(n) {
   n = Math.floor(n);
@@ -671,12 +768,23 @@ document.getElementById('toggleFlash').addEventListener('change', e => { flashOn
 document.getElementById('togglePop').addEventListener('change', e => { popOn = e.target.checked; saveToLocalStorage(); });
 document.getElementById('resetBtn').addEventListener('click', () => {
   if (!confirm('Reset ALL progress? This cannot be undone.')) return;
-  shots = 0; totalShots = 0; bestCPS = 0; lastMS = 0;
+  shots = 0; totalShots = 0; bestCPS = 0; lastMS = 0; rebirths = 0;
   UPGRADES.forEach(u => owned[u.id] = 0);
   updateCursorDots();
   localStorage.removeItem(SAVE_KEY);
+  buildShop();
   tick();
+  updateRebirthUI();
   closeModal('settingsPanel','settingsBack');
+});
+
+// ── REBIRTH ────────────────────────────────────────────
+setupModal('rebirthBtn','rebirthPanel','rebirthBack','rebirthClose');
+document.getElementById('confirmRebirthBtn').addEventListener('click', () => {
+  if (!canRebirth()) return;
+  if (!confirm(`Rebirth will reset your shots and upgrades but permanently multiply all click value by ${rebirths + 2}. Continue?`)) return;
+  doRebirth();
+  closeModal('rebirthPanel','rebirthBack');
 });
 
 // ── MANUAL SAVE ────────────────────────────────────────
@@ -720,16 +828,39 @@ document.getElementById('loadImportBtn').addEventListener('click', () => {
   }
   applySaveObj(obj);
   updateCursorDots();
+  buildShop();
   tick();
+  updateRebirthUI();
   closeModal('importPanel','importBack');
   milestoneEl.textContent = '✅ Save loaded!';
   milestoneEl.classList.add('show');
   setTimeout(() => milestoneEl.classList.remove('show'), 2500);
 });
 
+// ── EASTER EGG: SLITHER ────────────────────────────────
+let keyBuffer = '';
+const slitherEgg = document.getElementById('slitherEgg');
+let slitherVisible = false;
+
+document.addEventListener('keydown', e => {
+  keyBuffer += e.key.toUpperCase();
+  if (keyBuffer.length > 7) keyBuffer = keyBuffer.slice(-7);
+  
+  if (keyBuffer === 'SLITHER') {
+    slitherVisible = !slitherVisible;
+    if (slitherVisible) {
+      slitherEgg.classList.add('visible');
+    } else {
+      slitherEgg.classList.remove('visible');
+    }
+    keyBuffer = ''; // Reset so you need to type it again
+  }
+});
+
 // ── INIT ───────────────────────────────────────────────
-buildShop(); // Build shop cards once
+buildShop();
 loadFromLocalStorage();
+updateRebirthUI();
 tick();
 </script>
 </body>
