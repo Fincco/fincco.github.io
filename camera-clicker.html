@@ -17,7 +17,7 @@
     --muted: #555;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
 
   body {
     background: var(--bg);
@@ -176,6 +176,7 @@
     color: #777; font-family: 'Space Mono', monospace; font-size: 7px;
     padding: 8px; margin-top: 8px; resize: vertical; min-height: 80px;
     letter-spacing: 0.05em; outline: none;
+    user-select: text; /* Allow text selection for copy/paste */
   }
   .modal-textarea:focus { border-color: #3a3a2a; }
 
@@ -414,24 +415,42 @@ function playSound() {
 
 // ── UPGRADES ───────────────────────────────────────────
 const UPGRADES = [
-  { id:'cursor',     icon:'🖱️', name:'Auto Cursor',       desc:'+1 shot/sec. Orbits the camera.',         type:'auto',  sps:1,     base:15,      mult:1.15, max:999 },
-  { id:'assistant',  icon:'🤖', name:'Photo Assistant',   desc:'Enthusiastic intern. +5 shots/sec.',       type:'auto',  sps:5,     base:100,     mult:1.18, max:999 },
-  { id:'tripod',     icon:'🎬', name:'Motorized Tripod',  desc:'Burst-fire rig. +20 shots/sec.',           type:'auto',  sps:20,    base:500,     mult:1.20, max:999 },
-  { id:'studio',     icon:'🏭', name:'Photo Studio',      desc:'Full production line. +100 shots/sec.',    type:'auto',  sps:100,   base:3000,    mult:1.22, max:999 },
-  { id:'satellite',  icon:'🛰️', name:'Orbital Camera',   desc:'Clicks from orbit. +500 shots/sec.',       type:'auto',  sps:500,   base:20000,   mult:1.25, max:999 },
-  { id:'ai',         icon:'🧠', name:'AI Photographer',  desc:'Neural net shutter. +2000/sec.',            type:'auto',  sps:2000,  base:100000,  mult:1.28, max:999 },
-  { id:'quantum',    icon:'⚛️', name:'Quantum Lens',     desc:'Entangled photons. +10K/sec.',              type:'auto',  sps:10000, base:1000000, mult:1.30, max:999 },
-  { id:'timewarp',   icon:'⏳', name:'Time Warp Studio', desc:'Bends spacetime. +50K/sec.',                type:'auto',  sps:50000, base:10000000,mult:1.32, max:999 },
+  // Auto clickers (passive income)
+  { id:'cursor',     icon:'🖱️', name:'Auto Cursor',       desc:'+1 shot/sec. Orbits the camera.',         type:'auto',  sps:1,      base:15,        mult:1.15, max:999 },
+  { id:'assistant',  icon:'🤖', name:'Photo Assistant',   desc:'Enthusiastic intern. +5 shots/sec.',       type:'auto',  sps:5,      base:100,       mult:1.18, max:999 },
+  { id:'tripod',     icon:'🎬', name:'Motorized Tripod',  desc:'Burst-fire rig. +20 shots/sec.',           type:'auto',  sps:20,     base:500,       mult:1.20, max:999 },
+  { id:'studio',     icon:'🏭', name:'Photo Studio',      desc:'Full production line. +100 shots/sec.',    type:'auto',  sps:100,    base:3000,      mult:1.22, max:999 },
+  { id:'satellite',  icon:'🛰️', name:'Orbital Camera',   desc:'Clicks from orbit. +500 shots/sec.',       type:'auto',  sps:500,    base:20000,     mult:1.25, max:999 },
+  { id:'ai',         icon:'🧠', name:'AI Photographer',  desc:'Neural net shutter. +2000/sec.',            type:'auto',  sps:2000,   base:100000,    mult:1.28, max:999 },
+  { id:'quantum',    icon:'⚛️', name:'Quantum Lens',     desc:'Entangled photons. +10K/sec.',              type:'auto',  sps:10000,  base:1000000,   mult:1.30, max:999 },
+  { id:'timewarp',   icon:'⏳', name:'Time Warp Studio', desc:'Bends spacetime. +50K/sec.',                type:'auto',  sps:50000,  base:10000000,  mult:1.32, max:999 },
+  { id:'blackhole',  icon:'🌀', name:'Black Hole Cam',   desc:'Infinite focal length. +250K/sec.',         type:'auto',  sps:250000, base:100000000, mult:1.35, max:999 },
+  { id:'dimension',  icon:'🌐', name:'Dimension Rift',   desc:'Shoots across realities. +1M/sec.',         type:'auto',  sps:1000000,base:1000000000,mult:1.38, max:999 },
+  { id:'multiverse', icon:'🎆', name:'Multiverse Hub',   desc:'Infinite parallel studios. +5M/sec.',       type:'auto',  sps:5000000,base:10000000000,mult:1.40,max:999 },
   
-  { id:'lens1',      icon:'🔭', name:'Better Lens',      desc:'+2 shots per manual click.',                type:'click', bonus:2,   base:50,      mult:1.30, max:20  },
-  { id:'lens2',      icon:'💎', name:'Crystal Optics',   desc:'+10 shots per manual click.',               type:'click', bonus:10,  base:500,     mult:1.40, max:10  },
-  { id:'lens3',      icon:'🌌', name:'Galaxy Glass',     desc:'+50 shots per manual click.',               type:'click', bonus:50,  base:50000,   mult:1.50, max:8   },
-  { id:'lens4',      icon:'💠', name:'Infinity Prism',   desc:'+200 shots per manual click.',              type:'click', bonus:200, base:500000,  mult:1.60, max:5   },
+  // Click boosters
+  { id:'lens1',      icon:'🔭', name:'Better Lens',      desc:'+2 shots per manual click.',                type:'click', bonus:2,    base:50,        mult:1.30, max:20  },
+  { id:'lens2',      icon:'💎', name:'Crystal Optics',   desc:'+10 shots per manual click.',               type:'click', bonus:10,   base:500,       mult:1.40, max:10  },
+  { id:'lens3',      icon:'🌌', name:'Galaxy Glass',     desc:'+50 shots per manual click.',               type:'click', bonus:50,   base:50000,     mult:1.50, max:8   },
+  { id:'lens4',      icon:'💠', name:'Infinity Prism',   desc:'+200 shots per manual click.',              type:'click', bonus:200,  base:500000,    mult:1.60, max:5   },
+  { id:'lens5',      icon:'🔮', name:'Void Crystal',     desc:'+1000 shots per manual click.',             type:'click', bonus:1000, base:5000000,   mult:1.70, max:4   },
+  { id:'lens6',      icon:'✨', name:'Starlight Core',   desc:'+5000 shots per manual click.',             type:'click', bonus:5000, base:50000000,  mult:1.80, max:3   },
   
-  { id:'burst',      icon:'⚡', name:'Burst Mode',       desc:'×2 all shots per click.',                   type:'cmult', mult:2,    base:300,     mult2:4.0, max:6   },
-  { id:'goldhour',   icon:'🌅', name:'Golden Hour',      desc:'×2 all passive shots/sec.',                 type:'smult', mult:2,    base:2500,    mult2:5.0, max:5   },
-  { id:'darkroom',   icon:'🌑', name:'Dark Room',        desc:'×1.5 everything — clicks AND passive.',     type:'all',   mult:1.5,  base:50000,   mult2:6.0, max:4   },
-  { id:'supernova',  icon:'💥', name:'Supernova',        desc:'×3 everything. Unleash cosmic power.',      type:'all',   mult:3,    base:5000000, mult2:10.0,max:3   },
+  // Click multipliers
+  { id:'burst',      icon:'⚡', name:'Burst Mode',       desc:'×2 all shots per click.',                   type:'cmult', mult:2,     base:300,       mult2:4.0,  max:6   },
+  { id:'hyperburst', icon:'⚡⚡', name:'Hyper Burst',     desc:'×2 all shots per click.',                   type:'cmult', mult:2,     base:100000,    mult2:6.0,  max:5   },
+  { id:'ultraburst', icon:'💫', name:'Ultra Burst',     desc:'×3 all shots per click.',                   type:'cmult', mult:3,     base:10000000,  mult2:10.0, max:3   },
+  
+  // Passive multipliers
+  { id:'goldhour',   icon:'🌅', name:'Golden Hour',      desc:'×2 all passive shots/sec.',                 type:'smult', mult:2,     base:2500,      mult2:5.0,  max:5   },
+  { id:'bluehour',   icon:'🌆', name:'Blue Hour',        desc:'×2 all passive shots/sec.',                 type:'smult', mult:2,     base:250000,    mult2:7.0,  max:4   },
+  { id:'magichour',  icon:'🌇', name:'Magic Hour',       desc:'×3 all passive shots/sec.',                 type:'smult', mult:3,     base:25000000,  mult2:12.0, max:3   },
+  
+  // Global multipliers (most expensive)
+  { id:'darkroom',   icon:'🌑', name:'Dark Room',        desc:'×1.5 everything — clicks AND passive.',     type:'all',   mult:1.5,   base:50000,     mult2:6.0,  max:4   },
+  { id:'supernova',  icon:'💥', name:'Supernova',        desc:'×3 everything. Unleash cosmic power.',      type:'all',   mult:3,     base:5000000,   mult2:10.0, max:3   },
+  { id:'bigbang',    icon:'💢', name:'Big Bang',         desc:'×5 everything. Creation itself.',           type:'all',   mult:5,     base:500000000, mult2:20.0, max:2   },
+  { id:'omniscient', icon:'👁️', name:'Omniscience',      desc:'×10 everything. You are everything.',       type:'all',   mult:10,    base:50000000000,mult2:50.0,max:1  },
 ];
 const owned = {};
 UPGRADES.forEach(u => owned[u.id] = 0);
