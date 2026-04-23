@@ -17,6 +17,8 @@
             border: 2px solid #444; text-align: center; color: white;
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
             width: 320px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         h1 { margin-top: 0; margin-bottom: 5px; color: #fff; font-size: 32px; letter-spacing: 2px; transition: color 0.3s; }
@@ -36,7 +38,7 @@
         /* Gun Highscore hidden by default */
         #gun-score-row { color: #ff4757; display: none; }
 
-        input[type="text"] {
+        input[type="text"], input[type="number"] {
             width: 100%; padding: 12px; margin: 15px 0; border-radius: 5px;
             border: 1px solid #444; font-size: 16px; box-sizing: border-box;
             background: #111; color: white; text-align: center;
@@ -75,11 +77,20 @@
             background: #00ff9d; color: #000; border: none; padding: 12px 30px;
             font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer;
             transition: all 0.2s; width: 100%;
+            margin-bottom: 10px;
         }
         button:hover { background: #00ffb3; transform: translateY(-2px); }
 
         #startBtn.spectate-mode { background: #3498db; color: white; }
         #startBtn.spectate-mode:hover { background: #2980b9; }
+
+        #coopBtn {
+            background: #00ff9d;
+            color: #000;
+        }
+        #coopBtn:hover {
+            background: #00ffb3;
+        }
 
         #stopSpectateBtn {
             position: absolute; 
@@ -108,7 +119,10 @@
         }
         #leaderboard h3 { margin: 0 0 10px 0; font-size: 16px; text-align: center; }
         .entry { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; }
-        .player-entry { color: #ffff00; font-weight: bold; }
+        .player-entry { font-weight: bold; }
+        .player1-entry { color: #ffff00; }
+        .player2-entry { color: #ff00ff; }
+        .player3-entry { color: #00ffff; }
         
         #controls-hint {
             position: absolute; bottom: 20px; left: 20px;
@@ -127,6 +141,104 @@
             50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
             100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
         }
+
+        /* Coop Mode Styles */
+        #coopSettings {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+
+        .coop-section {
+            margin-bottom: 15px;
+        }
+
+        .coop-section-title {
+            font-size: 12px;
+            color: #00ff9d;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .button-group button {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .toggle-btn {
+            background: #444;
+            color: #aaa;
+        }
+
+        .toggle-btn.active {
+            background: #00ff9d;
+            color: #000;
+        }
+
+        .player-name-input {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        #winCondition {
+            background: #111;
+            color: white;
+            border: 1px solid #444;
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        #scoreTarget {
+            display: none;
+        }
+
+        #winnerOverlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px 60px;
+            border-radius: 20px;
+            border: 3px solid #00ff9d;
+            display: none;
+            z-index: 200;
+            text-align: center;
+        }
+
+        #winnerOverlay h2 {
+            color: #00ff9d;
+            font-size: 48px;
+            margin: 0 0 20px 0;
+            text-shadow: 0 0 20px #00ff9d;
+        }
+
+        #winnerOverlay p {
+            color: white;
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        #winnerOverlay button {
+            margin-top: 20px;
+            width: auto;
+            padding: 15px 40px;
+        }
     </style>
 </head>
 <body>
@@ -139,26 +251,82 @@
             <div id="gun-score-row">Gun Highscore: <span id="gunHighScoreValue">0</span></div>
         </div>
         
-        <input type="text" id="playerName" placeholder="Your Nickname" maxlength="12">
-        
-        <div id="skin-settings">
-            <span class="skin-label">Choose Skin</span>
-            <div id="skin-list">
-                <div class="skin-opt selected" style="background: #00ff9d;" data-color="#00ff9d"></div>
-                <div class="skin-opt" style="background: #ff4757;" data-color="#ff4757"></div>
-                <div class="skin-opt" style="background: #54a0ff;" data-color="#54a0ff"></div>
-                <div class="skin-opt" style="background: #feca57;" data-color="#feca57"></div>
-                <div class="skin-opt" style="background: #ff9ff3;" data-color="#ff9ff3"></div>
-                <div class="skin-opt" style="background: #5f27cd;" data-color="#5f27cd"></div>
+        <div id="singlePlayerSettings">
+            <input type="text" id="playerName" placeholder="Your Nickname" maxlength="12">
+            
+            <div id="skin-settings">
+                <span class="skin-label">Choose Skin</span>
+                <div id="skin-list">
+                    <div class="skin-opt selected" style="background: #00ff9d;" data-color="#00ff9d"></div>
+                    <div class="skin-opt" style="background: #ff4757;" data-color="#ff4757"></div>
+                    <div class="skin-opt" style="background: #54a0ff;" data-color="#54a0ff"></div>
+                    <div class="skin-opt" style="background: #feca57;" data-color="#feca57"></div>
+                    <div class="skin-opt" style="background: #ff9ff3;" data-color="#ff9ff3"></div>
+                    <div class="skin-opt" style="background: #5f27cd;" data-color="#5f27cd"></div>
+                </div>
+
+                <div class="custom-color-container">
+                    <span class="skin-label">Custom Color</span>
+                    <input type="color" id="customColor" value="#00ff9d">
+                </div>
             </div>
 
-            <div class="custom-color-container">
-                <span class="skin-label">Custom Color</span>
-                <input type="color" id="customColor" value="#00ff9d">
-            </div>
+            <button id="startBtn">PLAY</button>
         </div>
 
-        <button id="startBtn">PLAY</button>
+        <button id="coopBtn">COOP MODE</button>
+
+<div id="coopSettings">
+            <div class="coop-section">
+                <div class="coop-section-title">Number of Players</div>
+                <div class="button-group">
+                    <button id="pCount2" class="toggle-btn active">2 Players</button>
+                    <button id="pCount3" class="toggle-btn">3 Players</button>
+                </div>
+            </div>
+
+            <div class="coop-section">
+                <div class="coop-section-title">Bots</div>
+                <div class="button-group">
+                    <button id="botsOnBtn" class="toggle-btn active">Bots ON</button>
+                    <button id="botsOffBtn" class="toggle-btn">Bots OFF</button>
+                </div>
+            </div>
+
+            <div class="coop-section">
+                <div class="coop-section-title">Win Condition</div>
+                <select id="winCondition">
+                    <option value="lastAlive">Last One Alive</option>
+                    <option value="scoreTarget">Score Target</option>
+                </select>
+                <input type="number" id="scoreTarget" placeholder="Score to Win" min="1" value="100">
+            </div>
+
+            <div class="coop-section">
+                <div class="coop-section-title">Player 1 (Mouse)</div>
+                <input type="text" class="player-name-input" id="player1Name" placeholder="Player 1 Name" maxlength="12">
+            </div>
+
+            <div class="coop-section">
+                <div class="coop-section-title">Player 2 Controls</div>
+                <div class="button-group">
+                    <button id="p2WasdBtn" class="toggle-btn active">WASD</button>
+                    <button id="p2ArrowBtn" class="toggle-btn">Arrow Keys</button>
+                </div>
+                <input type="text" class="player-name-input" id="player2Name" placeholder="Player 2 Name" maxlength="12">
+            </div>
+
+            <div class="coop-section" id="p3Section" style="display: none;">
+                <div class="coop-section-title">Player 3 Controls</div>
+                <div class="button-group">
+                    <button id="p3WasdBtn" class="toggle-btn">WASD</button>
+                    <button id="p3ArrowBtn" class="toggle-btn active">Arrow Keys</button>
+                </div>
+                <input type="text" class="player-name-input" id="player3Name" placeholder="Player 3 Name" maxlength="12">
+            </div>
+
+            <button id="startCoopBtn">START COOP</button>
+        </div>
     </div>
 </div>
 
@@ -167,6 +335,12 @@
 <div id="leaderboard">
     <h3>Leaderboard</h3>
     <div id="leaderboard-list"></div>
+</div>
+
+<div id="winnerOverlay">
+    <h2 id="winnerText">PLAYER 1 WINS!</h2>
+    <p id="winnerScore">Score: 0</p>
+    <button id="backToMenuBtn">BACK TO MENU</button>
 </div>
 
 <div id="event-overlay">FOOD RAIN!</div>
@@ -190,6 +364,27 @@ const highScoreDisplay = document.getElementById('highScoreValue');
 const gunHighScoreDisplay = document.getElementById('gunHighScoreValue');
 const gunScoreRow = document.getElementById('gun-score-row');
 
+// Coop elements
+const coopBtn = document.getElementById('coopBtn');
+const coopSettings = document.getElementById('coopSettings');
+const singlePlayerSettings = document.getElementById('singlePlayerSettings');
+const startCoopBtn = document.getElementById('startCoopBtn');
+const botsOnBtn = document.getElementById('botsOnBtn');
+const botsOffBtn = document.getElementById('botsOffBtn');
+const p2WasdBtn = document.getElementById('p2WasdBtn');
+const p2ArrowBtn = document.getElementById('p2ArrowBtn');
+const p3WasdBtn = document.getElementById('p3WasdBtn');
+const p3ArrowBtn = document.getElementById('p3ArrowBtn');
+const winConditionSelect = document.getElementById('winCondition');
+const scoreTargetInput = document.getElementById('scoreTarget');
+const player1NameInput = document.getElementById('player1Name');
+const player2NameInput = document.getElementById('player2Name');
+const player3NameInput = document.getElementById('player3Name');
+const winnerOverlay = document.getElementById('winnerOverlay');
+const winnerText = document.getElementById('winnerText');
+const winnerScore = document.getElementById('winnerScore');
+const backToMenuBtn = document.getElementById('backToMenuBtn');
+
 const WORLD_SIZE = 3000;
 const INITIAL_FOOD_COUNT = 500;
 const BOT_COUNT = 18;
@@ -204,6 +399,23 @@ let playerSnake = null;
 let gameState = 'MENU'; 
 let selectedColor = '#00ff9d';
 let isFlipped = false;
+
+// Coop mode variables
+let isCoopMode = false;
+let coopBotsEnabled = true;
+let coopWinCondition = 'lastAlive';
+let coopScoreTarget = 100;
+let coopPlayer2Controls = 'wasd'; // 'wasd' or 'arrows'
+let coopPlayer3Controls = 'arrows'; // 'wasd' or 'arrows'
+let coopPlayers = []; // Array of player snake references
+
+// New coop player count variable
+let coopPlayerCount = 2;
+
+// Element selectors for the new toggle
+const pCount2 = document.getElementById('pCount2');
+const pCount3 = document.getElementById('pCount3');
+const p3Section = document.getElementById('p3Section');
 
 // Highscore loading
 let highScore = parseInt(localStorage.getItem('fincco_slither_highscore')) || 0;
@@ -290,8 +502,99 @@ nameInput.addEventListener('input', () => {
     }
 });
 
+// Logic for switching player count
+pCount2.addEventListener('click', () => {
+    coopPlayerCount = 2;
+    pCount2.classList.add('active');
+    pCount3.classList.remove('active');
+    p3Section.style.display = 'none';
+});
+
+pCount3.addEventListener('click', () => {
+    coopPlayerCount = 3;
+    pCount3.classList.add('active');
+    pCount2.classList.remove('active');
+    p3Section.style.display = 'block';
+});
+
+// Coop button handlers
+coopBtn.addEventListener('click', () => {
+    const isExpanded = coopSettings.style.display === 'block';
+    if (isExpanded) {
+        coopSettings.style.display = 'none';
+        singlePlayerSettings.style.display = 'block';
+        coopBtn.textContent = 'COOP MODE';
+    } else {
+        coopSettings.style.display = 'block';
+        singlePlayerSettings.style.display = 'none';
+        coopBtn.textContent = 'BACK TO SINGLE PLAYER';
+    }
+});
+
+botsOnBtn.addEventListener('click', () => {
+    coopBotsEnabled = true;
+    botsOnBtn.classList.add('active');
+    botsOffBtn.classList.remove('active');
+});
+
+botsOffBtn.addEventListener('click', () => {
+    coopBotsEnabled = false;
+    botsOffBtn.classList.add('active');
+    botsOnBtn.classList.remove('active');
+});
+
+p2WasdBtn.addEventListener('click', () => {
+    coopPlayer2Controls = 'wasd';
+    p2WasdBtn.classList.add('active');
+    p2ArrowBtn.classList.remove('active');
+});
+
+p2ArrowBtn.addEventListener('click', () => {
+    coopPlayer2Controls = 'arrows';
+    p2ArrowBtn.classList.add('active');
+    p2WasdBtn.classList.remove('active');
+});
+
+p3WasdBtn.addEventListener('click', () => {
+    coopPlayer3Controls = 'wasd';
+    p3WasdBtn.classList.add('active');
+    p3ArrowBtn.classList.remove('active');
+});
+
+p3ArrowBtn.addEventListener('click', () => {
+    coopPlayer3Controls = 'arrows';
+    p3ArrowBtn.classList.add('active');
+    p3WasdBtn.classList.remove('active');
+});
+
+winConditionSelect.addEventListener('change', () => {
+    coopWinCondition = winConditionSelect.value;
+    if (coopWinCondition === 'scoreTarget') {
+        scoreTargetInput.style.display = 'block';
+    } else {
+        scoreTargetInput.style.display = 'none';
+    }
+});
+
+scoreTargetInput.addEventListener('input', () => {
+    coopScoreTarget = parseInt(scoreTargetInput.value) || 100;
+});
+
+backToMenuBtn.addEventListener('click', () => {
+    winnerOverlay.style.display = 'none';
+    gameState = 'MENU';
+    uiLayer.style.display = 'flex';
+    lbContainer.style.display = 'none';
+    isCoopMode = false;
+    coopSettings.style.display = 'none';
+    singlePlayerSettings.style.display = 'block';
+    coopBtn.textContent = 'COOP MODE';
+    canvas.style.transform = 'scaleY(1)';
+    isFlipped = false;
+});
+
 class Snake {
-    constructor(x, y, isBot = false, name = "Bot", color, isHitman = false) {
+    constructor(x, y, isBot = false, name = "Bot", color, isHitman = false, playerIndex = 0) {
         this.segments = [{x, y}];
         this.history = []; 
         this.length = START_LENGTH;
@@ -308,6 +611,7 @@ class Snake {
         this.dead = false;
         this.isBoosting = false;
         this.boostCounter = 0;
+        this.playerIndex = playerIndex; // 0 = not coop player, 1-3 = coop player
 
         this.aiState = 'WANDER';
         this.stateTimer = 0;
@@ -325,12 +629,14 @@ class Snake {
 
         if (this.isBot) {
             this.runAI();
-        } else {
+        } else if (!isCoopMode || this.playerIndex === 1) {
+            // Player 1 uses mouse in both single and coop mode
             let dx = mouse.x - canvas.width / 2;
             let dy = mouse.y - canvas.height / 2;
             if (isFlipped) dy = -dy;
             this.targetAngle = Math.atan2(dy, dx);
         }
+        // Player 2 and 3 angles are set in updateCoopPlayerControls()
 
         if (this.isBoosting && (this.score > 2 || this.isHitman)) {
             this.speed = this.baseSpeed * 2;
@@ -452,6 +758,13 @@ class Snake {
                 this.length += 1; 
                 foods.splice(i, 1);
                 if (!isRaining) spawnFood(); 
+                
+                // Check coop score target win condition
+                if (isCoopMode && coopWinCondition === 'scoreTarget' && this.playerIndex > 0) {
+                    if (this.score >= coopScoreTarget) {
+                        coopPlayerWins(this.playerIndex);
+                    }
+                }
             }
         }
     }
@@ -462,7 +775,19 @@ class Snake {
         this.segments.forEach((seg, i) => {
             if (i % 3 === 0) foods.push({ x: seg.x, y: seg.y, color: this.color, size: Math.random() * 3 + 4 });
         });
-        if (!this.isBot) gameOver();
+        
+        if (isCoopMode && this.playerIndex > 0 && coopWinCondition === 'lastAlive') {
+            // Check if there's a winner in coop mode
+            let alivePlayers = coopPlayers.filter(p => p && !p.dead);
+            if (alivePlayers.length === 1) {
+                coopPlayerWins(alivePlayers[0].playerIndex);
+            } else if (alivePlayers.length === 0) {
+                // All players dead
+                gameOver();
+            }
+        } else if (!this.isBot && !isCoopMode) {
+            gameOver();
+        }
     }
 
     getShot(segIdx) {
@@ -568,6 +893,83 @@ function init() {
     for (let i = 0; i < INITIAL_FOOD_COUNT; i++) spawnFood();
 }
 
+function coopPlayerWins(playerIndex) {
+    let winner = coopPlayers[playerIndex - 1];
+    if (!winner) return;
+
+    gameState = 'COOP_WIN';
+    winnerText.textContent = `${winner.name.toUpperCase()} WINS!`;
+    winnerScore.textContent = `Score: ${winner.score}`;
+    winnerOverlay.style.display = 'block';
+}
+
+function startCoopGame() {
+    snakes = [];
+    bullets = [];
+    coopPlayers = [];
+    isCoopMode = true;
+    isFlipped = false;
+
+    // Add bots if enabled
+    if (coopBotsEnabled) {
+        for (let i = 0; i < BOT_COUNT; i++) snakes.push(createBot());
+    }
+
+    // --- Player 1 (Mouse control) ---
+    let p1Name = player1NameInput.value.trim() || 'Player 1';
+    let player1 = new Snake(WORLD_SIZE / 2 - 200, WORLD_SIZE / 2, false, p1Name, '#ffff00', false, 1);
+    
+    if (p1Name.toLowerCase() === 'gunman') {
+        gunUnlocked = true;
+        localStorage.setItem('fincco_slither_gun_unlocked', 'true');
+        gunScoreRow.style.display = 'block';
+    }
+    if (p1Name.toLowerCase() === 'flip') {
+        isFlipped = true;
+        canvas.style.transform = 'scaleY(-1)';
+    }
+    snakes.push(player1);
+    coopPlayers.push(player1);
+
+    // --- Player 2 ---
+    let p2Name = player2NameInput.value.trim() || 'Player 2';
+    let player2 = new Snake(WORLD_SIZE / 2 + 200, WORLD_SIZE / 2, false, p2Name, '#ff00ff', false, 2);
+    
+    if (p2Name.toLowerCase() === 'gunman') {
+        gunUnlocked = true;
+        localStorage.setItem('fincco_slither_gun_unlocked', 'true');
+        gunScoreRow.style.display = 'block';
+    }
+    if (p2Name.toLowerCase() === 'flip' && !isFlipped) {
+        isFlipped = true;
+        canvas.style.transform = 'scaleY(-1)';
+    }
+    snakes.push(player2);
+    coopPlayers.push(player2);
+
+    // --- Player 3 (Conditional Spawn) ---
+    if (coopPlayerCount === 3) {
+        let p3Name = player3NameInput.value.trim() || 'Player 3';
+        let player3 = new Snake(WORLD_SIZE / 2, WORLD_SIZE / 2 + 200, false, p3Name, '#00ffff', false, 3);
+        
+        if (p3Name.toLowerCase() === 'gunman') {
+            gunUnlocked = true;
+            localStorage.setItem('fincco_slither_gun_unlocked', 'true');
+            gunScoreRow.style.display = 'block';
+        }
+        if (p3Name.toLowerCase() === 'flip' && !isFlipped) {
+            isFlipped = true;
+            canvas.style.transform = 'scaleY(-1)';
+        }
+        snakes.push(player3);
+        coopPlayers.push(player3);
+    }
+
+    gameState = 'PLAYING';
+    uiLayer.style.display = 'none';
+    lbContainer.style.display = 'block';
+}
+
 function startGame() {
     const name = nameInput.value.trim() || "Guest";
 
@@ -598,6 +1000,7 @@ function startGame() {
     playerSnake = new Snake(WORLD_SIZE / 2, WORLD_SIZE / 2, false, name, selectedColor);
     snakes.push(playerSnake);
     gameState = 'PLAYING';
+    isCoopMode = false;
     uiLayer.style.display = 'none';
     lbContainer.style.display = 'block';
 }
@@ -636,6 +1039,7 @@ function gameOver() {
     lbContainer.style.display = 'none';
     startBtn.innerText = "RESPAWN";
     playerSnake = null;
+    isCoopMode = false;
     isRaining = false;
     eventOverlay.style.display = 'none';
     canvas.style.transform = 'scaleY(1)';
@@ -644,12 +1048,67 @@ function gameOver() {
 
 function updateLeaderboard() {
     let sorted = [...snakes].filter(s => !s.dead).sort((a, b) => b.score - a.score).slice(0, 10);
-    lbList.innerHTML = sorted.map((s, i) => `
-        <div class="entry ${!s.isBot ? 'player-entry' : ''}">
-            <span>${i+1}. ${s.name}</span>
-            <span>${s.score}</span>
-        </div>
-    `).join('');
+    lbList.innerHTML = sorted.map((s, i) => {
+        let entryClass = 'entry';
+        if (!s.isBot) {
+            if (s.playerIndex === 1) entryClass += ' player-entry player1-entry';
+            else if (s.playerIndex === 2) entryClass += ' player-entry player2-entry';
+            else if (s.playerIndex === 3) entryClass += ' player-entry player3-entry';
+            else entryClass += ' player-entry';
+        }
+        return `
+            <div class="${entryClass}">
+                <span>${i+1}. ${s.name}</span>
+                <span>${s.score}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateCoopPlayerControls() {
+    if (!isCoopMode || coopPlayers.length === 0) return;
+
+    // Player 1 - Mouse control (already handled in Snake.update())
+
+    // Player 2
+    let player2 = coopPlayers[1];
+    if (player2 && !player2.dead) {
+        let dx = 0, dy = 0;
+        if (coopPlayer2Controls === 'wasd') {
+            if (keysPressed['KeyW']) dy = -1;
+            if (keysPressed['KeyS']) dy = 1;
+            if (keysPressed['KeyA']) dx = -1;
+            if (keysPressed['KeyD']) dx = 1;
+        } else { // arrows
+            if (keysPressed['ArrowUp']) dy = -1;
+            if (keysPressed['ArrowDown']) dy = 1;
+            if (keysPressed['ArrowLeft']) dx = -1;
+            if (keysPressed['ArrowRight']) dx = 1;
+        }
+        if (dx !== 0 || dy !== 0) {
+            player2.targetAngle = Math.atan2(dy, dx);
+        }
+    }
+
+    // Player 3
+    let player3 = coopPlayers[2];
+    if (player3 && !player3.dead) {
+        let dx = 0, dy = 0;
+        if (coopPlayer3Controls === 'wasd') {
+            if (keysPressed['KeyW']) dy = -1;
+            if (keysPressed['KeyS']) dy = 1;
+            if (keysPressed['KeyA']) dx = -1;
+            if (keysPressed['KeyD']) dx = 1;
+        } else { // arrows
+            if (keysPressed['ArrowUp']) dy = -1;
+            if (keysPressed['ArrowDown']) dy = 1;
+            if (keysPressed['ArrowLeft']) dx = -1;
+            if (keysPressed['ArrowRight']) dx = 1;
+        }
+        if (dx !== 0 || dy !== 0) {
+            player3.targetAngle = Math.atan2(dy, dx);
+        }
+    }
 }
 
 function gameLoop() {
@@ -672,7 +1131,7 @@ function gameLoop() {
         setTimeout(() => {
             isRaining = false;
             eventOverlay.style.display = 'none';
-            nextEventTime = Date.now() + (Math.random() * 60000 + 60000); 
+            nextEventTime = Date.now() + (Math.random() * 45000 + 45000); 
         }, 15000);
     }
 
@@ -680,7 +1139,24 @@ function gameLoop() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     let camX, camY;
-    if (gameState === 'PLAYING' && playerSnake && !playerSnake.dead) {
+    if (gameState === 'PLAYING' && isCoopMode && coopPlayers.length > 0) {
+        // Center camera on alive players in coop mode
+        let alivePlayers = coopPlayers.filter(p => p && !p.dead);
+        if (alivePlayers.length > 0) {
+            let avgX = 0, avgY = 0;
+            for (let p of alivePlayers) {
+                avgX += p.segments[0].x;
+                avgY += p.segments[0].y;
+            }
+            avgX /= alivePlayers.length;
+            avgY /= alivePlayers.length;
+            camX = avgX - canvas.width / 2;
+            camY = avgY - canvas.height / 2;
+        } else {
+            camX = WORLD_SIZE/2 - canvas.width/2;
+            camY = WORLD_SIZE/2 - canvas.height/2;
+        }
+    } else if (gameState === 'PLAYING' && playerSnake && !playerSnake.dead) {
         camX = playerSnake.segments[0].x - canvas.width / 2;
         camY = playerSnake.segments[0].y - canvas.height / 2;
     } else if (gameState === 'SPECTATING') {
@@ -709,6 +1185,11 @@ function gameLoop() {
         ctx.fillStyle = f.color;
         ctx.beginPath(); ctx.arc(f.x - camX, f.y - camY, f.size, 0, Math.PI * 2); ctx.fill();
     });
+
+    // Update coop player controls
+    if (isCoopMode) {
+        updateCoopPlayerControls();
+    }
 
     for (let i = snakes.length - 1; i >= 0; i--) {
         let s = snakes[i];
@@ -751,13 +1232,24 @@ function gameLoop() {
         b.draw(camX, camY);
     }
 
-    if(gameState !== 'MENU' && Date.now() % 150 < 20) updateLeaderboard();
+    if(gameState !== 'MENU' && gameState !== 'COOP_WIN' && Date.now() % 150 < 20) updateLeaderboard();
     requestAnimationFrame(gameLoop);
 }
 
 window.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    if (gameState === 'PLAYING' && playerSnake && !playerSnake.dead && playerSnake.name.toLowerCase() === 'gunman') {
+    if (gameState === 'PLAYING' && isCoopMode) {
+        // Handle gunman easter egg for coop players
+        for (let player of coopPlayers) {
+            if (player && !player.dead && player.name.toLowerCase() === 'gunman') {
+                let head = player.segments[0];
+                let startX = head.x + Math.cos(player.angle) * (player.width + 5);
+                let startY = head.y + Math.sin(player.angle) * (player.width + 5);
+                bullets.push(new Bullet(startX, startY, player.angle, player));
+                break; // Only shoot for first gunman found
+            }
+        }
+    } else if (gameState === 'PLAYING' && playerSnake && !playerSnake.dead && playerSnake.name.toLowerCase() === 'gunman') {
         let head = playerSnake.segments[0];
         let startX = head.x + Math.cos(playerSnake.angle) * (playerSnake.width + 5);
         let startY = head.y + Math.sin(playerSnake.angle) * (playerSnake.width + 5);
@@ -766,22 +1258,92 @@ window.addEventListener('contextmenu', (e) => {
 });
 
 window.addEventListener('mousedown', (e) => { 
-    if(e.button === 0 && playerSnake) playerSnake.isBoosting = true; 
+    if(e.button === 0) {
+        if (isCoopMode && coopPlayers[0]) {
+            coopPlayers[0].isBoosting = true;
+        } else if (playerSnake) {
+            playerSnake.isBoosting = true;
+        }
+    }
 });
+
 window.addEventListener('mouseup', (e) => { 
-    if(e.button === 0 && playerSnake) playerSnake.isBoosting = false; 
+    if(e.button === 0) {
+        if (isCoopMode && coopPlayers[0]) {
+            coopPlayers[0].isBoosting = false;
+        } else if (playerSnake) {
+            playerSnake.isBoosting = false;
+        }
+    }
 });
+
 window.addEventListener('keydown', (e) => { 
     keysPressed[e.code] = true;
-    if(e.code === 'Space' && playerSnake) playerSnake.isBoosting = true; 
+    
+    // Space boost handling
+    if(e.code === 'Space') {
+        if (isCoopMode && coopPlayers[0]) {
+            coopPlayers[0].isBoosting = true;
+        } else if (playerSnake) {
+            playerSnake.isBoosting = true;
+        }
+    }
+    
+    // Shift boost for player 2 (if using WASD)
+    if(e.code === 'ShiftLeft' && isCoopMode && coopPlayers[1] && coopPlayer2Controls === 'wasd') {
+        coopPlayers[1].isBoosting = true;
+    }
+    
+    // Shift boost for player 3 (if using WASD)
+    if(e.code === 'ShiftLeft' && isCoopMode && coopPlayers[2] && coopPlayer3Controls === 'wasd') {
+        coopPlayers[2].isBoosting = true;
+    }
+    
+    // Enter boost for arrow key players
+    if(e.code === 'Enter') {
+        if (isCoopMode && coopPlayers[1] && coopPlayer2Controls === 'arrows') {
+            coopPlayers[1].isBoosting = true;
+        }
+        if (isCoopMode && coopPlayers[2] && coopPlayer3Controls === 'arrows') {
+            coopPlayers[2].isBoosting = true;
+        }
+    }
 });
+
 window.addEventListener('keyup', (e) => { 
     keysPressed[e.code] = false;
-    if(e.code === 'Space' && playerSnake) playerSnake.isBoosting = false; 
+    
+    if(e.code === 'Space') {
+        if (isCoopMode && coopPlayers[0]) {
+            coopPlayers[0].isBoosting = false;
+        } else if (playerSnake) {
+            playerSnake.isBoosting = false;
+        }
+    }
+    
+    if(e.code === 'ShiftLeft' && isCoopMode) {
+        if (coopPlayers[1] && coopPlayer2Controls === 'wasd') {
+            coopPlayers[1].isBoosting = false;
+        }
+        if (coopPlayers[2] && coopPlayer3Controls === 'wasd') {
+            coopPlayers[2].isBoosting = false;
+        }
+    }
+    
+    if(e.code === 'Enter' && isCoopMode) {
+        if (coopPlayers[1] && coopPlayer2Controls === 'arrows') {
+            coopPlayers[1].isBoosting = false;
+        }
+        if (coopPlayers[2] && coopPlayer3Controls === 'arrows') {
+            coopPlayers[2].isBoosting = false;
+        }
+    }
 });
+
 window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
 window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
 startBtn.addEventListener('click', startGame);
+startCoopBtn.addEventListener('click', startCoopGame);
 stopSpectateBtn.addEventListener('click', stopSpectating);
 nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') startGame(); });
 
