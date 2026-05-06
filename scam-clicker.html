@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCAM-O-MATIC 3000</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap');
+  :root {
+    --green:#00ff41; --dg:#003b00; --mg:#00aa2a;
+    --bg:#0a0a0a; --panel:#0f1a0f; --border:#00ff4144;
+    --red:#ff3c3c; --gold:#ffd700; --rebirth:#ff6aff; --blue:#00cfff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--green);font-family:'Share Tech Mono',monospace;overflow:hidden;height:100vh;width:100vw;cursor:crosshair;}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);pointer-events:none;z-index:9999;}
+
+  /* ── LAYOUT ── */
+  #game{display:grid;grid-template-columns:220px 1fr 200px;height:100vh;}
+
+  /* ── LEFT PANEL ── */
+  #left-panel{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:12px;gap:8px;overflow-y:auto;}
+  #left-panel::-webkit-scrollbar{width:3px;}
+  #left-panel::-webkit-scrollbar-thumb{background:var(--border);}
+  .panel-title{font-family:'VT323',monospace;font-size:22px;color:var(--green);text-shadow:0 0 10px var(--green);border-bottom:1px solid var(--border);padding-bottom:6px;letter-spacing:2px;flex-shrink:0;}
+  .stat-box{background:#0a120a;border:1px solid var(--border);padding:8px 10px;border-radius:2px;flex-shrink:0;}
+  .stat-label{font-size:9px;color:var(--mg);letter-spacing:2px;text-transform:uppercase;}
+  .stat-value{font-family:'VT323',monospace;font-size:28px;color:var(--green);text-shadow:0 0 8px var(--green);line-height:1;}
+  .stat-value.gold{color:var(--gold);text-shadow:0 0 8px var(--gold);}
+  .stat-value.rc{color:var(--rebirth);text-shadow:0 0 8px var(--rebirth);font-size:22px;}
+  .upgrade-btn{background:#0a120a;border:1px solid var(--border);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;cursor:pointer;text-align:left;transition:all .1s;width:100%;flex-shrink:0;}
+  .upgrade-btn:hover:not(:disabled){background:var(--dg);border-color:var(--green);box-shadow:0 0 8px #00ff4433;}
+  .upgrade-btn:disabled{opacity:.35;cursor:not-allowed;}
+  .upgrade-btn .un{color:var(--gold);font-size:11px;display:block;margin-bottom:2px;}
+  .upgrade-btn .uc{color:var(--mg);font-size:9px;}
+  .prog-bar-wrap{background:#0a120a;border:1px solid var(--border);height:6px;border-radius:1px;overflow:hidden;margin-top:4px;}
+  .prog-bar{height:100%;background:var(--green);box-shadow:0 0 6px var(--green);transition:width .3s;}
+  #rebirth-btn{background:transparent;border:1px solid var(--rebirth);color:var(--rebirth);font-family:'VT323',monospace;font-size:18px;padding:8px;cursor:not-allowed;letter-spacing:2px;text-shadow:0 0 6px var(--rebirth);transition:all .2s;opacity:.35;width:100%;flex-shrink:0;}
+  #rebirth-btn.ready{cursor:pointer;opacity:1;box-shadow:0 0 12px #ff6aff66;animation:rpulse 1.5s infinite;}
+  @keyframes rpulse{0%,100%{box-shadow:0 0 10px #ff6aff66;}50%{box-shadow:0 0 25px #ff6affcc;}}
+  #rebirth-hint{font-size:8px;color:#ff6aff88;letter-spacing:1px;text-align:center;flex-shrink:0;}
+  .save-row{display:flex;gap:6px;flex-shrink:0;}
+  .save-btn{flex:1;background:#0a120a;border:1px solid var(--border);color:var(--mg);font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 4px;cursor:pointer;letter-spacing:1px;transition:all .1s;}
+  .save-btn:hover{border-color:var(--green);color:var(--green);}
+  #autosave-ind{font-size:8px;color:#00ff4155;letter-spacing:1px;text-align:center;flex-shrink:0;transition:color .3s;}
+
+  /* ── CENTER ── */
+  #center{position:relative;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;}
+  #header-bar{background:var(--panel);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;}
+  #game-title{font-family:'VT323',monospace;font-size:28px;letter-spacing:4px;text-shadow:0 0 15px var(--green),0 0 30px var(--green);animation:flicker 4s infinite;cursor:default;user-select:none;}
+  @keyframes flicker{0%,95%,100%{opacity:1;}96%{opacity:.6;}97%{opacity:1;}98%{opacity:.4;}99%{opacity:1;}}
+  #header-right{display:flex;align-items:center;gap:8px;}
+  .hdr-btn{background:transparent;border:1px solid var(--border);color:var(--mg);font-family:'Share Tech Mono',monospace;font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .1s;}
+  .hdr-btn:hover{border-color:var(--green);color:var(--green);}
+  #spam-zone{flex:1;position:relative;overflow:hidden;}
+  #clicker-area{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:10;}
+  #spam-btn{background:transparent;border:2px solid var(--green);color:var(--green);font-family:'VT323',monospace;font-size:48px;padding:20px 50px;cursor:pointer;position:relative;transition:all .05s;letter-spacing:4px;text-shadow:0 0 15px var(--green);box-shadow:0 0 20px #00ff4144,inset 0 0 20px #00ff4111;user-select:none;}
+  #spam-btn::before{content:'';position:absolute;inset:-6px;border:1px solid #00ff4133;}
+  #spam-btn:active{transform:scale(.94);}
+  .scam-msg{position:absolute;background:#0f1a0f;border:1px solid #00ff4188;color:var(--green);font-family:'Share Tech Mono',monospace;font-size:10px;padding:6px 10px;border-radius:2px;pointer-events:none;animation:floatUp 2.5s ease-out forwards;max-width:200px;line-height:1.4;box-shadow:0 0 8px #00ff4133;white-space:nowrap;}
+  .scam-msg .sh{color:var(--red);font-size:9px;letter-spacing:1px;}
+  @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}70%{opacity:1;}100%{opacity:0;transform:translateY(-180px) scale(.85);}}
+  .click-pop{position:absolute;font-family:'VT323',monospace;font-size:22px;color:var(--gold);text-shadow:0 0 8px var(--gold);pointer-events:none;animation:popUp .8s ease-out forwards;z-index:20;white-space:nowrap;}
+  @keyframes popUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(1.3);}}
+  #auto-bar{padding:6px 16px;background:var(--panel);border-top:1px solid var(--border);font-size:9px;color:var(--mg);letter-spacing:1px;flex-shrink:0;display:flex;gap:16px;align-items:center;}
+  .auto-ind{display:flex;align-items:center;gap:4px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:dp 1s infinite;}
+  @keyframes dp{0%,100%{opacity:1;}50%{opacity:.3;}}
+  #matrix-canvas{position:absolute;inset:0;opacity:.06;pointer-events:none;}
+
+  /* ── RIGHT PANEL ── */
+  #right-panel{background:var(--panel);border-left:1px solid var(--border);padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+  #log{flex:1;overflow-y:auto;font-size:9px;color:var(--mg);line-height:1.6;}
+  #log::-webkit-scrollbar{width:4px;}
+  #log::-webkit-scrollbar-thumb{background:var(--border);}
+  .log-entry{border-bottom:1px solid var(--border);padding:3px 0;animation:logIn .3s ease;}
+  @keyframes logIn{from{opacity:0;transform:translateX(-10px);}to{opacity:1;}}
+  .log-entry .lt{color:#00ff4177;font-size:8px;}
+
+  /* ── TOAST ── */
+  #toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:#0f1a0f;border:1px solid var(--gold);color:var(--gold);font-family:'VT323',monospace;font-size:20px;padding:8px 24px;letter-spacing:3px;text-shadow:0 0 10px var(--gold);box-shadow:0 0 20px #ffd70044;opacity:0;transition:all .4s;pointer-events:none;z-index:1000;white-space:nowrap;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ── OVERLAYS base ── */
+  .overlay{display:none;position:fixed;inset:0;z-index:5000;align-items:center;justify-content:center;flex-direction:column;gap:18px;}
+  .overlay.show{display:flex;}
+  .overlay-bg{background:#000000dd;}
+
+  /* ── REBIRTH OVERLAY ── */
+  #rebirth-overlay{background:#000000dd;}
+  .rebirth-title{font-family:'VT323',monospace;font-size:64px;color:var(--rebirth);text-shadow:0 0 30px var(--rebirth),0 0 60px var(--rebirth);letter-spacing:6px;animation:rglow 1s infinite;}
+  @keyframes rglow{0%,100%{opacity:1;}50%{opacity:.7;}}
+  .rebirth-info{font-size:11px;color:#ff6affcc;letter-spacing:2px;text-align:center;line-height:2.2;max-width:420px;}
+  .btn-rebirth-ok{background:transparent;border:2px solid var(--rebirth);color:var(--rebirth);font-family:'VT323',monospace;font-size:28px;padding:12px 48px;cursor:pointer;letter-spacing:4px;text-shadow:0 0 10px var(--rebirth);box-shadow:0 0 20px #ff6aff44;transition:all .1s;}
+  .btn-rebirth-ok:hover{background:#ff6aff22;box-shadow:0 0 40px #ff6aff88;}
+  .btn-cancel{background:transparent;border:1px solid #555;color:#666;font-family:'VT323',monospace;font-size:18px;padding:8px 32px;cursor:pointer;letter-spacing:2px;transition:all .1s;}
+  .btn-cancel:hover{color:#aaa;border-color:#aaa;}
+
+  /* ── SETTINGS OVERLAY ── */
+  #settings-overlay{background:#000000ee;}
+  .settings-box{background:#0f1a0f;border:1px solid var(--border);padding:30px 40px;min-width:360px;display:flex;flex-direction:column;gap:16px;}
+  .settings-title{font-family:'VT323',monospace;font-size:32px;letter-spacing:4px;text-shadow:0 0 10px var(--green);border-bottom:1px solid var(--border);padding-bottom:8px;}
+  .setting-row{display:flex;align-items:center;justify-content:space-between;gap:20px;font-size:10px;letter-spacing:1px;}
+  .setting-row label{color:var(--mg);}
+  .toggle{position:relative;width:40px;height:20px;flex-shrink:0;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;inset:0;background:#1a2a1a;border:1px solid var(--border);cursor:pointer;transition:.3s;}
+  .toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:2px;bottom:2px;background:#444;transition:.3s;}
+  .toggle input:checked+.toggle-slider{background:var(--dg);border-color:var(--green);}
+  .toggle input:checked+.toggle-slider::before{transform:translateX(20px);background:var(--green);box-shadow:0 0 6px var(--green);}
+  .volume-row{display:flex;align-items:center;gap:10px;font-size:10px;color:var(--mg);}
+  input[type=range]{-webkit-appearance:none;height:4px;background:var(--border);outline:none;border-radius:2px;cursor:pointer;flex:1;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
+  .settings-close{align-self:flex-end;background:transparent;border:1px solid var(--border);color:var(--mg);font-family:'Share Tech Mono',monospace;font-size:10px;padding:6px 18px;cursor:pointer;letter-spacing:2px;}
+  .settings-close:hover{border-color:var(--green);color:var(--green);}
+
+  /* ── PHONE CALL OVERLAY ── */
+  #call-overlay{background:#000000f2;z-index:7000;}
+  #phone-widget{background:#0a0f0a;border:2px solid var(--red);box-shadow:0 0 40px #ff3c3c44,inset 0 0 20px #ff3c3c11;width:380px;display:flex;flex-direction:column;overflow:hidden;}
+  #phone-header{background:#110808;border-bottom:1px solid #ff3c3c44;padding:14px 16px;display:flex;align-items:center;gap:12px;}
+  #phone-avatar{width:44px;height:44px;border-radius:50%;background:#1a0808;border:2px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  #phone-caller-info{flex:1;}
+  #phone-caller-name{font-family:'VT323',monospace;font-size:22px;color:var(--red);text-shadow:0 0 8px var(--red);letter-spacing:2px;}
+  #phone-status{font-size:8px;color:#ff3c3c88;letter-spacing:2px;}
+  #phone-timer-display{font-family:'VT323',monospace;font-size:18px;color:var(--red);}
+  #phone-transcript{height:220px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#080808;}
+  #phone-transcript::-webkit-scrollbar{width:3px;}
+  #phone-transcript::-webkit-scrollbar-thumb{background:#ff3c3c44;}
+  .msg-bubble{max-width:85%;padding:7px 12px;border-radius:2px;font-size:10px;line-height:1.5;animation:bubbleIn .25s ease;}
+  @keyframes bubbleIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .msg-caller{background:#1a0808;border:1px solid #ff3c3c44;color:#ff9999;align-self:flex-start;}
+  .msg-caller .msg-name{font-size:8px;color:var(--red);letter-spacing:1px;margin-bottom:3px;}
+  .msg-you{background:#0a1a0a;border:1px solid var(--border);color:var(--green);align-self:flex-end;}
+  .msg-you .msg-name{font-size:8px;color:var(--mg);letter-spacing:1px;margin-bottom:3px;text-align:right;}
+  .msg-system{align-self:center;font-size:8px;color:#555;letter-spacing:2px;font-style:italic;}
+  #phone-responses{padding:10px;background:#0a0f0a;border-top:1px solid #ff3c3c22;display:flex;flex-direction:column;gap:6px;}
+  .resp-btn{background:#0a0f0a;border:1px solid var(--border);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 10px;cursor:pointer;text-align:left;transition:all .1s;letter-spacing:.5px;}
+  .resp-btn:hover{background:var(--dg);border-color:var(--green);box-shadow:0 0 6px #00ff4433;}
+  .resp-btn:disabled{opacity:.3;cursor:not-allowed;}
+  #phone-ringing{display:flex;flex-direction:column;align-items:center;padding:30px 20px;gap:16px;}
+  #ring-phone-icon{font-size:56px;animation:ringShake .5s infinite;}
+  @keyframes ringShake{0%,100%{transform:rotate(-8deg);}50%{transform:rotate(8deg);}}
+  #ring-caller-name{font-family:'VT323',monospace;font-size:28px;color:var(--red);text-shadow:0 0 15px var(--red);letter-spacing:3px;}
+  #ring-subtitle{font-size:9px;color:#ff3c3c88;letter-spacing:3px;}
+  #ring-actions{display:flex;gap:16px;margin-top:8px;}
+  .ring-accept{background:transparent;border:2px solid #00ff41;color:#00ff41;font-family:'VT323',monospace;font-size:22px;padding:10px 28px;cursor:pointer;letter-spacing:3px;text-shadow:0 0 8px #00ff41;transition:all .1s;}
+  .ring-accept:hover{background:#00ff4122;}
+  .ring-decline{background:transparent;border:2px solid var(--red);color:var(--red);font-family:'VT323',monospace;font-size:22px;padding:10px 28px;cursor:pointer;letter-spacing:3px;text-shadow:0 0 8px var(--red);transition:all .1s;}
+  .ring-decline:hover{background:#ff3c3c22;}
+  #call-notification{position:fixed;bottom:20px;right:20px;background:#110808;border:2px solid var(--red);padding:12px 16px;z-index:6000;animation:notifSlide .4s ease;cursor:pointer;box-shadow:0 0 20px #ff3c3c44;display:none;}
+  @keyframes notifSlide{from{transform:translateX(120px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+  #call-notification .notif-title{font-family:'VT323',monospace;font-size:18px;color:var(--red);letter-spacing:2px;}
+  #call-notification .notif-sub{font-size:9px;color:#ff3c3c88;letter-spacing:1px;margin-top:2px;}
+  #call-rage-meter{height:4px;background:#1a0808;border-top:1px solid #ff3c3c22;overflow:hidden;}
+  #call-rage-fill{height:100%;background:var(--red);box-shadow:0 0 6px var(--red);width:100%;transition:width .5s;}
+
+  /* ── SLITHER EASTER EGG ── */
+  #slither-overlay{background:#000000f0;z-index:8000;}
+  #sli-header{font-family:'VT323',monospace;font-size:40px;color:var(--green);letter-spacing:5px;text-shadow:0 0 20px var(--green);}
+  #sli-sub{font-size:9px;color:var(--mg);letter-spacing:3px;margin-bottom:4px;}
+  #sli-score{font-family:'VT323',monospace;font-size:22px;color:var(--gold);letter-spacing:3px;}
+  #slither-canvas{border:2px solid var(--green);box-shadow:0 0 20px #00ff4166;background:#050f05;display:block;}
+  #sli-close{margin-top:6px;background:transparent;border:1px solid #444;color:#666;font-family:'Share Tech Mono',monospace;font-size:10px;padding:6px 20px;cursor:pointer;letter-spacing:2px;}
+  #sli-close:hover{color:var(--green);border-color:var(--green);}
+  #sli-wrap{position:relative;display:flex;align-items:center;justify-content:center;}
+  #sli-gameover{display:none;position:absolute;font-family:'VT323',monospace;font-size:44px;color:var(--red);text-shadow:0 0 20px var(--red);letter-spacing:4px;text-align:center;background:#000000cc;padding:20px 30px;border:1px solid var(--red);}
+  #sli-hint{font-size:9px;color:var(--mg);letter-spacing:2px;}
+</style>
+</head>
+<body>
+<div id="game">
+
+  <!-- LEFT PANEL -->
+  <div id="left-panel">
+    <div class="panel-title">// STATUS //</div>
+    <div class="stat-box"><div class="stat-label">SCAMS SENT</div><div class="stat-value" id="s-total">0</div></div>
+    <div class="stat-box"><div class="stat-label">ALL TIME</div><div class="stat-value" id="s-alltime">0</div></div>
+    <div class="stat-box"><div class="stat-label">PER CLICK</div><div class="stat-value gold" id="s-click">1</div></div>
+    <div class="stat-box"><div class="stat-label">AUTO / SEC</div><div class="stat-value" id="s-auto">0</div></div>
+    <div class="stat-box"><div class="stat-label">☣ REBIRTH BONUS</div><div class="stat-value rc" id="s-rebirth">×1.00</div></div>
+    <div class="stat-box">
+      <div class="stat-label">NEXT UPGRADE</div>
+      <div style="font-size:9px;color:var(--mg);margin-top:4px;" id="nxt-lbl">-</div>
+      <div class="prog-bar-wrap"><div class="prog-bar" id="nxt-bar" style="width:0%"></div></div>
+    </div>
+
+    <div class="panel-title">// UPGRADES //</div>
+    <button class="upgrade-btn" id="upg-0" onclick="buyUpg(0)"><span class="un">📧 BULK EMAILER</span>+1 per click<br><span class="uc" id="uc-0">Cost: 10</span></button>
+    <button class="upgrade-btn" id="upg-1" onclick="buyUpg(1)"><span class="un">🤖 BOT ARMY</span>+1 auto/sec<br><span class="uc" id="uc-1">Cost: 50</span></button>
+    <button class="upgrade-btn" id="upg-2" onclick="buyUpg(2)"><span class="un">📱 SMS BLASTER</span>+3 per click<br><span class="uc" id="uc-2">Cost: 200</span></button>
+    <button class="upgrade-btn" id="upg-3" onclick="buyUpg(3)"><span class="un">🌐 PROXY FARM</span>+5 auto/sec<br><span class="uc" id="uc-3">Cost: 500</span></button>
+    <button class="upgrade-btn" id="upg-4" onclick="buyUpg(4)"><span class="un">💻 DARKWEB SERVER</span>×2 all production<br><span class="uc" id="uc-4">Cost: 2000</span></button>
+    <button class="upgrade-btn" id="upg-5" onclick="buyUpg(5)"><span class="un">🛰️ SATELLITE SPAM</span>+25 auto/sec<br><span class="uc" id="uc-5">Cost: 10000</span></button>
+
+    <div class="panel-title">// REBIRTH //</div>
+    <button id="rebirth-btn" onclick="openRebirth()">☣ REBIRTH</button>
+    <div id="rebirth-hint">NEED 50,000 SCAMS</div>
+
+    <div class="panel-title">// SAVE //</div>
+    <div class="save-row">
+      <button class="save-btn" onclick="gameSave()">💾 SAVE</button>
+      <button class="save-btn" onclick="gameLoad(true)">📂 LOAD</button>
+      <button class="save-btn" onclick="gameReset()" style="color:var(--red);border-color:#ff3c3c44;">🗑 WIPE</button>
+    </div>
+    <div id="autosave-ind">AUTOSAVE IN: 30s</div>
+  </div>
+
+  <!-- CENTER -->
+  <div id="center">
+    <div id="header-bar">
+      <div id="game-title">SCAM-O-MATIC 3000</div>
+      <div id="header-right">
+        <div style="font-size:9px;color:var(--mg);letter-spacing:1px;">FICTIONAL GAME</div>
+        <button class="hdr-btn" onclick="openSettings()">⚙ SETTINGS</button>
+      </div>
+    </div>
+    <div id="spam-zone"><canvas id="matrix-canvas"></canvas></div>
+    <div id="auto-bar">
+      <div class="auto-ind"><div class="dot"></div> SYS ONLINE</div>
+      <div class="auto-ind" id="bot-ind" style="display:none"><div class="dot" style="animation-delay:.3s"></div> BOTS ACTIVE</div>
+      <div class="auto-ind" id="proxy-ind" style="display:none"><div class="dot" style="animation-delay:.6s"></div> PROXIES</div>
+      <div style="margin-left:auto;font-size:8px;color:#ff6aff77;" id="rb-bar"></div>
+    </div>
+    <div id="clicker-area">
+      <button id="spam-btn" onclick="clickSpam(event)">[ SEND SCAM ]</button>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right-panel">
+    <div class="panel-title">// LOG //</div>
+    <div id="log"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- INCOMING CALL NOTIFICATION BADGE -->
+<div id="call-notification" onclick="openCallOverlay()">
+  <div class="notif-title">📞 INCOMING CALL</div>
+  <div class="notif-sub" id="notif-name-line">UNKNOWN CALLER</div>
+</div>
+
+<!-- REBIRTH OVERLAY -->
+<div id="rebirth-overlay" class="overlay">
+  <div class="rebirth-title">☣ REBIRTH ☣</div>
+  <div class="rebirth-info" id="rb-info"></div>
+  <button class="btn-rebirth-ok" onclick="doRebirth()">[ CONFIRM REBIRTH ]</button>
+  <button class="btn-cancel" onclick="closeRebirth()">[ CANCEL ]</button>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div id="settings-overlay" class="overlay">
+  <div class="settings-box">
+    <div class="settings-title">⚙ SETTINGS</div>
+    <div class="setting-row">
+      <label>SOUND EFFECTS</label>
+      <label class="toggle"><input type="checkbox" id="set-sfx" checked onchange="saveSettings()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <label>NOTIFICATION SOUNDS</label>
+      <label class="toggle"><input type="checkbox" id="set-notif" checked onchange="saveSettings()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <label>CALL RINGTONE</label>
+      <label class="toggle"><input type="checkbox" id="set-ring" checked onchange="saveSettings()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="volume-row">
+      <span>VOLUME</span>
+      <input type="range" id="set-vol" min="0" max="100" value="70" oninput="saveSettings()">
+      <span id="vol-pct">70%</span>
+    </div>
+    <div style="font-size:8px;color:var(--mg);letter-spacing:1px;border-top:1px solid var(--border);padding-top:10px;">
+      SAVE CODE (copy to backup):<br>
+      <textarea id="save-code-box" style="width:100%;height:48px;background:#050a05;border:1px solid var(--border);color:var(--mg);font-family:'Share Tech Mono',monospace;font-size:8px;resize:none;margin-top:4px;padding:4px;" readonly></textarea>
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <button class="save-btn" style="font-size:8px;" onclick="copyCode()">COPY CODE</button>
+        <button class="save-btn" style="font-size:8px;" onclick="importCode()">IMPORT CODE</button>
+      </div>
+    </div>
+    <button class="settings-close" onclick="closeSettings()">[ CLOSE ]</button>
+  </div>
+</div>
+
+<!-- PHONE CALL OVERLAY -->
+<div id="call-overlay" class="overlay">
+  <div id="phone-widget">
+    <!-- RINGING SCREEN -->
+    <div id="phone-ringing">
+      <div id="ring-phone-icon">📱</div>
+      <div id="ring-caller-name">ANGRY VICTIM</div>
+      <div id="ring-subtitle">INCOMING CALL — SCAM VICTIM</div>
+      <div id="ring-actions">
+        <button class="ring-accept" onclick="acceptCall()">✓ ANSWER</button>
+        <button class="ring-decline" onclick="declineCall()">✕ DECLINE</button>
+      </div>
+    </div>
+    <!-- ACTIVE CALL SCREEN -->
+    <div id="phone-active" style="display:none;flex-direction:column;">
+      <div id="phone-header">
+        <div id="phone-avatar">😡</div>
+        <div id="phone-caller-info">
+          <div id="phone-caller-name">ANGRY PERSON</div>
+          <div id="phone-status">CALL ACTIVE</div>
+        </div>
+        <div id="phone-timer-display">0:00</div>
+      </div>
+      <div id="call-rage-meter"><div id="call-rage-fill"></div></div>
+      <div id="phone-transcript"></div>
+      <div id="phone-responses"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLITHER EASTER EGG -->
+<div id="slither-overlay" class="overlay">
+  <div id="sli-header">🐍 SLITHER.EXE</div>
+  <div id="sli-sub">— EASTER EGG — ARROW KEYS OR WASD —</div>
+  <div id="sli-score">SCORE: <span id="sli-s">0</span> &nbsp;|&nbsp; BEST: <span id="sli-b">0</span></div>
+  <div id="sli-wrap">
+    <canvas id="slither-canvas" width="400" height="400"></canvas>
+    <div id="sli-gameover">GAME OVER<br><span style="font-size:22px;color:var(--green);">PRESS R TO RETRY</span></div>
+  </div>
+  <div id="sli-hint">EARN 100 SCAMS PER APPLE</div>
+  <button id="sli-close" onclick="closeSlither()">[ ESC / CLOSE ]</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  ENCRYPTED SAVE  (XOR + base64, same style as camera clicker)
+// ═══════════════════════════════════════════════════════════
+const SAVE_KEY  = 'scamomatic3k_v3';
+const CIPHER_KEY = 'SCM3K_X7F2_CIPHER';
+
+function xorCipher(str, key) {
+  let out = '';
+  for (let i = 0; i < str.length; i++)
+    out += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  return out;
+}
+function encode(obj) {
+  try { return btoa(xorCipher(JSON.stringify(obj), CIPHER_KEY)); }
+  catch(e) { return null; }
+}
+function decode(str) {
+  try { return JSON.parse(xorCipher(atob(str), CIPHER_KEY)); }
+  catch(e) { return null; }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════════════════════
+const settings = { sfx: true, notif: true, ring: true, vol: 0.7 };
+
+function saveSettings() {
+  settings.sfx   = document.getElementById('set-sfx').checked;
+  settings.notif = document.getElementById('set-notif').checked;
+  settings.ring  = document.getElementById('set-ring').checked;
+  settings.vol   = document.getElementById('set-vol').value / 100;
+  document.getElementById('vol-pct').textContent = Math.round(settings.vol * 100) + '%';
+  // persist inside main save
+  gameSave();
+}
+function applySettingsUI() {
+  document.getElementById('set-sfx').checked   = settings.sfx;
+  document.getElementById('set-notif').checked = settings.notif;
+  document.getElementById('set-ring').checked  = settings.ring;
+  document.getElementById('set-vol').value     = Math.round(settings.vol * 100);
+  document.getElementById('vol-pct').textContent = Math.round(settings.vol * 100) + '%';
+}
+function openSettings()  {
+  refreshSaveCode();
+  document.getElementById('settings-overlay').classList.add('show');
+}
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('show'); }
+
+// ═══════════════════════════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════════════════════════
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+// Click sound
+const dingAudio = new Audio('https://fincco.github.io/assets/ding.mp3');
+function playSFX() {
+  if (!settings.sfx) return;
+  dingAudio.volume = settings.vol;
+  dingAudio.currentTime = 0;
+  dingAudio.play().catch(()=>{});
+}
+
+// Notification sound (from URL)
+const notifAudio = new Audio('https://fincco.github.io/assets/notification.mp3');
+function playNotif() {
+  if (!settings.notif) return;
+  notifAudio.volume = settings.vol;
+  notifAudio.currentTime = 0;
+  notifAudio.play().catch(()=>{});
+}
+
+// Call ringtone
+const callAudio = new Audio('https://fincco.github.io/assets/iphonecall.mp3');
+callAudio.loop = true;
+function startRingtone() {
+  if (!settings.ring) return;
+  callAudio.volume = settings.vol;
+  callAudio.currentTime = 0;
+  callAudio.play().catch(()=>{});
+}
+function stopRingtone() { callAudio.pause(); callAudio.currentTime = 0; }
+
+// ═══════════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════════
+const REBIRTH_COST = 50000;
+const G = {
+  total: 0, allTime: 0,
+  multiplier: 1, rebirths: 0, rebirthBonus: 1,
+  callsReceived: 0, callsDefused: 0,
+};
+let bPC = 1, bAPS = 0; // base per-click, base auto/sec
+
+const upgrades = [
+  {name:'BULK EMAILER', cost:10,   owned:false},
+  {name:'BOT ARMY',     cost:50,   owned:false},
+  {name:'SMS BLASTER',  cost:200,  owned:false},
+  {name:'PROXY FARM',   cost:500,  owned:false},
+  {name:'DARKWEB SRV',  cost:2000, owned:false},
+  {name:'SATELLITE',    cost:10000,owned:false},
+];
+
+function ePC()  { return Math.max(1, Math.round(bPC  * G.multiplier * G.rebirthBonus)); }
+function eAPS() { return Math.round(bAPS * G.multiplier * G.rebirthBonus); }
+
+function applyUpgFx(i) {
+  if(i===0) bPC+=1;
+  if(i===1){bAPS+=1; updAutoInds();}
+  if(i===2) bPC+=3;
+  if(i===3){bAPS+=5; updAutoInds();}
+  if(i===4) G.multiplier*=2;
+  if(i===5){bAPS+=25; updAutoInds();}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SAVE / LOAD / EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════════
+const shownMS = new Set();
+let sliBest = 0;
+
+function buildSaveObj() {
+  return {
+    ...G, bPC, bAPS,
+    upgrades: upgrades.map(u=>u.owned),
+    milestones: [...shownMS],
+    sliBest,
+    settings: {...settings},
+  };
+}
+
+function gameSave() {
+  const code = encode(buildSaveObj());
+  if (!code) { flashSave('SAVE FAILED!'); return; }
+  try { localStorage.setItem(SAVE_KEY, code); flashSave('SAVED ✓'); }
+  catch(e) { flashSave('STORAGE ERR'); }
+}
+
+function gameLoad(manual=false) {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) { if(manual) flashSave('NO SAVE FOUND'); return; }
+    const d = decode(raw);
+    if (!d)  { if(manual) flashSave('CORRUPT SAVE'); return; }
+    applySaveData(d);
+    if(manual) { flashSave('LOADED ✓'); showToast('SAVE LOADED!'); }
+  } catch(e) { if(manual) flashSave('LOAD ERROR'); }
+}
+
+function applySaveData(d) {
+  Object.assign(G, {
+    total:        d.total        || 0,
+    allTime:      d.allTime      || 0,
+    multiplier:   d.multiplier   || 1,
+    rebirths:     d.rebirths     || 0,
+    rebirthBonus: d.rebirthBonus || 1,
+    callsReceived:d.callsReceived|| 0,
+    callsDefused: d.callsDefused || 0,
+  });
+  bPC  = d.bPC  || 1;
+  bAPS = d.bAPS || 0;
+  sliBest = d.sliBest || 0;
+  (d.upgrades||[]).forEach((o,i)=>{ if(o&&upgrades[i]){ upgrades[i].owned=true; document.getElementById(`upg-${i}`).disabled=true; } });
+  (d.milestones||[]).forEach(m=>shownMS.add(m));
+  if(d.settings) {
+    Object.assign(settings, d.settings);
+    applySettingsUI();
+  }
+  updAutoInds();
+  updateUI();
+}
+
+function gameReset() {
+  if(!confirm('WIPE ALL PROGRESS? Cannot be undone.')) return;
+  localStorage.removeItem(SAVE_KEY); location.reload();
+}
+
+function refreshSaveCode() {
+  document.getElementById('save-code-box').value = encode(buildSaveObj()) || '';
+}
+function copyCode() {
+  refreshSaveCode();
+  const el = document.getElementById('save-code-box');
+  el.select(); document.execCommand('copy');
+  showToast('CODE COPIED!');
+}
+function importCode() {
+  const code = prompt('PASTE YOUR SAVE CODE:');
+  if (!code) return;
+  const d = decode(code.trim());
+  if (!d) { showToast('INVALID CODE!'); return; }
+  applySaveData(d);
+  gameSave();
+  showToast('IMPORT SUCCESS!');
+}
+
+// Autosave countdown
+let asCountdown = 30;
+setInterval(()=>{
+  asCountdown--;
+  if(asCountdown<=0){ asCountdown=30; gameSave(); }
+  document.getElementById('autosave-ind').textContent = `AUTOSAVE IN: ${asCountdown}s`;
+}, 1000);
+
+function flashSave(msg) {
+  const el = document.getElementById('autosave-ind');
+  el.textContent=msg; el.style.color='var(--green)';
+  setTimeout(()=>{ el.style.color=''; }, 2000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REBIRTH
+// ═══════════════════════════════════════════════════════════
+function openRebirth() {
+  if(G.total<REBIRTH_COST) return;
+  const nb = +(G.rebirthBonus*1.5).toFixed(2);
+  document.getElementById('rb-info').innerHTML =
+    `SACRIFICE ALL PROGRESS FOR A PERMANENT BONUS<br><br>
+    <span style="color:var(--rebirth)">REBIRTHS: ${G.rebirths}</span><br>
+    <span style="color:var(--gold)">CURRENT: ×${G.rebirthBonus.toFixed(2)}</span><br>
+    <span style="color:var(--green)">AFTER REBIRTH: ×${nb.toFixed(2)}</span>`;
+  document.getElementById('rebirth-overlay').classList.add('show');
+}
+function closeRebirth() { document.getElementById('rebirth-overlay').classList.remove('show'); }
+function doRebirth() {
+  G.rebirths++; G.rebirthBonus=+(G.rebirthBonus*1.5).toFixed(4);
+  G.total=0; G.multiplier=1; bPC=1; bAPS=0;
+  upgrades.forEach((u,i)=>{ u.owned=false; document.getElementById(`upg-${i}`).disabled=false; });
+  shownMS.clear(); closeRebirth(); updAutoInds(); updateUI(); gameSave();
+  document.body.style.boxShadow='inset 0 0 150px var(--rebirth)';
+  setTimeout(()=>document.body.style.boxShadow='', 700);
+  showToast(`☣ REBIRTH ${G.rebirths} — ×${G.rebirthBonus.toFixed(2)}`);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SCAM TEMPLATES
+// ═══════════════════════════════════════════════════════════
+const scamT = [
+  {h:'URGENT',      b:'Your account needs verification\nfincco.github.io/visitus'},
+  {h:'PRIZE',       b:"You've WON $1,000,000!\nfincco.github.io/visitus"},
+  {h:'BANK ALERT',  b:'Suspicious login detected\nfincco.github.io/visitus'},
+  {h:'TAX REFUND',  b:'Gov owes you $4,200\nfincco.github.io/visitus'},
+  {h:'DELIVERY',    b:'Parcel held - pay fee\nfincco.github.io/visitus'},
+  {h:'CRYPTO',      b:'BTC opportunity EXPIRES\nfincco.github.io/visitus'},
+  {h:'IT SUPPORT',  b:'Virus detected on PC!\nfincco.github.io/visitus'},
+  {h:'LOTTERY',     b:'Ticket #7749 WINNER\nfincco.github.io/visitus'},
+  {h:'INHERITANCE', b:'Unclaimed funds await\nfincco.github.io/visitus'},
+  {h:'EXCLUSIVE',   b:'VIP membership offer\nfincco.github.io/visitus'},
+];
+const rnd = arr => arr[0|Math.random()*arr.length];
+
+// ═══════════════════════════════════════════════════════════
+//  CLICK
+// ═══════════════════════════════════════════════════════════
+function clickSpam(e) {
+  const amt = ePC();
+  G.total+=amt; G.allTime+=amt;
+  playSFX();
+  spawnMsg(e.clientX, e.clientY);
+  spawnPop(e.clientX, e.clientY, `+${fmt(amt)}`);
+  addLog();
+  updateUI();
+  checkMS();
+}
+function spawnMsg(mx, my) {
+  const zone=document.getElementById('spam-zone'), r=zone.getBoundingClientRect();
+  const el=document.createElement('div'); el.className='scam-msg';
+  const t=rnd(scamT);
+  el.innerHTML=`<div class="sh">⚠ ${t.h}</div>${t.b}`;
+  el.style.left=(Math.random()*Math.max(1,r.width-220))+'px';
+  el.style.top =(Math.random()*Math.max(1,r.height-80))+'px';
+  zone.appendChild(el); setTimeout(()=>el.remove(),2600);
+}
+function spawnPop(cx,cy,txt) {
+  const zone=document.getElementById('spam-zone'), r=zone.getBoundingClientRect();
+  const el=document.createElement('div'); el.className='click-pop';
+  el.textContent=txt; el.style.left=(cx-r.left-20)+'px'; el.style.top=(cy-r.top-20)+'px';
+  zone.appendChild(el); setTimeout(()=>el.remove(),800);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOG
+// ═══════════════════════════════════════════════════════════
+function addLog(text) {
+  const t=rnd(scamT), n=new Date();
+  const ts=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+  const log=document.getElementById('log');
+  const el=document.createElement('div'); el.className='log-entry';
+  el.innerHTML=`<span class="lt">[${ts}]</span> ${text||t.h+': '+t.b.replace('\n',' ')}`;
+  log.insertBefore(el,log.firstChild);
+  while(log.children.length>40) log.removeChild(log.lastChild);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UPGRADES
+// ═══════════════════════════════════════════════════════════
+function buyUpg(i) {
+  const u=upgrades[i];
+  if(u.owned||G.total<u.cost) return;
+  G.total-=u.cost; applyUpgFx(i); u.owned=true;
+  document.getElementById(`upg-${i}`).disabled=true;
+  playNotif();
+  showToast(`UNLOCKED: ${u.name}`);
+  updateUI();
+}
+function updAutoInds() {
+  document.getElementById('bot-ind').style.display  =bAPS>0 ?'flex':'none';
+  document.getElementById('proxy-ind').style.display=bAPS>=5?'flex':'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UI
+// ═══════════════════════════════════════════════════════════
+function updateUI() {
+  document.getElementById('s-total').textContent  =fmt(G.total);
+  document.getElementById('s-alltime').textContent=fmt(G.allTime);
+  document.getElementById('s-click').textContent  =fmt(ePC());
+  document.getElementById('s-auto').textContent   =fmt(eAPS());
+  document.getElementById('s-rebirth').textContent=`×${G.rebirthBonus.toFixed(2)}`;
+
+  let nxt=null;
+  upgrades.forEach((u,i)=>{
+    if(!u.owned){
+      document.getElementById(`upg-${i}`).disabled=G.total<u.cost;
+      document.getElementById(`uc-${i}`).textContent=`Cost: ${fmt(u.cost)} scams`;
+      if(!nxt) nxt={u,i};
+    }
+  });
+  if(nxt){
+    document.getElementById('nxt-lbl').textContent=nxt.u.name;
+    document.getElementById('nxt-bar').style.width=Math.min(100,G.total/nxt.u.cost*100)+'%';
+  } else {
+    document.getElementById('nxt-lbl').textContent='MAX REACHED';
+    document.getElementById('nxt-bar').style.width='100%';
+  }
+
+  const rb=document.getElementById('rebirth-btn');
+  if(G.total>=REBIRTH_COST){ rb.classList.add('ready'); document.getElementById('rebirth-hint').textContent='☣ READY!'; }
+  else { rb.classList.remove('ready'); document.getElementById('rebirth-hint').textContent=`NEED ${fmt(REBIRTH_COST)} (${(G.total/REBIRTH_COST*100).toFixed(0)}%)`; }
+  document.getElementById('rb-bar').textContent=G.rebirths>0?`☣ REBIRTHS: ${G.rebirths}`:'';
+}
+
+function fmt(n){
+  if(n>=1e12)return(n/1e12).toFixed(1)+'T';
+  if(n>=1e9) return(n/1e9).toFixed(1)+'B';
+  if(n>=1e6) return(n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return(n/1e3).toFixed(1)+'K';
+  return Math.floor(n).toString();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MILESTONES + TOAST
+// ═══════════════════════════════════════════════════════════
+const milestones=[
+  {at:100,   msg:'100 SCAMS SENT!'},
+  {at:1000,  msg:'1K SCAMS — CRIME LORD!'},
+  {at:10000, msg:'10K SCAMS — LEGENDARY!'},
+  {at:50000, msg:'50K — ☣ REBIRTH UNLOCKED!'},
+  {at:100000,msg:'100K SCAMS — MAXIMAL CHAOS!'},
+  {at:1000000,msg:'1M SCAMS — GLOBAL DOMINATION!'},
+];
+function checkMS(){
+  milestones.forEach(m=>{
+    if(!shownMS.has(m.at)&&G.total>=m.at){
+      shownMS.add(m.at); playNotif(); showToast(m.msg);
+    }
+  });
+}
+
+let tQueue=[],tBusy=false;
+function showToast(msg){ tQueue.push(msg); if(!tBusy) drainToast(); }
+function drainToast(){
+  if(!tQueue.length){tBusy=false;return;} tBusy=true;
+  const msg=tQueue.shift(), el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(drainToast,400); },2400);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AUTO TICKER
+// ═══════════════════════════════════════════════════════════
+let autoAcc=0;
+setInterval(()=>{
+  const aps=eAPS(); if(aps<=0) return;
+  autoAcc+=aps/20;
+  const e2=Math.floor(autoAcc);
+  if(e2>0){ autoAcc-=e2; G.total+=e2; G.allTime+=e2; updateUI(); checkMS(); }
+},50);
+setInterval(()=>{ if(eAPS()>0) spawnMsg(-1,-1); },600);
+
+// ═══════════════════════════════════════════════════════════
+//  MATRIX BG
+// ═══════════════════════════════════════════════════════════
+const mC=document.getElementById('matrix-canvas'), mX=mC.getContext('2d'); let mCols=[];
+function rszM(){ mC.width=mC.offsetWidth; mC.height=mC.offsetHeight; mCols=Array.from({length:Math.floor(mC.width/14)},()=>Math.random()*mC.height); }
+rszM(); window.addEventListener('resize',rszM);
+setInterval(()=>{
+  mX.fillStyle='rgba(10,10,10,0.05)'; mX.fillRect(0,0,mC.width,mC.height);
+  mX.fillStyle='#00ff41'; mX.font='12px VT323,monospace';
+  mCols.forEach((y,i)=>{ mX.fillText(String.fromCharCode(33+Math.random()*93),i*14,y); mCols[i]=y>mC.height&&Math.random()>.975?0:y+14; });
+},60);
+
+// ═══════════════════════════════════════════════════════════
+//  📞 PHONE CALL SYSTEM
+// ═══════════════════════════════════════════════════════════
+const callerNames = ['GARY HENDERSON','DOROTHY MILLS','FRANK KOWALSKI','MARGARET CHEN','BOB STEVENSON','LINDA PARKS','HAROLD GRUBER','PATRICIA OWENS','WALTER SCHMIDT','HELEN NGUYEN'];
+const callerEmojis = ['😡','🤬','😤','👴','👵','🧓','😠','😒'];
+
+const callScripts = [
+  // Each entry: { opener, responses: [{text, goodChance, callerReply, isGood?}], closeGood, closeBad }
+  {
+    opener: `YOU SCAMMED ME! I got your "bank alert" email and clicked it and now my account is showing suspicious charges! I want answers RIGHT NOW!`,
+    responses: [
+      { text: `I have no idea what you're talking about. I'm just a regular person.`, goodChance: 0.3, callerReply: `Don't play dumb with me! Your email was right there — "fincco.github.io/visitus"!` },
+      { text: `Sir, that email was a phishing attempt. You should call your actual bank immediately.`, goodChance: 0.75, callerReply: `Wait... you're saying someone else sent it pretending to be the bank?` },
+      { text: `Please calm down. Have you already changed your password?`, goodChance: 0.6, callerReply: `No! I panicked and called you instead. Should I do that now?` },
+      { text: `I'm the one who sent it and I'm proud of my work.`, goodChance: 0.0, callerReply: `WHAT?! I'm calling the police RIGHT NOW!` },
+    ],
+    followups: [
+      { text: `Yes, change your password immediately and call your bank's official number.`, goodChance: 0.85, callerReply: `Okay... I guess that makes sense. Thank you.` },
+      { text: `It's not my fault you clicked a suspicious link.`, goodChance: 0.15, callerReply: `Unbelievable! You people have no shame!` },
+      { text: `Your bank will have a fraud department — they can reverse any charges.`, goodChance: 0.9, callerReply: `Alright, I'll try that. Sorry for yelling, I was just scared.` },
+    ],
+    closeGood: `...Fine. I'm sorry for accusing you. I'll call my real bank. Goodbye.`,
+    closeBad:  `You haven't heard the last of me! I'm reporting this!`,
+  },
+  {
+    opener: `I won a MILLION dollars?! I clicked the link and now it's asking for my credit card to "verify identity". Something feels wrong.`,
+    responses: [
+      { text: `Please do NOT enter your credit card details. This is a scam.`, goodChance: 0.9, callerReply: `Oh my goodness... I almost did it. So the million dollars isn't real?` },
+      { text: `Yes! Pay the verification fee and your prize will be released within 24 hours!`, goodChance: 0.0, callerReply: `That doesn't sound right. My grandson told me about these scams...` },
+      { text: `Close that browser tab right now and do not click anything else.`, goodChance: 0.8, callerReply: `I closed it. Am I safe now? Did they get anything from me?` },
+    ],
+    followups: [
+      { text: `If you didn't enter any details you should be fine. Just be careful next time.`, goodChance: 0.95, callerReply: `Thank you, dear. I'll be more careful. God bless you.` },
+      { text: `Run a virus scan on your computer just to be safe.`, goodChance: 0.85, callerReply: `Good idea. My grandson can help me with that. Thank you!` },
+      { text: `You should have known better. Goodbye.`, goodChance: 0.1, callerReply: `Well that's just rude! I hope someone scams YOU someday!` },
+    ],
+    closeGood: `Thank you for your help. I'll tell my friends to watch out for these. Bye!`,
+    closeBad:  `I'm telling everyone in my book club about this company!`,
+  },
+  {
+    opener: `My computer says it has a virus and I need to call "Microsoft Support" at your number. But my son says this might be fake. WHO ARE YOU PEOPLE?`,
+    responses: [
+      { text: `Your son is right. This is a fake Microsoft support scam. Microsoft does NOT call you.`, goodChance: 0.9, callerReply: `So I shouldn't give the "technician" remote access?` },
+      { text: `We are Microsoft's certified partner. Please allow us remote access immediately.`, goodChance: 0.0, callerReply: `You're trying to scam me! I knew it! I'm hanging up!` },
+      { text: `Close all browser pop-ups and run Windows Defender. Your computer is probably fine.`, goodChance: 0.8, callerReply: `Oh! The pop-up made it sound so urgent. I was so scared.` },
+    ],
+    followups: [
+      { text: `Never give remote access to unsolicited callers. Hang up if anyone asks.`, goodChance: 0.9, callerReply: `I understand now. My son will be relieved I didn't fall for it. Thank you.` },
+      { text: `This pop-up is fake. Just press F11 to exit fullscreen and close it.`, goodChance: 0.85, callerReply: `It worked! The scary screen is gone! Thank you so much!` },
+      { text: `I can't help you. Figure it out yourself.`, goodChance: 0.1, callerReply: `You're useless! I'm leaving a bad review everywhere!` },
+    ],
+    closeGood: `My son says you gave good advice. We'll be reporting the original scam number. Take care!`,
+    closeBad:  `You're all the same! I'm calling the better business bureau!`,
+  },
+  {
+    opener: `I got a message saying my package is held and I need to pay $3.99. I paid it but nothing happened. I want my money back!`,
+    responses: [
+      { text: `Unfortunately that site was a scam. Call your bank to dispute the charge.`, goodChance: 0.8, callerReply: `Can they really get my $3.99 back? That seems like so little but still...` },
+      { text: `Your package will arrive in 3-5 business days. Thank you for paying the fee!`, goodChance: 0.0, callerReply: `Wait, are you actually the scammer? I'm calling the police!` },
+      { text: `Check your actual courier's tracking page — your real package is likely still coming.`, goodChance: 0.75, callerReply: `Oh! The actual FedEx site says it's out for delivery today! So the other email was fake!` },
+    ],
+    followups: [
+      { text: `Yes, banks can often dispute small fraudulent charges. Act quickly.`, goodChance: 0.9, callerReply: `Thank you for being straight with me. I appreciate the honesty.` },
+      { text: `Also change your password if you used one to log in on that site.`, goodChance: 0.85, callerReply: `Good point. I'll do that now. You've been very helpful, thanks!` },
+      { text: `$3.99 is practically nothing. Move on.`, goodChance: 0.15, callerReply: `The nerve! It's the principle of the thing! Goodbye!` },
+    ],
+    closeGood: `Okay, I'll call my bank right now. Thanks for the advice!`,
+    closeBad:  `This is absolutely unacceptable. I will be filing a complaint!`,
+  },
+];
+
+// Call state
+let callActive = false;
+let callScript = null;
+let callStage  = 'initial'; // 'initial' | 'followup' | 'ending'
+let callTimer  = null;
+let callSeconds= 0;
+let callRage   = 100;
+let callPending= false;
+let pendingCallerName = '';
+let pendingCallerEmoji= '';
+
+// Schedule random calls
+function scheduleCall() {
+  const delay = 25000 + Math.random() * 40000; // every 25-65 seconds
+  setTimeout(() => {
+    if (!callActive && G.allTime >= 50) triggerIncomingCall();
+    scheduleCall();
+  }, delay);
+}
+
+function triggerIncomingCall() {
+  if (callActive || callPending) return;
+  callPending = true;
+  pendingCallerName  = rnd(callerNames);
+  pendingCallerEmoji = rnd(callerEmojis);
+  G.callsReceived++;
+
+  // Show notification badge
+  document.getElementById('notif-name-line').textContent = pendingCallerName;
+  document.getElementById('call-notification').style.display = 'block';
+
+  startRingtone();
+  addLog(`📞 INCOMING CALL FROM: ${pendingCallerName}`);
+  playNotif();
+
+  // Auto-dismiss notification after 20s
+  setTimeout(() => {
+    if (callPending && !callActive) {
+      document.getElementById('call-notification').style.display = 'none';
+      stopRingtone();
+      callPending = false;
+      addLog(`📞 MISSED CALL: ${pendingCallerName}`);
+    }
+  }, 20000);
+}
+
+function openCallOverlay() {
+  if (!callPending) return;
+  document.getElementById('call-notification').style.display = 'none';
+  document.getElementById('call-overlay').classList.add('show');
+  // Show ringing screen
+  document.getElementById('phone-ringing').style.display = 'flex';
+  document.getElementById('phone-active').style.display  = 'none';
+  document.getElementById('ring-caller-name').textContent = pendingCallerName;
+  document.getElementById('phone-avatar').textContent = pendingCallerEmoji;
+}
+
+function acceptCall() {
+  stopRingtone();
+  callPending = false;
+  callActive  = true;
+  callScript  = rnd(callScripts);
+  callStage   = 'initial';
+  callSeconds = 0;
+  callRage    = 100;
+
+  document.getElementById('phone-ringing').style.display = 'none';
+  document.getElementById('phone-active').style.display  = 'flex';
+  document.getElementById('phone-caller-name').textContent = pendingCallerName;
+  document.getElementById('phone-avatar').textContent = pendingCallerEmoji;
+  document.getElementById('phone-status').textContent = 'CALL ACTIVE';
+  document.getElementById('call-rage-fill').style.width = '100%';
+  document.getElementById('call-rage-fill').style.background = 'var(--red)';
+
+  // Clear transcript
+  document.getElementById('phone-transcript').innerHTML = '';
+
+  // Start call timer
+  callTimer = setInterval(() => {
+    callSeconds++;
+    const m = Math.floor(callSeconds/60), s = callSeconds%60;
+    document.getElementById('phone-timer-display').textContent = `${m}:${String(s).padStart(2,'0')}`;
+  }, 1000);
+
+  // Show opener message
+  setTimeout(() => {
+    addCallBubble('caller', pendingCallerName, callScript.opener);
+    buildResponses(callScript.responses, false);
+  }, 600);
+}
+
+function declineCall() {
+  stopRingtone();
+  callPending = false;
+  document.getElementById('call-overlay').classList.remove('show');
+  addLog(`📞 DECLINED CALL: ${pendingCallerName}`);
+}
+
+function addCallBubble(who, name, text) {
+  const tc = document.getElementById('phone-transcript');
+  const el = document.createElement('div');
+  el.className = `msg-bubble msg-${who === 'caller' ? 'caller' : 'you'}`;
+  const label = who === 'caller' ? name : 'YOU';
+  el.innerHTML = `<div class="msg-name">${label}</div>${text}`;
+  tc.appendChild(el);
+  tc.scrollTop = tc.scrollHeight;
+}
+
+function addSystemMsg(text) {
+  const tc = document.getElementById('phone-transcript');
+  const el = document.createElement('div');
+  el.className = 'msg-bubble msg-system';
+  el.textContent = text;
+  tc.appendChild(el);
+  tc.scrollTop = tc.scrollHeight;
+}
+
+function buildResponses(options, isFollowup) {
+  const box = document.getElementById('phone-responses');
+  box.innerHTML = '';
+  options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'resp-btn';
+    btn.textContent = `[${i+1}] ${opt.text}`;
+    btn.onclick = () => chooseResponse(opt, isFollowup);
+    box.appendChild(btn);
+  });
+}
+
+function chooseResponse(opt, wasFollowup) {
+  // Disable all buttons
+  document.querySelectorAll('.resp-btn').forEach(b=>b.disabled=true);
+
+  addCallBubble('you', 'YOU', opt.text);
+
+  const good = Math.random() < opt.goodChance;
+
+  // Update rage meter
+  if (good) { callRage = Math.max(0, callRage - 35); }
+  else       { callRage = Math.min(100, callRage + 20); }
+  const ragePct = callRage;
+  const fill = document.getElementById('call-rage-fill');
+  fill.style.width = ragePct + '%';
+  fill.style.background = ragePct > 66 ? 'var(--red)' : ragePct > 33 ? 'var(--gold)' : 'var(--green)';
+
+  // Caller replies after a short delay
+  setTimeout(() => {
+    addCallBubble('caller', pendingCallerName, opt.callerReply);
+
+    // Decide next stage
+    if (wasFollowup || !good) {
+      // End call
+      setTimeout(() => endCall(good), 1200);
+    } else {
+      // Move to followup responses
+      setTimeout(() => buildResponses(callScript.followups, true), 800);
+    }
+  }, 900);
+}
+
+function endCall(wasGood) {
+  clearInterval(callTimer);
+  callActive = false;
+
+  const closeLine = wasGood ? callScript.closeGood : callScript.closeBad;
+  addCallBubble('caller', pendingCallerName, closeLine);
+
+  setTimeout(() => {
+    addSystemMsg('— CALL ENDED —');
+    document.getElementById('phone-status').textContent = 'CALL ENDED';
+    document.getElementById('phone-responses').innerHTML = '';
+
+    if (wasGood) {
+      G.callsDefused++;
+      const bonus = 500 + G.rebirths * 200;
+      G.total += bonus; G.allTime += bonus;
+      addSystemMsg(`+${fmt(bonus)} SCAMS BONUS — VICTIM CALMED`);
+      playNotif();
+      showToast(`📞 DEFUSED! +${fmt(bonus)} SCAMS`);
+      updateUI();
+    } else {
+      addSystemMsg('VICTIM REMAINS ANGRY — NO BONUS');
+      showToast('📞 CALL FAILED — NO BONUS');
+    }
+
+    // Add close button
+    const box = document.getElementById('phone-responses');
+    const btn = document.createElement('button');
+    btn.className = 'resp-btn';
+    btn.textContent = '[END CALL]';
+    btn.onclick = closeCall;
+    box.appendChild(btn);
+
+    addLog(`📞 CALL ${wasGood?'DEFUSED':'FAILED'}: ${pendingCallerName} — ${callSeconds}s`);
+  }, 1000);
+}
+
+function closeCall() {
+  document.getElementById('call-overlay').classList.remove('show');
+  callActive = false;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  🐍 SLITHER EASTER EGG
+// ═══════════════════════════════════════════════════════════
+const SC=20,SCOLS=20,SROWS=20;
+let slitherActive=false, slitherAlive=false, slitherLoop=null;
+let sSnake,sDir,sNDir,sFood,sScore;
+
+function sInit(){
+  sSnake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+  sDir={x:1,y:0}; sNDir={x:1,y:0}; sScore=0;
+  sPlaceFood();
+  document.getElementById('sli-s').textContent=0;
+  document.getElementById('sli-gameover').style.display='none';
+  document.getElementById('sli-hint').textContent='EARN 100 SCAMS PER APPLE';
+}
+function sPlaceFood(){ do{sFood={x:0|Math.random()*SCOLS,y:0|Math.random()*SROWS};}while(sSnake.some(s=>s.x===sFood.x&&s.y===sFood.y)); }
+function sDraw(){
+  const cv=document.getElementById('slither-canvas'), cx=cv.getContext('2d');
+  cx.fillStyle='#050f05'; cx.fillRect(0,0,cv.width,cv.height);
+  cx.strokeStyle='#00ff4111'; cx.lineWidth=0.5;
+  for(let i=0;i<=SCOLS;i++){cx.beginPath();cx.moveTo(i*SC,0);cx.lineTo(i*SC,cv.height);cx.stroke();}
+  for(let i=0;i<=SROWS;i++){cx.beginPath();cx.moveTo(0,i*SC);cx.lineTo(cv.width,i*SC);cx.stroke();}
+  cx.shadowBlur=12; cx.shadowColor='#ff3c3c'; cx.fillStyle='#ff3c3c';
+  cx.fillRect(sFood.x*SC+3,sFood.y*SC+3,SC-6,SC-6); cx.shadowBlur=0;
+  sSnake.forEach((s,i)=>{
+    cx.fillStyle=i===0?'#00ff41':`hsl(120,100%,${Math.max(25,48-i)}%)`;
+    if(i===0){cx.shadowBlur=14;cx.shadowColor='#00ff41';}
+    cx.fillRect(s.x*SC+1,s.y*SC+1,SC-2,SC-2); cx.shadowBlur=0;
+  });
+}
+function sStep(){
+  sDir={...sNDir};
+  const h={x:sSnake[0].x+sDir.x,y:sSnake[0].y+sDir.y};
+  if(h.x<0||h.x>=SCOLS||h.y<0||h.y>=SROWS||sSnake.some(s=>s.x===h.x&&s.y===h.y)){sGameOver();return;}
+  sSnake.unshift(h);
+  if(h.x===sFood.x&&h.y===sFood.y){
+    sScore++; document.getElementById('sli-s').textContent=sScore;
+    if(sScore>sliBest){sliBest=sScore;document.getElementById('sli-b').textContent=sliBest;}
+    sPlaceFood();
+  } else sSnake.pop();
+  sDraw();
+}
+function sGameOver(){
+  clearInterval(slitherLoop); slitherAlive=false;
+  document.getElementById('sli-gameover').style.display='block';
+  if(sScore>0){
+    const bonus=sScore*100; G.total+=bonus; G.allTime+=bonus; updateUI();
+    showToast(`🐍 SNAKE BONUS: +${fmt(bonus)} SCAMS!`);
+    document.getElementById('sli-hint').textContent=`+${fmt(bonus)} SCAMS EARNED!`;
+  }
+}
+function sStart(){ sInit(); sDraw(); slitherAlive=true; clearInterval(slitherLoop); slitherLoop=setInterval(sStep,115); }
+function openSlither(){
+  slitherActive=true;
+  document.getElementById('slither-overlay').classList.add('show');
+  document.getElementById('sli-b').textContent=sliBest;
+  sStart();
+}
+function closeSlither(){
+  clearInterval(slitherLoop); slitherActive=slitherAlive=false;
+  document.getElementById('slither-overlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  KEYBOARD
+// ═══════════════════════════════════════════════════════════
+const SECRET='SLITHER'; let sBuf='';
+document.addEventListener('keydown',e=>{
+  if(slitherActive&&slitherAlive){
+    if((e.key==='ArrowUp'   ||e.key==='w')&&sDir.y!==1) {sNDir={x:0,y:-1};e.preventDefault();return;}
+    if((e.key==='ArrowDown' ||e.key==='s')&&sDir.y!==-1){sNDir={x:0,y:1}; e.preventDefault();return;}
+    if((e.key==='ArrowLeft' ||e.key==='a')&&sDir.x!==1) {sNDir={x:-1,y:0};e.preventDefault();return;}
+    if((e.key==='ArrowRight'||e.key==='d')&&sDir.x!==-1){sNDir={x:1,y:0}; e.preventDefault();return;}
+  }
+  if(slitherActive&&!slitherAlive&&e.key.toLowerCase()==='r'){sStart();return;}
+  if(e.key==='Escape'&&slitherActive){closeSlither();return;}
+  if(e.key.length===1){
+    sBuf+=e.key.toUpperCase();
+    if(sBuf.length>SECRET.length) sBuf=sBuf.slice(-SECRET.length);
+    if(sBuf===SECRET){sBuf='';openSlither();}
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+gameLoad(false);
+updateUI();
+addLog();
+scheduleCall();
+</script>
+</body>
+</html>
