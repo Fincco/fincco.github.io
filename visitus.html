@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLAIM YOUR PRIZE - URGENT!!!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #00ff41;
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Scanlines */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.12) 2px,
+      rgba(0,0,0,0.12) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  canvas#bg {
+    position: fixed;
+    inset: 0;
+    opacity: 0.05;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 40px 20px;
+    max-width: 700px;
+  }
+
+  /* The fake "loading" phase */
+  #fake-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .fake-title {
+    font-family: 'VT323', monospace;
+    font-size: 42px;
+    color: #ffd700;
+    text-shadow: 0 0 20px #ffd700, 0 0 40px #ffd700;
+    letter-spacing: 3px;
+    animation: flicker 3s infinite;
+  }
+
+  @keyframes flicker {
+    0%,94%,100% { opacity: 1; }
+    95% { opacity: 0.5; }
+    97% { opacity: 0.8; }
+    98% { opacity: 0.3; }
+  }
+
+  .fake-subtitle {
+    font-size: 11px;
+    color: #00aa2a;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .bar-wrap {
+    width: 320px;
+    height: 10px;
+    background: #0f1a0f;
+    border: 1px solid #00ff4166;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: #00ff41;
+    box-shadow: 0 0 8px #00ff41;
+    width: 0%;
+    animation: loadUp 2.2s ease-in-out forwards;
+  }
+
+  @keyframes loadUp {
+    0%   { width: 0%; }
+    40%  { width: 60%; }
+    70%  { width: 75%; }
+    90%  { width: 92%; }
+    100% { width: 100%; }
+  }
+
+  .fake-status {
+    font-size: 9px;
+    color: #00ff4188;
+    letter-spacing: 2px;
+    animation: statusCycle 2.2s steps(1) forwards;
+  }
+
+  @keyframes statusCycle {
+    0%   { content: ''; }
+  }
+
+  /* THE REVEAL */
+  #reveal {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .big-text {
+    font-family: 'VT323', monospace;
+    font-size: clamp(36px, 8vw, 72px);
+    color: #00ff41;
+    text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41;
+    letter-spacing: 2px;
+    line-height: 1.1;
+    animation: glitchIn 0.5s ease forwards;
+  }
+
+  @keyframes glitchIn {
+    0%   { transform: skewX(20deg) scale(1.2); opacity: 0; filter: blur(8px); }
+    60%  { transform: skewX(-5deg) scale(0.97); opacity: 1; filter: blur(0); }
+    80%  { transform: skewX(2deg); }
+    100% { transform: skewX(0deg) scale(1); }
+  }
+
+  .sub-text {
+    font-size: 13px;
+    color: #00aa2a;
+    letter-spacing: 2px;
+    line-height: 1.8;
+    max-width: 500px;
+    animation: fadeIn 0.6s 0.3s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .emoji-row {
+    font-size: 48px;
+    animation: bounceIn 0.5s 0.5s ease both;
+    letter-spacing: 10px;
+  }
+
+  @keyframes bounceIn {
+    0%   { transform: scale(0); opacity: 0; }
+    70%  { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .box {
+    border: 1px solid #00ff4144;
+    background: #0f1a0f;
+    padding: 20px 32px;
+    animation: fadeIn 0.6s 0.6s ease both;
+    max-width: 480px;
+  }
+
+  .box-title {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: #ffd700;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+  }
+
+  .box p {
+    font-size: 10px;
+    color: #00aa2a;
+    line-height: 1.9;
+    letter-spacing: 1px;
+  }
+
+  .back-btn {
+    margin-top: 8px;
+    background: transparent;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    padding: 10px 40px;
+    cursor: pointer;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px #00ff41;
+    transition: all 0.1s;
+    animation: fadeIn 0.6s 0.9s ease both;
+  }
+
+  .back-btn:hover {
+    background: #00ff4122;
+    box-shadow: 0 0 16px #00ff4166;
+  }
+
+  .counter-line {
+    font-size: 9px;
+    color: #00ff4155;
+    letter-spacing: 2px;
+    animation: fadeIn 0.6s 1.2s ease both;
+  }
+
+  #victim-count {
+    color: #ffd700;
+  }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<div class="container">
+
+  <!-- FAKE LOADING PHASE -->
+  <div id="fake-loading">
+    <div class="fake-title">⚠ PRIZE CLAIM PORTAL ⚠</div>
+    <div class="fake-subtitle">verifying eligibility... please wait</div>
+    <div class="bar-wrap"><div class="bar-fill"></div></div>
+    <div class="fake-status" id="status-text">CONNECTING TO SECURE SERVER...</div>
+  </div>
+
+  <!-- THE REVEAL (shown after fake load) -->
+  <div id="reveal">
+    <div class="big-text">DID YOU ACTUALLY<br>THINK THIS WOULD WORK?</div>
+    <div class="emoji-row">😂🤦💀</div>
+    <div class="sub-text">
+      CONGRATULATIONS.<br>
+      YOU HAVE SUCCESSFULLY CLICKED A FAKE SCAM LINK<br>
+      FROM A SILLY BROWSER GAME.
+    </div>
+    <div class="box">
+      <div class="box-title">// SCAM DETECTED //</div>
+      <p>
+        NO PRIZE EXISTS.<br>
+        NO BANK ACCOUNT IS AT RISK.<br>
+        NO PRINCE IS TRYING TO REACH YOU.<br>
+        YOUR PC IS FINE.<br>
+        THERE IS NO UNCLAIMED PACKAGE.<br>
+        <br>
+        THIS PAGE IS PART OF SCAM-O-MATIC 3000.<br>
+        A COMPLETELY FICTIONAL CLICKER GAME.
+      </p>
+    </div>
+    <button class="back-btn" onclick="history.back()">[ GO BACK ]</button>
+    <div class="counter-line">VICTIMS TROLLED TODAY: <span id="victim-count">1</span></div>
+  </div>
+
+</div>
+
+<script>
+// Fake status messages cycling
+const statuses = [
+  'CONNECTING TO SECURE SERVER...',
+  'VERIFYING IP ADDRESS...',
+  'CHECKING ELIGIBILITY...',
+  'RETRIEVING PRIZE DATA...',
+  'PROCESSING REQUEST...',
+  'ALMOST DONE...',
+];
+let si = 0;
+const statusEl = document.getElementById('status-text');
+const statusInterval = setInterval(() => {
+  si++;
+  if (si < statuses.length) statusEl.textContent = statuses[si];
+}, 380);
+
+// After fake load completes, show the reveal
+setTimeout(() => {
+  clearInterval(statusInterval);
+  document.getElementById('fake-loading').style.display = 'none';
+  const reveal = document.getElementById('reveal');
+  reveal.style.display = 'flex';
+
+  // Fake victim counter
+  let count = Math.floor(Math.random() * 900) + 100;
+  document.getElementById('victim-count').textContent = count.toLocaleString();
+  setInterval(() => {
+    count += Math.floor(Math.random() * 3);
+    document.getElementById('victim-count').textContent = count.toLocaleString();
+  }, 2000);
+}, 2400);
+
+// Matrix BG
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initCols(); });
+
+let cols = [];
+function initCols() {
+  cols = Array.from({ length: Math.floor(canvas.width / 14) }, () => Math.random() * canvas.height);
+}
+initCols();
+
+setInterval(() => {
+  ctx.fillStyle = 'rgba(10,10,10,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#00ff41';
+  ctx.font = '12px monospace';
+  cols.forEach((y, i) => {
+    ctx.fillText(String.fromCharCode(33 + Math.random() * 93), i * 14, y);
+    cols[i] = y > canvas.height && Math.random() > 0.975 ? 0 : y + 14;
+  });
+}, 60);
+</script>
+</body>
+</html>
