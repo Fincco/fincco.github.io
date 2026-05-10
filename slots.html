@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate HTML5 Slots</title>
+    <style>
+        :root {
+            --gold: #f1c40f;
+            --silver: #bdc3c7;
+            --dark-red: #c0392b;
+        }
+
+        body {
+            background: radial-gradient(circle, #2c3e50, #000);
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0; left: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .machine-body {
+            background: linear-gradient(180deg, #444, #222);
+            padding: 25px;
+            border: 8px solid var(--silver);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            text-align: center;
+            width: 380px; /* Fixed width to keep things tidy */
+            position: relative;
+            z-index: 10;
+			user-select: none;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .reels-container {
+            display: flex;
+            gap: 10px;
+            background: #111;
+            padding: 15px;
+            border-radius: 10px;
+            border: 4px solid #555;
+            justify-content: center;
+        }
+
+        .reel {
+            width: 90px;
+            height: 110px;
+            background: white;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .symbol-strip {
+            position: absolute;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .symbol {
+            height: 110px;
+            font-size: 55px;
+            line-height: 110px;
+            color: black;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .bet-row {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-circle {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-spin {
+            background: var(--dark-red);
+            color: white;
+            border: none;
+            padding: 12px 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8e1e13;
+			user-select: none;
+			outline: none;
+        }
+
+        .btn-spin:active { transform: translateY(2px); box-shadow: 0 2px 0 #8e1e13; }
+        .btn-spin:disabled { background: #666; box-shadow: none; opacity: 0.7; }
+
+        #status-msg {
+            margin-top: 15px;
+            color: var(--gold);
+            height: 20px;
+            font-weight: bold;
+        }
+
+        .spinning { animation: blurEffect 0.1s infinite linear; }
+        @keyframes blurEffect { 0%, 100% { filter: blur(0px); } 50% { filter: blur(3px); } }
+    </style>
+</head>
+<body>
+
+    <canvas id="coinCanvas"></canvas>
+
+    <div class="machine-body">
+        <div class="stats-row">
+            <span>💰 $<span id="balance">500</span></span>
+            <span id="win-display" style="color:var(--gold)"></span>
+        </div>
+
+        <div class="reels-container">
+            <div class="reel"><div id="strip1" class="symbol-strip"></div></div>
+            <div class="reel"><div id="strip2" class="symbol-strip"></div></div>
+            <div class="reel"><div id="strip3" class="symbol-strip"></div></div>
+        </div>
+
+        <div class="controls">
+            <div class="bet-row">
+                <button class="btn-circle" onclick="changeBet(-5)">-</button>
+                <span>Bet: <b>$<span id="current-bet">10</span></b></span>
+                <button class="btn-circle" onclick="changeBet(5)">+</button>
+            </div>
+            <button class="btn-spin" id="spin-btn" onclick="playGame()">SPIN</button>
+            <div id="status-msg"></div>
+        </div>
+    </div>
+
+    <script>
+        const symbols = ["🍒", "🍋", "🍉", "🔔", "⭐", "💎"];
+        const symbolHeight = 110;
+        let balance = 500;
+        let currentBet = 10;
+        let particles = [];
+
+        const canvas = document.getElementById('coinCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Initialization
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ['strip1', 'strip2', 'strip3'].forEach(id => {
+                const s = document.getElementById(id);
+                s.innerHTML = `<div class="symbol">${symbols[Math.floor(Math.random()*6)]}</div>`;
+            });
+        }
+
+        function changeBet(val) {
+            let next = currentBet + val;
+            if (next >= 5 && next <= balance) {
+                currentBet = next;
+                document.getElementById('current-bet').innerText = currentBet;
+            }
+        }
+
+        async function playGame() {
+            if (balance < currentBet) return;
+            
+            balance -= currentBet;
+            updateUI();
+            
+            const btn = document.getElementById('spin-btn');
+            btn.disabled = true;
+            document.getElementById('status-msg').innerText = "Spinning...";
+
+            const results = [
+                Math.floor(Math.random() * symbols.length),
+                Math.floor(Math.random() * symbols.length),
+                Math.floor(Math.random() * symbols.length)
+            ];
+
+            await Promise.all([
+                animateReel('strip1', results[0], 1800),
+                animateReel('strip2', results[1], 2200),
+                animateReel('strip3', results[2], 2600)
+            ]);
+
+            checkResults(results);
+            btn.disabled = false;
+        }
+
+        function animateReel(id, targetIdx, duration) {
+            return new Promise(resolve => {
+                const strip = document.getElementById(id);
+                strip.style.transition = 'none';
+                strip.style.transform = 'translateY(0px)';
+                strip.innerHTML = '';
+                
+                const count = 25;
+                for(let i=0; i<count; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'symbol';
+                    div.innerText = (i === count-1) ? symbols[targetIdx] : symbols[Math.floor(Math.random()*6)];
+                    strip.appendChild(div);
+                }
+
+                strip.offsetHeight; // Force reflow
+                strip.classList.add('spinning');
+                strip.style.transition = `transform ${duration}ms cubic-bezier(0.1, 0, 0.1, 1)`;
+                strip.style.transform = `translateY(-${(count-1)*symbolHeight}px)`;
+
+                setTimeout(() => {
+                    strip.classList.remove('spinning');
+                    resolve();
+                }, duration);
+            });
+        }
+
+        function checkResults(res) {
+            const [s1, s2, s3] = res.map(i => symbols[i]);
+            let win = 0;
+            if (s1 === s2 && s2 === s3) {
+                win = currentBet * (s1 === "💎" ? 50 : 10);
+                spawnCoins();
+            } else if (s1 === s2 || s2 === s3 || s1 === s3) {
+                win = currentBet * 2;
+            }
+
+            if (win > 0) {
+                balance += win;
+                document.getElementById('status-msg').innerText = `WIN: $${win}!`;
+            } else {
+                document.getElementById('status-msg').innerText = "Try Again!";
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = balance;
+        }
+
+        // Coin Physics
+        class Coin {
+            constructor() {
+                this.x = window.innerWidth/2;
+                this.y = window.innerHeight/2;
+                this.vx = (Math.random()-0.5)*15;
+                this.vy = (Math.random()-0.8)*18;
+                this.gravity = 0.5;
+            }
+            update() { this.vy += this.gravity; this.x += this.vx; this.y += this.vy; }
+            draw() {
+                ctx.fillStyle = '#f1c40f';
+                ctx.beginPath(); ctx.arc(this.x, this.y, 8, 0, Math.PI*2); ctx.fill();
+            }
+        }
+
+        function spawnCoins() {
+            for(let i=0; i<40; i++) particles.push(new Coin());
+            animateParticles();
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            particles = particles.filter(p => p.y < window.innerHeight);
+            particles.forEach(p => { p.update(); p.draw(); });
+            if (particles.length > 0) requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        init();
+    </script>
+</body>
+</html>
