@@ -159,10 +159,11 @@
   #sli-header{font-family:'VT323',monospace;font-size:40px;color:var(--green);letter-spacing:5px;text-shadow:0 0 20px var(--green);}
   #sli-sub{font-size:9px;color:var(--mg);letter-spacing:3px;margin-bottom:4px;}
   #sli-score{font-family:'VT323',monospace;font-size:22px;color:var(--gold);letter-spacing:3px;}
-  #slither-canvas{border:2px solid var(--green);box-shadow:0 0 20px #00ff4166;background:#050f05;display:block;}
+  #slither-canvas{border:2px solid var(--green);box-shadow:0 0 20px #00ff4166;background:#050f05;display:block;overflow:visible;}
   #sli-close{margin-top:6px;background:transparent;border:1px solid #444;color:#666;font-family:'Share Tech Mono',monospace;font-size:10px;padding:6px 20px;cursor:pointer;letter-spacing:2px;}
   #sli-close:hover{color:var(--green);border-color:var(--green);}
-  #sli-wrap{position:relative;display:flex;align-items:center;justify-content:center;}
+  #sli-wrap{position:relative;display:flex;align-items:center;justify-content:center;overflow:visible;}
+  #slither-overlay{overflow:visible!important;}
   #sli-gameover{display:none;position:absolute;font-family:'VT323',monospace;font-size:44px;color:var(--red);text-shadow:0 0 20px var(--red);letter-spacing:4px;text-align:center;background:#000000cc;padding:20px 30px;border:1px solid var(--red);}
   #sli-hint{font-size:9px;color:var(--mg);letter-spacing:2px;}
 </style>
@@ -309,6 +310,26 @@
       <div id="phone-transcript"></div>
       <div id="phone-responses"></div>
     </div>
+  </div>
+</div>
+
+<!-- SNAKE RPG TEASER -->
+<div id="snake-rpg-overlay" class="overlay" style="background:#000000f5;z-index:9000;">
+  <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px;">
+    <div style="font-family:'VT323',monospace;font-size:14px;color:#00ff4177;letter-spacing:4px;">— SECRET FOUND —</div>
+    <div style="font-family:'VT323',monospace;font-size:72px;color:#00ff41;text-shadow:0 0 30px #00ff41,0 0 60px #00ff41;letter-spacing:6px;animation:flicker 3s infinite;line-height:1;">🐍 SNAKE RPG</div>
+    <div style="font-family:'VT323',monospace;font-size:28px;color:#ffd700;letter-spacing:4px;text-shadow:0 0 12px #ffd700;">COMING SOON</div>
+    <div style="width:340px;border:1px solid #00ff4133;padding:18px 24px;background:#0a120a;display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:9px;color:#00aa2a;letter-spacing:2px;line-height:2;">
+        THE SNAKE HAS ESCAPED THE GRID.<br>
+        A FULL ADVENTURE AWAITS BEYOND THE BORDER.<br>
+        DUNGEONS. ENEMIES. PROGRESSION. LORE.<br>
+      </div>
+      <div style="font-family:'VT323',monospace;font-size:18px;color:#00ff41;letter-spacing:2px;border-top:1px solid #00ff4133;padding-top:10px;">
+        fincco.github.io/snake-rpg
+      </div>
+    </div>
+    <button onclick="document.getElementById('snake-rpg-overlay').classList.remove('show')" style="background:transparent;border:1px solid #444;color:#666;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px 24px;cursor:pointer;letter-spacing:2px;transition:all .1s;" onmouseover="this.style.color='#00ff41';this.style.borderColor='#00ff41'" onmouseout="this.style.color='#666';this.style.borderColor='#444'">[ CLOSE ]</button>
   </div>
 </div>
 
@@ -1100,17 +1121,37 @@ function closeCall() {
 const SC=20,SCOLS=20,SROWS=20;
 let slitherActive=false, slitherAlive=false, slitherLoop=null;
 let sSnake,sDir,sNDir,sFood,sScore;
+let sEscaping=false, sEscapeLoop=null;
+let sCanBreak=false;
+// pixel position of every segment during escape (set at break moment)
+let sEscSegs=[];
+// shards
+let sShards=[];
 
 function sInit(){
   sSnake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
   sDir={x:1,y:0}; sNDir={x:1,y:0}; sScore=0;
+  sEscaping=false; sCanBreak=false; sShards=[]; sEscSegs=[];
   sPlaceFood();
   document.getElementById('sli-s').textContent=0;
   document.getElementById('sli-gameover').style.display='none';
   document.getElementById('sli-hint').textContent='EARN 100 SCAMS PER APPLE';
 }
-function sPlaceFood(){ do{sFood={x:0|Math.random()*SCOLS,y:0|Math.random()*SROWS};}while(sSnake.some(s=>s.x===sFood.x&&s.y===sFood.y)); }
-function sDraw(){
+
+function sPlaceFood(){
+  do{ sFood={x:0|Math.random()*SCOLS, y:0|Math.random()*SROWS}; }
+  while(sSnake.some(s=>s.x===sFood.x&&s.y===sFood.y));
+}
+
+function sNearBorder(){
+  const h=sSnake[0];
+  return (sDir.x=== 1&&h.x===SCOLS-1)
+      || (sDir.x===-1&&h.x===0)
+      || (sDir.y=== 1&&h.y===SROWS-1)
+      || (sDir.y===-1&&h.y===0);
+}
+
+function sDrawNormal(){
   const cv=document.getElementById('slither-canvas'), cx=cv.getContext('2d');
   cx.fillStyle='#050f05'; cx.fillRect(0,0,cv.width,cv.height);
   cx.strokeStyle='#00ff4111'; cx.lineWidth=0.5;
@@ -1124,20 +1165,115 @@ function sDraw(){
     cx.fillRect(s.x*SC+1,s.y*SC+1,SC-2,SC-2); cx.shadowBlur=0;
   });
 }
+
 function sStep(){
   sDir={...sNDir};
-  const h={x:sSnake[0].x+sDir.x,y:sSnake[0].y+sDir.y};
-  if(h.x<0||h.x>=SCOLS||h.y<0||h.y>=SROWS||sSnake.some(s=>s.x===h.x&&s.y===h.y)){sGameOver();return;}
+  const h={x:sSnake[0].x+sDir.x, y:sSnake[0].y+sDir.y};
+  // wall or self collision → but check if player pressed SPACE this tick
+  if(h.x<0||h.x>=SCOLS||h.y<0||h.y>=SROWS||sSnake.some(s=>s.x===h.x&&s.y===h.y)){
+    sGameOver(); return;
+  }
   sSnake.unshift(h);
   if(h.x===sFood.x&&h.y===sFood.y){
     sScore++; document.getElementById('sli-s').textContent=sScore;
-    if(sScore>sliBest){sliBest=sScore;document.getElementById('sli-b').textContent=sliBest;}
+    if(sScore>sliBest){sliBest=sScore; document.getElementById('sli-b').textContent=sliBest;}
     sPlaceFood();
   } else sSnake.pop();
-  sDraw();
+  sCanBreak=sNearBorder();
+  sDrawNormal();
 }
+
+function sBreakBorder(){
+  if(!slitherAlive||sEscaping||!sCanBreak) return;
+  clearInterval(slitherLoop);
+  slitherAlive=false; sEscaping=true;
+
+  const cv=document.getElementById('slither-canvas');
+  const wrap=document.getElementById('sli-wrap');
+
+  // Flash border white then remove it
+  cv.style.borderColor='#ffffff';
+  cv.style.boxShadow='0 0 50px #ffffffaa';
+  setTimeout(()=>{ cv.style.border='none'; cv.style.boxShadow='none'; },300);
+
+  // Get canvas position relative to wrap so we can place DOM divs correctly
+  const cvRect=cv.getBoundingClientRect();
+  const wrRect=wrap.getBoundingClientRect();
+  const offX=cvRect.left-wrRect.left;
+  const offY=cvRect.top-wrRect.top;
+
+  // Build pixel-coord segments from current grid positions as DOM divs
+  const segDivs=[];
+  sSnake.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText=`position:absolute;width:${SC-2}px;height:${SC-2}px;`
+      +`left:${offX+s.x*SC+1}px;top:${offY+s.y*SC+1}px;`
+      +`background:${i===0?'#00ff41':`hsl(120,100%,${Math.max(25,48-i)}%)`};`
+      +`box-shadow:${i===0?'0 0 10px #00ff41':''};z-index:100;pointer-events:none;`;
+    wrap.appendChild(d);
+    segDivs.push({el:d, x:offX+s.x*SC+1, y:offY+s.y*SC+1});
+  });
+
+  // Blank the canvas so original snake disappears
+  const cx=cv.getContext('2d');
+  cx.fillStyle='#050f05'; cx.fillRect(0,0,cv.width,cv.height);
+  cx.strokeStyle='#00ff4111'; cx.lineWidth=0.5;
+  for(let i=0;i<=SCOLS;i++){cx.beginPath();cx.moveTo(i*SC,0);cx.lineTo(i*SC,cv.height);cx.stroke();}
+  for(let i=0;i<=SROWS;i++){cx.beginPath();cx.moveTo(0,i*SC);cx.lineTo(cv.width,i*SC);cx.stroke();}
+
+  // Shards drawn on canvas at impact point
+  const impX=sSnake[0].x*SC+1+sDir.x*SC;
+  const impY=sSnake[0].y*SC+1+sDir.y*SC;
+  sShards=[];
+  for(let i=0;i<22;i++){
+    const a=Math.random()*Math.PI*2, spd=2+Math.random()*5;
+    sShards.push({x:impX,y:impY,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-1,
+                  size:3+Math.random()*6,alpha:1,rot:Math.random()*Math.PI*2,rspd:(Math.random()-.5)*.25});
+  }
+
+  const SPD=10;
+
+  sEscapeLoop=setInterval(()=>{
+    // Move DOM segments
+    segDivs.forEach(s=>{
+      s.x+=sDir.x*SPD; s.y+=sDir.y*SPD;
+      s.el.style.left=s.x+'px'; s.el.style.top=s.y+'px';
+    });
+
+    // Animate shards on canvas
+    cx.fillStyle='#050f05'; cx.fillRect(0,0,cv.width,cv.height);
+    cx.strokeStyle='#00ff4111'; cx.lineWidth=0.5;
+    for(let i=0;i<=SCOLS;i++){cx.beginPath();cx.moveTo(i*SC,0);cx.lineTo(i*SC,cv.height);cx.stroke();}
+    for(let i=0;i<=SROWS;i++){cx.beginPath();cx.moveTo(0,i*SC);cx.lineTo(cv.width,i*SC);cx.stroke();}
+    sShards.forEach(sh=>{
+      sh.x+=sh.vx; sh.y+=sh.vy; sh.vy+=0.2;
+      sh.alpha=Math.max(0,sh.alpha-0.035); sh.rot+=sh.rspd;
+      cx.save(); cx.globalAlpha=sh.alpha;
+      cx.translate(sh.x,sh.y); cx.rotate(sh.rot);
+      cx.strokeStyle='#aaffcc'; cx.fillStyle='#00ff4122';
+      cx.shadowBlur=4; cx.shadowColor='#00ff41';
+      cx.beginPath(); cx.moveTo(0,-sh.size); cx.lineTo(sh.size*.6,sh.size*.6); cx.lineTo(-sh.size*.6,sh.size*.6); cx.closePath();
+      cx.fill(); cx.stroke(); cx.restore();
+    });
+
+    // Done when head div is well outside the wrap bounds
+    const head=segDivs[0];
+    const wW=wrap.offsetWidth, wH=wrap.offsetHeight;
+    const gone=(sDir.x=== 1&&head.x>wW+SC*2)
+             ||(sDir.x===-1&&head.x<-SC*3)
+             ||(sDir.y=== 1&&head.y>wH+SC*2)
+             ||(sDir.y===-1&&head.y<-SC*3);
+    if(gone){
+      clearInterval(sEscapeLoop);
+      segDivs.forEach(s=>s.el.remove());
+      sEscaping=false;
+      document.getElementById('snake-rpg-overlay').classList.add('show');
+    }
+  },40);
+}
+
 function sGameOver(){
-  clearInterval(slitherLoop); slitherAlive=false;
+  clearInterval(slitherLoop); slitherAlive=false; sCanBreak=false;
   document.getElementById('sli-gameover').style.display='block';
   if(sScore>0){
     const bonus=sScore*100; G.total+=bonus; G.allTime+=bonus; updateUI();
@@ -1145,15 +1281,25 @@ function sGameOver(){
     document.getElementById('sli-hint').textContent=`+${fmt(bonus)} SCAMS EARNED!`;
   }
 }
-function sStart(){ sInit(); sDraw(); slitherAlive=true; clearInterval(slitherLoop); slitherLoop=setInterval(sStep,115); }
+
+function sStart(){
+  const cv=document.getElementById('slither-canvas');
+  cv.style.border='2px solid var(--green)';
+  cv.style.boxShadow='0 0 20px #00ff4166';
+  sInit(); sDrawNormal(); slitherAlive=true;
+  clearInterval(slitherLoop); slitherLoop=setInterval(sStep,115);
+}
+
 function openSlither(){
   slitherActive=true;
   document.getElementById('slither-overlay').classList.add('show');
   document.getElementById('sli-b').textContent=sliBest;
   sStart();
 }
+
 function closeSlither(){
-  clearInterval(slitherLoop); slitherActive=slitherAlive=false;
+  clearInterval(slitherLoop); clearInterval(sEscapeLoop);
+  slitherActive=slitherAlive=sEscaping=false; sCanBreak=false;
   document.getElementById('slither-overlay').classList.remove('show');
 }
 
@@ -1167,6 +1313,7 @@ document.addEventListener('keydown',e=>{
     if((e.key==='ArrowDown' ||e.key==='s')&&sDir.y!==-1){sNDir={x:0,y:1}; e.preventDefault();return;}
     if((e.key==='ArrowLeft' ||e.key==='a')&&sDir.x!==1) {sNDir={x:-1,y:0};e.preventDefault();return;}
     if((e.key==='ArrowRight'||e.key==='d')&&sDir.x!==-1){sNDir={x:1,y:0}; e.preventDefault();return;}
+    if(e.key===' '&&sCanBreak){sBreakBorder();e.preventDefault();return;}
   }
   if(slitherActive&&!slitherAlive&&e.key.toLowerCase()==='r'){sStart();return;}
   if(e.key==='Escape'&&slitherActive){closeSlither();return;}
