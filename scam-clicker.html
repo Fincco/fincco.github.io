@@ -800,6 +800,96 @@ const callScripts = [
     closeGood: `Okay, I'll call my bank right now. Thanks for the advice!`,
     closeBad:  `This is absolutely unacceptable. I will be filing a complaint!`,
   },
+  {
+    opener: `I got an email saying I owe $899 for a Norton antivirus subscription renewal. I never signed up for this! Is this real?!`,
+    responses: [
+      { text: `That is a classic subscription scam. Do NOT call the number in that email.`, goodChance: 0.85, callerReply: `I was literally about to call them. How did you know about this?` },
+      { text: `Yes your renewal is confirmed. Please call us to process the refund with your bank details.`, goodChance: 0.0, callerReply: `Wait a second... YOU'RE the scammer aren't you! I'm hanging up!` },
+      { text: `Delete that email immediately. Norton does not charge $899 for anything.`, goodChance: 0.8, callerReply: `That's such a relief. I nearly had a heart attack looking at that number.` },
+    ],
+    followups: [
+      { text: `Mark it as phishing in your email so your provider can block similar ones.`, goodChance: 0.9, callerReply: `Good idea. I'll do that. You've saved me a lot of stress today!` },
+      { text: `These scams rely on panic. Take a breath before acting on any urgent email.`, goodChance: 0.85, callerReply: `You're right, I panicked. Thank you for talking sense into me.` },
+      { text: `Just ignore it. It'll go away.`, goodChance: 0.2, callerReply: `That's your advice?! Very helpful. Absolutely useless.` },
+    ],
+    closeGood: `Thank you so much. I'm going to tell my sister about this, she nearly fell for one last month!`,
+    closeBad:  `I'll be leaving a one-star review for whatever company this is. Disgraceful!`,
+  },
+  {
+    opener: `My grandson told me I have to send $500 in gift cards to claim my social security benefits or they'll be suspended. I already bought the cards. What do I do?!`,
+    responses: [
+      { text: `Stop! Do NOT give anyone those gift card numbers. This is a government impersonation scam.`, goodChance: 0.9, callerReply: `Oh no... I haven't given them the numbers yet. Are you sure it's fake?` },
+      { text: `Great idea — read me the card numbers and I'll process your benefits personally.`, goodChance: 0.0, callerReply: `You want the numbers too?! Everyone wants something from me! I'm calling 911!` },
+      { text: `Social Security will never ask for gift cards. This is 100% a scam.`, goodChance: 0.85, callerReply: `But the man on the phone sounded so official. He had a badge number and everything.` },
+    ],
+    followups: [
+      { text: `Keep those cards and contact the gift card companies — they may be able to freeze the funds.`, goodChance: 0.9, callerReply: `Really?! I still have the receipts. I'll call them right now. Thank you!` },
+      { text: `You can also report this to the FTC at reportfraud.ftc.gov.`, goodChance: 0.85, callerReply: `I will do that. I feel so foolish but at least I caught it in time.` },
+      { text: `Sorry, once the cards are bought there's nothing you can do.`, goodChance: 0.1, callerReply: `That's awful. You could have at least tried to help!` },
+    ],
+    closeGood: `Bless your heart. I'm going to call my real Social Security office right now. You're a lifesaver.`,
+    closeBad:  `I don't know who to trust anymore! Everyone is out to get seniors!`,
+  },
+  {
+    opener: `I clicked a link about a cryptocurrency investment and now my wallet shows zero. I put in my seed phrase because the site said it was for verification. WHERE IS MY MONEY?`,
+    responses: [
+      { text: `Your seed phrase should NEVER be entered anywhere. Your wallet has been drained.`, goodChance: 0.6, callerReply: `I... I had $4,000 in there. Is it really gone? Can anything be done?` },
+      { text: `Congratulations on verifying! Your returns will arrive in 24-48 hours.`, goodChance: 0.0, callerReply: `You're one of them aren't you. I KNOW your voice! I'm tracing this call!` },
+      { text: `Contact your crypto exchange immediately and report the wallet address that received the funds.`, goodChance: 0.7, callerReply: `They can actually do something about it?` },
+    ],
+    followups: [
+      { text: `Recovery is unlikely but reporting it helps authorities track the scammers.`, goodChance: 0.8, callerReply: `I'll do whatever it takes. At least warn others. Thank you for being honest.` },
+      { text: `Also file a report with the FBI's IC3 at ic3.gov — they track crypto fraud.`, goodChance: 0.85, callerReply: `I didn't know that existed. I'll file one today. Thank you.` },
+      { text: `Crypto is unregulated. You won't see that money again.`, goodChance: 0.15, callerReply: `Thanks for nothing. You could have been nicer about it at least!` },
+    ],
+    closeGood: `I appreciate your honesty even if the news was bad. I'll report everything and warn my friends.`,
+    closeBad:  `This whole industry is corrupt! I'm going to the news with this story!`,
+  },
+  {
+    opener: `Someone bought $1,200 of stuff on my Amazon account! I got a call from "Amazon Security" and they want me to buy Google Play cards to reverse the charges. Does that make sense?`,
+    responses: [
+      { text: `No — that makes zero sense. Amazon Security does not ask for gift cards. Hang up on them.`, goodChance: 0.9, callerReply: `They were so convincing though! They knew my name and everything.` },
+      { text: `Yes that's our standard refund procedure. Please proceed with the Google Play cards.`, goodChance: 0.0, callerReply: `I'm googling Amazon's real number right now. You are NOT Amazon. Goodbye!` },
+      { text: `Log into Amazon directly and check your real order history first.`, goodChance: 0.8, callerReply: `I just checked... there are no unauthorized orders. So it was all fake?` },
+    ],
+    followups: [
+      { text: `Exactly — they created fake urgency to panic you into buying gift cards.`, goodChance: 0.9, callerReply: `That's terrifyingly clever. I almost fell for it completely.` },
+      { text: `Change your Amazon password anyway just to be safe.`, goodChance: 0.9, callerReply: `Good thinking. Doing it right now. Thank you for talking me through this!` },
+      { text: `You should be more careful online.`, goodChance: 0.2, callerReply: `Well aren't you just a bundle of joy. Very helpful, truly.` },
+    ],
+    closeGood: `Phew. Okay. No gift cards were bought. Crisis averted thanks to you. Really — thank you!`,
+    closeBad:  `Next time I'll trust my gut and not call random numbers. Bye!`,
+  },
+  {
+    opener: `I got an email from my own email address saying someone hacked my webcam and recorded me. They want $800 in Bitcoin or they'll send the video to everyone I know!`,
+    responses: [
+      { text: `This is called a sextortion scam. They did NOT hack your webcam. It's a bluff.`, goodChance: 0.9, callerReply: `How can you be so sure? They knew my email address!` },
+      { text: `Pay immediately to avoid embarrassment. Bitcoin only, no refunds.`, goodChance: 0.0, callerReply: `You sound just like the email! I'm calling the cyber crime unit!` },
+      { text: `Spoofing a sender address is trivial — it proves nothing about actual access.`, goodChance: 0.8, callerReply: `So they just... faked sending it from my own address? That's even possible?` },
+    ],
+    followups: [
+      { text: `Yes, extremely common. Millions of these go out daily. Just delete it and move on.`, goodChance: 0.95, callerReply: `I've been losing sleep over this for three days. Oh my gosh. THANK you.` },
+      { text: `Put a piece of tape over your webcam for peace of mind, but you owe nothing.`, goodChance: 0.9, callerReply: `Ha! My IT guy told me the same thing once. Okay. I feel so much better now.` },
+      { text: `I mean it could be real. Hard to say. Good luck.`, goodChance: 0.05, callerReply: `That is the least helpful thing anyone has ever said to me. Bye!` },
+    ],
+    closeGood: `You have no idea how relieved I am. I'm going to sleep tonight for the first time this week. Thank you!`,
+    closeBad:  `I'm still not 100% sure but whatever. I guess I'll just worry about it forever. Thanks for nothing.`,
+  },
+  {
+    opener: `My kid downloaded something called a "free Robux generator" and now our bank account has weird charges from somewhere in Eastern Europe. I am FURIOUS.`,
+    responses: [
+      { text: `Those sites are malware traps. You need to run an antivirus scan immediately.`, goodChance: 0.8, callerReply: `I already grounded him for life. But what do I do about the bank charges?` },
+      { text: `Congratulations! Your child successfully enrolled in our premium Robux subscription.`, goodChance: 0.0, callerReply: `EXCUSE me?! I will find out where you are located so help me—` },
+      { text: `Call your bank right now and dispute the charges as unauthorized fraud.`, goodChance: 0.85, callerReply: `Can I do that even if it was technically my kid who clicked something?` },
+    ],
+    followups: [
+      { text: `Yes — you didn't authorize those charges. Banks handle this all the time.`, goodChance: 0.9, callerReply: `Okay good. And I'll scan the computer. Honestly thank you, I needed someone calm to talk to.` },
+      { text: `Also consider setting up parental controls so this doesn't happen again.`, goodChance: 0.85, callerReply: `Already googling how to do that. He's not touching this laptop for a month.` },
+      { text: `Should've watched your kid better honestly.`, goodChance: 0.05, callerReply: `Oh I am TWO SECONDS away from losing my mind. Goodbye forever.` },
+    ],
+    closeGood: `Thank you. I feel better. The bank, the scan, the parental controls. Got it. Goodbye!`,
+    closeBad:  `Completely useless. My husband was right, I should have just dealt with this myself!`,
+  },
 ];
 
 // Call state
