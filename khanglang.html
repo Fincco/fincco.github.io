@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KhangLang Translation Studio v4.0</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .mode-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        #mode-label {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        button {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 8px 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #e5e5e5;
+        }
+        .field-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        textarea {
+            width: 100%;
+            height: 130px;
+            padding: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .cheat-sheet-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+        .cheat-sheet {
+            height: 180px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #ffffff;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+        }
+        .cheat-item {
+            white-space: nowrap;
+        }
+        @media (max-width: 500px) {
+            .cheat-sheet {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Top Section: Mode Switcher -->
+    <div class="mode-section">
+        <div id="mode-label">CURRENT MODE: Text ➔ KhangLang</div>
+        <button id="switch-btn" onclick="toggleMode()">🔄 Switch Mode</button>
+    </div>
+
+    <!-- Middle Section: Input Bar -->
+    <div class="field-group">
+        <label id="input-label" for="input-entry">Type normal text here:</label>
+        <input type="text" id="input-entry" oninput="translateLive()">
+    </div>
+
+    <!-- Middle Section: Output Text Box -->
+    <div class="field-group">
+        <label id="output-label" for="output-text">KhangLang Translation Output:</label>
+        <textarea id="output-text" readonly></textarea>
+    </div>
+
+    <!-- Bottom Section: The Dictionary Reference Sheet -->
+    <div class="cheat-sheet-title">Quick Cheat-Sheet Reference:</div>
+    <div class="cheat-sheet" id="cheat-sheet"></div>
+</div>
+
+<script>
+    // State management
+    let textToKhangMode = true;
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,!?-+=_@#$*()[]{};:<>/\\";
+    const charToKhang = {};
+    const khangToChar = {};
+
+    // DOM Elements
+    const modeLabel = document.getElementById('mode-label');
+    const inputLabel = document.getElementById('input-label');
+    const outputLabel = document.getElementById('output-label');
+    const inputEntry = document.getElementById('input-entry');
+    const outputText = document.getElementById('output-text');
+    const cheatSheet = document.getElementById('cheat-sheet');
+
+    // Build the language tables
+    function buildLanguage() {
+        const base = "khang";
+        for (let i = 0; i < chars.length; i++) {
+            let variant = "";
+            for (let bitIndex = 0; bitIndex < 5; bitIndex++) {
+                if ((i >> bitIndex) & 1) {
+                    variant += base[bitIndex].toUpperCase();
+                } else {
+                    variant += base[bitIndex].toLowerCase();
+                }
+            }
+            if (i >= 32) variant += "!";
+            if (i >= 64) variant += "!!";
+
+            charToKhang[chars[i]] = variant;
+            khangToChar[variant] = chars[i];
+        }
+    }
+
+    // Generate cheat sheet view
+    function populateDictionaryView() {
+        for (let i = 0; i < chars.length; i++) {
+            const char = chars[i];
+            const khang = charToKhang[char];
+            const displayChar = char === " " ? "'Space'" : `'${char}'`;
+            
+            const div = document.createElement('div');
+            div.className = 'cheat-item';
+            div.textContent = `${displayChar} ➔ ${khang}`;
+            cheatSheet.appendChild(div);
+        }
+    }
+
+    // Handle switching between translation directions
+    function toggleMode() {
+        textToKhangMode = !textToKhangMode;
+        inputEntry.value = "";
+        outputText.value = "";
+
+        if (textToKhangMode) {
+            modeLabel.textContent = "CURRENT MODE: Text ➔ KhangLang";
+            modeLabel.style.color = "#0066cc";
+            inputLabel.textContent = "Type normal text here:";
+            outputLabel.textContent = "KhangLang Translation Output:";
+        } else {
+            modeLabel.textContent = "CURRENT MODE: KhangLang ➔ Text";
+            modeLabel.style.color = "#cc3300";
+            inputLabel.textContent = "Paste KhangLang words here (separated by spaces):";
+            outputLabel.textContent = "Decoded Text Output:";
+        }
+        inputEntry.focus();
+    }
+
+    // Live automatic calculations
+    function translateLive() {
+        const rawInput = inputEntry.value;
+        let finalOutput = "";
+
+        if (textToKhangMode) {
+            // ENCODING MODE: Text to KhangLang
+            const translated = [];
+            for (let i = 0; i < rawInput.length; i++) {
+                const char = rawInput[i];
+                if (char in charToKhang) {
+                    translated.push(charToKhang[char]);
+                } else {
+                    // Fallback to space translation or default string if space layout missing
+                    translated.push(charToKhang[" "] || "khang");
+                }
+            }
+            finalOutput = translated.join(" ");
+        } else {
+            // DECODING MODE: KhangLang to Text
+            const tokens = rawInput.trim().split(/\s+/);
+            if (rawInput.trim() === "") {
+                finalOutput = "";
+            } else {
+                const translated = [];
+                for (let i = 0; i < tokens.length; i++) {
+                    const token = tokens[i];
+                    if (token in khangToChar) {
+                        translated.push(khangToChar[token]);
+                    } else {
+                        translated.push("❓");
+                    }
+                }
+                finalOutput = translated.join("");
+            }
+        }
+
+        outputText.value = finalOutput;
+    }
+
+    // Initialize application logic
+    buildLanguage();
+    populateDictionaryView();
+</script>
+
+</body>
+</html>
