@@ -12,6 +12,8 @@
             padding: 20px;
             display: flex;
             justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
         .container {
             width: 100%;
@@ -20,6 +22,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            align-self: flex-start;
         }
         .mode-section {
             display: flex;
@@ -95,6 +98,34 @@
         .cheat-item {
             white-space: nowrap;
         }
+
+        /* Square Fixed Download Button Styling */
+        .download-corner {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 1000;
+        }
+        .download-btn {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 0px; /* Force sharp square corners */
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            transition: background-color 0.2s, transform 0.1s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .download-btn:hover {
+            background-color: #004da0;
+            transform: translateY(-1px);
+        }
+        .download-btn:active {
+            transform: translateY(1px);
+        }
+
         @media (max-width: 500px) {
             .cheat-sheet {
                 grid-template-columns: repeat(2, 1fr);
@@ -126,6 +157,13 @@
     <!-- Bottom Section: The Dictionary Reference Sheet -->
     <div class="cheat-sheet-title">Quick Cheat-Sheet Reference:</div>
     <div class="cheat-sheet" id="cheat-sheet"></div>
+</div>
+
+<!-- Square Download Button -->
+<div class="download-corner">
+    <a href="index.html" download="khang.html" class="download-btn">
+        Download offline version
+    </a>
 </div>
 
 <script>
@@ -210,7 +248,6 @@
                 if (char in charToKhang) {
                     translated.push(charToKhang[char]);
                 } else {
-                    // Fallback to space translation or default string if space layout missing
                     translated.push(charToKhang[" "] || "khang");
                 }
             }
