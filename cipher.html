@@ -78,6 +78,22 @@
       gap: 0.4rem;
     }
 
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .checkbox-group input {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
     label {
       font-size: 0.85rem;
       color: var(--muted);
@@ -85,7 +101,7 @@
       letter-spacing: 0.05em;
     }
 
-    select, textarea {
+    select, textarea, input[type="password"] {
       width: 100%;
       background-color: var(--bg);
       border: 1px solid var(--border);
@@ -101,7 +117,7 @@
       resize: vertical;
     }
 
-    select:focus, textarea:focus {
+    select:focus, textarea:focus, input[type="password"]:focus {
       border-color: var(--accent);
     }
 
@@ -164,20 +180,35 @@
       <div class="control-group">
         <label for="encodeMode">Cipher Mode</label>
         <select id="encodeMode">
-          <option value="visible">Visible Cipher (Alien Glyphs: ⬡ / ⬢)</option>
+          <option value="visible">Alien Glyphs (⬡ / ⬢)</option>
+          <option value="lunar">Lunar Phases (🌑 / 🌕)</option>
+          <option value="matrix">Cyber Blocks (░ / ▓)</option>
           <option value="invisible">Steganographic (Zero-Width Invisible)</option>
         </select>
       </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="usePassword" onchange="togglePasswordFields()" />
+        <label for="usePassword" style="text-transform: none; color: var(--text);">Enable AES Password Encryption</label>
+      </div>
+
+      <div class="control-group" id="encodePassContainer" style="display: none;">
+        <label for="encodePassword">Secret Encryption Passphrase</label>
+        <input type="password" id="encodePassword" placeholder="Enter encryption key..." />
+      </div>
+
       <div class="control-group">
         <label for="plainText">Plaintext Message</label>
         <textarea id="plainText" placeholder="Type your secret message here..."></textarea>
       </div>
+
       <div class="btn-group">
         <button onclick="handleEncode()">Encode Message</button>
         <button onclick="copyOutput('encodedOutput')">Copy Secret Message</button>
       </div>
+
       <div class="control-group">
-        <label>Encoded Output <span id="modeBadge" class="info-badge">Visible Glyphs</span></label>
+        <label>Encoded Output <span id="modeBadge" class="info-badge">Alien Glyphs</span></label>
         <div id="encodedOutput" class="output-box">si</div>
       </div>
     </div>
@@ -189,9 +220,16 @@
         <label for="cipherText">Encoded Message</label>
         <textarea id="cipherText" placeholder="Paste encoded message starting with 'si'..."></textarea>
       </div>
+
+      <div class="control-group">
+        <label for="decodePassword">Passphrase (If message is encrypted)</label>
+        <input type="password" id="decodePassword" placeholder="Enter passphrase..." />
+      </div>
+
       <div class="btn-group">
         <button onclick="handleDecode()">Decode Message</button>
       </div>
+
       <div class="control-group">
         <label>Decoded Plaintext</label>
         <div id="decodedOutput" class="output-box"></div>
@@ -203,22 +241,86 @@
     const PREFIX = "si";
     const SECRET_SYMBOL = " ‎‎‎‎‎"; 
 
-    // Invisible Payload Markers (distinct from the secret symbol)
-    const INV_BIT_0 = "\u200b"; // Zero-Width Space
-    const INV_BIT_1 = "\u200c"; // Zero-Width Non-Joiner
-
-    // Visible Cipher Markers
-    const VIS_BIT_0 = "⬡"; 
-    const VIS_BIT_1 = "⬢"; 
+    // Symbol Maps
+    const SYMBOLS = {
+      invisible: { bit0: "\u200b", bit1: "\u200c" },
+      visible:   { bit0: "⬡",      bit1: "⬢" },
+      lunar:     { bit0: "🌑",     bit1: "🌕" },
+      matrix:    { bit0: "░",      bit1: "▓" }
+    };
 
     document.getElementById("encodeMode").addEventListener("change", (e) => {
       const badge = document.getElementById("modeBadge");
-      badge.textContent = e.target.value === "visible" ? "Visible Glyphs" : "Invisible payload embedded";
+      const labels = {
+        visible: "Alien Glyphs",
+        lunar: "Lunar Phases",
+        matrix: "Cyber Blocks",
+        invisible: "Invisible Payload"
+      };
+      badge.textContent = labels[e.target.value] || "Cipher Selected";
     });
 
-    function handleEncode() {
+    function togglePasswordFields() {
+      const usePass = document.getElementById("usePassword").checked;
+      document.getElementById("encodePassContainer").style.display = usePass ? "flex" : "none";
+    }
+
+    // Web Crypto API Key Derivation
+    async function getCryptoKey(password, salt) {
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+      );
+      return crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: salt,
+          iterations: 100000,
+          hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    // AES-GCM Encryption
+    async function encryptPayload(text, password) {
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await getCryptoKey(password, salt);
+      const encodedText = new TextEncoder().encode(text);
+      const ciphertext = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv }, key, encodedText
+      );
+
+      // Return combined Salt (16B) + IV (12B) + Ciphertext
+      const combined = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
+      combined.set(salt, 0);
+      combined.set(iv, salt.length);
+      combined.set(new Uint8Array(ciphertext), salt.length + iv.length);
+      return combined;
+    }
+
+    // AES-GCM Decryption
+    async function decryptPayload(combinedBytes, password) {
+      if (combinedBytes.length < 28) throw new Error("Payload too short");
+      const salt = combinedBytes.slice(0, 16);
+      const iv = combinedBytes.slice(16, 28);
+      const ciphertext = combinedBytes.slice(28);
+      const key = await getCryptoKey(password, salt);
+      const decrypted = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: iv }, key, ciphertext
+      );
+      return new TextDecoder().decode(decrypted);
+    }
+
+    async function handleEncode() {
       const text = document.getElementById("plainText").value;
       const mode = document.getElementById("encodeMode").value;
+      const usePass = document.getElementById("usePassword").checked;
+      const password = document.getElementById("encodePassword").value;
       const outputEl = document.getElementById("encodedOutput");
 
       if (!text) {
@@ -226,26 +328,42 @@
         return;
       }
 
-      const bit0 = (mode === "visible") ? VIS_BIT_0 : INV_BIT_0;
-      const bit1 = (mode === "visible") ? VIS_BIT_1 : INV_BIT_1;
-
-      // Convert UTF-8 text into binary bit stream
-      const bytes = new TextEncoder().encode(text);
-      let payloadBits = "";
-
-      for (let byte of bytes) {
-        const bits = byte.toString(2).padStart(8, '0');
-        for (let bit of bits) {
-          payloadBits += (bit === '1' ? bit1 : bit0);
-        }
+      if (usePass && !password) {
+        alert("Please enter a passphrase for encryption!");
+        return;
       }
 
-      // Format: PREFIX + Bit Payload + Required Symbol Suffix
-      outputEl.textContent = PREFIX + payloadBits + SECRET_SYMBOL;
+      const { bit0, bit1 } = SYMBOLS[mode] || SYMBOLS.visible;
+
+      try {
+        let bytes;
+        let isEncryptedFlag = usePass ? "1" : "0";
+
+        if (usePass) {
+          bytes = await encryptPayload(text, password);
+        } else {
+          bytes = new TextEncoder().encode(text);
+        }
+
+        // Build Payload: Header Flag Bit (1=Encrypted, 0=Plain) + Byte Bitstream
+        let bitStream = isEncryptedFlag === "1" ? bit1 : bit0;
+
+        for (let byte of bytes) {
+          const bits = byte.toString(2).padStart(8, '0');
+          for (let bit of bits) {
+            bitStream += (bit === '1' ? bit1 : bit0);
+          }
+        }
+
+        outputEl.textContent = PREFIX + bitStream + SECRET_SYMBOL;
+      } catch (err) {
+        alert("Error encoding message: " + err.message);
+      }
     }
 
-    function handleDecode() {
+    async function handleDecode() {
       const input = document.getElementById("cipherText").value;
+      const password = document.getElementById("decodePassword").value;
       const outputEl = document.getElementById("decodedOutput");
 
       outputEl.classList.remove("error");
@@ -256,40 +374,47 @@
         return;
       }
 
-      // Strip "si" prefix
       const payload = input.slice(PREFIX.length);
       let bitString = "";
 
-      // Extract binary bits, ignoring the secret symbol suffix and filler characters
+      // Extract all valid 0/1 bits across all supported symbol sets
       for (let char of payload) {
-        if (char === INV_BIT_1 || char === VIS_BIT_1) {
+        if (Object.values(SYMBOLS).some(s => s.bit1 === char)) {
           bitString += "1";
-        } else if (char === INV_BIT_0 || char === VIS_BIT_0) {
+        } else if (Object.values(SYMBOLS).some(s => s.bit0 === char)) {
           bitString += "0";
         }
       }
 
-      if (bitString.length === 0) {
-        outputEl.textContent = "Error: No secret payload found in the message.";
+      if (bitString.length < 9 || (bitString.length - 1) % 8 !== 0) {
+        outputEl.textContent = "Error: Invalid or corrupted payload.";
         outputEl.classList.add("error");
         return;
       }
 
-      if (bitString.length % 8 !== 0) {
-        outputEl.textContent = "Error: Message is corrupted or truncated.";
-        outputEl.classList.add("error");
-        return;
+      const isEncrypted = bitString[0] === "1";
+      const payloadBits = bitString.slice(1);
+
+      // Convert bit stream to Uint8Array bytes
+      const bytes = new Uint8Array(payloadBits.length / 8);
+      for (let i = 0; i < payloadBits.length; i += 8) {
+        bytes[i / 8] = parseInt(payloadBits.slice(i, i + 8), 2);
       }
 
-      // Reconstruct original UTF-8 string
       try {
-        const bytes = new Uint8Array(bitString.length / 8);
-        for (let i = 0; i < bitString.length; i += 8) {
-          bytes[i / 8] = parseInt(bitString.slice(i, i + 8), 2);
+        if (isEncrypted) {
+          if (!password) {
+            outputEl.textContent = "Error: Password required. This message is encrypted.";
+            outputEl.classList.add("error");
+            return;
+          }
+          const decryptedText = await decryptPayload(bytes, password);
+          outputEl.textContent = decryptedText;
+        } else {
+          outputEl.textContent = new TextDecoder().decode(bytes);
         }
-        outputEl.textContent = new TextDecoder().decode(bytes);
       } catch (err) {
-        outputEl.textContent = "Error: Failed to decode payload.";
+        outputEl.textContent = "Error: Decryption failed. Incorrect password or corrupted payload.";
         outputEl.classList.add("error");
       }
     }
