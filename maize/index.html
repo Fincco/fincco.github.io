@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maize Vids 🌽</title>
+  <style>
+    :root {
+      --bg-color: #1a1a1a;
+      --card-bg: #262626;
+      --accent-yellow: #fbc02d;
+      --accent-green: #4caf50;
+      --text-color: #f5f5f5;
+      --text-muted: #b0b0b0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding-bottom: 50px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #fbc02d 0%, #388e3c 100%);
+      color: #121212;
+      text-align: center;
+      padding: 40px 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    header h1 {
+      font-size: 3rem;
+      margin-bottom: 5px;
+      letter-spacing: 1px;
+    }
+
+    header p {
+      font-size: 1.2rem;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    section {
+      margin-bottom: 50px;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      border-bottom: 3px solid var(--accent-yellow);
+      display: inline-block;
+      padding-bottom: 5px;
+    }
+
+    .animal-section h2 {
+      border-bottom-color: var(--accent-green);
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .video-card {
+      background-color: var(--card-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s ease;
+    }
+
+    .video-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .video-card video, 
+    .video-card iframe {
+      width: 100%;
+      height: 200px;
+      border: none;
+      background-color: #000;
+      display: block;
+    }
+
+    .card-info {
+      padding: 15px;
+    }
+
+    .card-info h3 {
+      font-size: 1.1rem;
+      margin-bottom: 5px;
+    }
+
+    .card-info p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .empty-msg {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Submit Section */
+    .submit-section {
+      background-color: var(--card-bg);
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid #333;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background-color: #121212;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .form-group input:focus, 
+    .form-group select:focus, 
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent-yellow);
+    }
+
+    button.submit-btn {
+      background-color: var(--accent-yellow);
+      color: #121212;
+      font-size: 1rem;
+      font-weight: bold;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button.submit-btn:hover {
+      background-color: #fdd835;
+    }
+
+    .status-msg {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .status-success { color: #66bb6a; }
+    .status-error { color: #ef5350; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🌽 Maize Vids</h1>
+    <p>The internet's premiere collection of corn (and occasional animal) clips!</p>
+  </header>
+
+  <div class="container">
+
+    <!-- Corn Videos Section -->
+    <section>
+      <h2>🌽 Corn Videos</h2>
+      <div id="cornGrid" class="video-grid"></div>
+    </section>
+
+    <!-- Animals Sub-Section -->
+    <section class="animal-section">
+      <h2>🐾 Animal Friends</h2>
+      <div id="animalGrid" class="video-grid"></div>
+    </section>
+
+    <!-- Submission Form -->
+    <section class="submit-section">
+      <h2>📤 Submit a Video</h2>
+      <p style="margin-bottom: 20px; color: var(--text-muted);">Have a cool corn or animal video? Send it over to our Discord server!</p>
+      
+      <form id="submissionForm">
+        <div class="form-group">
+          <label for="submitter">Your Name / Username</label>
+          <input type="text" id="submitter" placeholder="e.g. CornCob3000" required>
+        </div>
+
+        <div class="form-group">
+          <label for="title">Video Title</label>
+          <input type="text" id="title" placeholder="e.g. Duck eating corn in 4K" required>
+        </div>
+
+        <div class="form-group">
+          <label for="category">Category</label>
+          <select id="category" required>
+            <option value="Corn 🌽">Corn Video 🌽</option>
+            <option value="Animal 🐾">Animal Video 🐾</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="videoUrl">Video Link (YouTube URL or Direct MP4 link)</label>
+          <input type="url" id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." required>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Extra Notes (Optional)</label>
+          <textarea id="notes" rows="3" placeholder="Tell us why this video is awesome..."></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">Submit via Discord</button>
+        <div id="statusMsg" class="status-msg"></div>
+      </form>
+    </section>
+
+  </div>
+
+  <script>
+    // ⚠️ REPLACE THIS WITH YOUR ACTUAL DISCORD WEBHOOK URL ⚠️
+    const DISCORD_WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE";
+
+    // Path to your JSON file inside your maize folder
+    const DATA_URL = "./videosData.json";
+
+    // Helper: Detect YouTube links and convert them into iframe embed URLs
+    function parseVideoSource(url) {
+      const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(ytRegExp);
+
+      if (match && match[2].length === 11) {
+        return {
+          isEmbed: true,
+          src: `https://www.youtube.com/embed/${match[2]}`
+        };
+      }
+
+      return {
+        isEmbed: false,
+        src: url
+      };
+    }
+
+    // Fetch JSON and render video cards
+    async function renderVideos() {
+      const cornGrid = document.getElementById('cornGrid');
+      const animalGrid = document.getElementById('animalGrid');
+
+      try {
+        const response = await fetch(DATA_URL);
+        if (!response.ok) {
+          throw new Error(`Failed to load JSON (status ${response.status})`);
+        }
+        
+        const videosData = await response.json();
+
+        cornGrid.innerHTML = '';
+        animalGrid.innerHTML = '';
+
+        let cornCount = 0;
+        let animalCount = 0;
+
+        videosData.forEach(video => {
+          const card = document.createElement('div');
+          card.className = 'video-card';
+
+          const parsed = parseVideoSource(video.url);
+
+          const mediaHTML = parsed.isEmbed 
+            ? `<iframe src="${parsed.src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+            : `<video controls><source src="${parsed.src}" type="video/mp4">Your browser does not support the video tag.</video>`;
+
+          card.innerHTML = `
+            ${mediaHTML}
+            <div class="card-info">
+              <h3>${video.title}</h3>
+              <p>Submitted by: ${video.author}</p>
+            </div>
+          `;
+
+          if (video.category === 'corn') {
+            cornGrid.appendChild(card);
+            cornCount++;
+          } else if (video.category === 'animal') {
+            animalGrid.appendChild(card);
+            animalCount++;
+          }
+        });
+
+        if (cornCount === 0) {
+          cornGrid.innerHTML = '<p class="empty-msg">No corn videos added yet!</p>';
+        }
+        if (animalCount === 0) {
+          animalGrid.innerHTML = '<p class="empty-msg">No animal videos added yet!</p>';
+        }
+
+      } catch (err) {
+        console.error('Error fetching videos:', err);
+        cornGrid.innerHTML = '<p class="empty-msg">Error loading video catalog.</p>';
+        animalGrid.innerHTML = '<p class="empty-msg">Error loading video catalog.</p>';
+      }
+    }
+
+    // Initial Render
+    document.addEventListener('DOMContentLoaded', renderVideos);
+
+    // -------------------------------------------------------------
+    // 📩 DISCORD WEBHOOK SUBMISSION FORM LOGIC
+    // -------------------------------------------------------------
+    const form = document.getElementById('submissionForm');
+    const statusMsg = document.getElementById('statusMsg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      statusMsg.textContent = "Sending submission...";
+      statusMsg.className = "status-msg";
+
+      const submitter = document.getElementById('submitter').value;
+      const title = document.getElementById('title').value;
+      const category = document.getElementById('category').value;
+      const videoUrl = document.getElementById('videoUrl').value;
+      const notes = document.getElementById('notes').value || "None";
+
+      const payload = {
+        username: "Maize Vids Bot",
+        avatar_url: "https://em-content.zobj.net/source/twitter/376/ear-of-corn_1f33d.png",
+        embeds: [
+          {
+            title: "🌽 New Video Submission!",
+            color: category.includes("Corn") ? 16498221 : 5025620,
+            fields: [
+              { name: "Title", value: title, inline: true },
+              { name: "Category", value: category, inline: true },
+              { name: "Submitted By", value: submitter, inline: true },
+              { name: "Video URL", value: videoUrl },
+              { name: "Notes", value: notes }
+            ],
+            footer: {
+              text: "Maize Vids Submission Portal"
+            },
+            timestamp: new Date().toISOString()
+          }
+        ]
+      };
+
+      try {
+        if (DISCORD_WEBHOOK_URL === "YOUR_DISCORD_WEBHOOK_URL_HERE") {
+          throw new Error("Please set your Discord Webhook URL in the script tags!");
+        }
+
+        const response = await fetch(DISCORD_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          statusMsg.textContent = "✅ Submission sent successfully to Discord!";
+          statusMsg.className = "status-msg status-success";
+          form.reset();
+        } else {
+          throw new Error(`Discord returned status ${response.status}`);
+        }
+      } catch (err) {
+        statusMsg.textContent = `❌ Error sending submission: ${err.message}`;
+        statusMsg.className = "status-msg status-error";
+      }
+    });
+  </script>
+</body>
+</html>
