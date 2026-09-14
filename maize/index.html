@@ -129,6 +129,12 @@
     .card-info p {
       color: var(--text-muted);
       font-size: 0.85rem;
+      margin-bottom: 2px;
+    }
+
+    .card-info .orig-author {
+      color: var(--accent-yellow);
+      font-weight: 500;
     }
 
     .empty-msg {
@@ -237,6 +243,11 @@
         </div>
 
         <div class="form-group">
+          <label for="originalAuthor">Original Author / Creator</label>
+          <input type="text" id="originalAuthor" placeholder="e.g. Original YouTube channel name (or 'Me' if you made it)">
+        </div>
+
+        <div class="form-group">
           <label for="title">Video Title</label>
           <input type="text" id="title" placeholder="e.g. Duck eating corn in 4K" required>
         </div>
@@ -322,11 +333,17 @@
             ? `<iframe src="${parsed.src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
             : `<video controls><source src="${parsed.src}" type="video/mp4">Your browser does not support the video tag.</video>`;
 
+          // Check if originalAuthor field exists in JSON entry
+          const origAuthorHTML = video.originalAuthor 
+            ? `<p class="orig-author">Original Author: ${video.originalAuthor}</p>` 
+            : '';
+
           card.innerHTML = `
             ${mediaHTML}
             <div class="card-info">
               <h3>${video.title}</h3>
-              <p>Submitted by: ${video.author}</p>
+              <p>Submitted by: ${video.author || video.submitter}</p>
+              ${origAuthorHTML}
             </div>
           `;
 
@@ -370,12 +387,13 @@
       statusMsg.className = "status-msg";
 
       const submitter = document.getElementById('submitter').value;
+      const originalAuthor = document.getElementById('originalAuthor').value || "Unknown / Unspecified";
       const title = document.getElementById('title').value;
       const category = document.getElementById('category').value;
       const videoUrl = document.getElementById('videoUrl').value;
       const notes = document.getElementById('notes').value || "None";
 
-      const payload = { submitter, title, category, videoUrl, notes };
+      const payload = { submitter, originalAuthor, title, category, videoUrl, notes };
 
       try {
         const response = await fetch(WORKER_URL, {
