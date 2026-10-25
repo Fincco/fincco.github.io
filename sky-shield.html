@@ -201,6 +201,8 @@
 
             <!-- Live Wave Contract & Weather Bar -->
             <div class="flex items-center gap-2 bg-slate-950/85 border border-slate-800 px-3 py-0.5 rounded-lg text-[10px] font-mono-tech">
+                <span id="difficulty-badge" class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">🛡️ STANDARD</span>
+                <span class="text-slate-600">|</span>
                 <span id="weather-badge" class="text-sky-300">🌙 CLEAR STARLIGHT</span>
                 <span class="text-slate-600">|</span>
                 <span id="bounty-text" class="text-amber-300 font-semibold">📋 CONTRACT: Skyhook 3 Crates (0/3) [+350⚙️ +1💎]</span>
@@ -508,6 +510,35 @@
                 <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl">
                     <div class="text-[11px] font-bold text-purple-400 font-mono-tech">A-50U & TU-95MS BOSS</div>
                     <p class="text-[10px] text-slate-400 mt-0.5">S-70 Stealth UCAV, AWACS & Strategic Missile Bombers.</p>
+                </div>
+            </div>
+
+            <!-- Difficulty Mode Selector (Standard vs Hardcore) -->
+            <div class="mb-5 text-left">
+                <div class="text-[11px] font-mono-tech uppercase tracking-widest text-slate-400 mb-2 text-center">
+                    SELECT COMBAT DOCTRINE / DIFFICULTY MODE
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button id="btn-diff-standard" type="button" class="p-3.5 rounded-xl border-2 border-emerald-400 bg-emerald-950/35 text-left transition flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-bold text-emerald-300 font-mono-tech">🛡️ STANDARD COMMAND</span>
+                            <span id="badge-diff-standard" class="text-[10px] font-mono-tech bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded">SELECTED</span>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-1.5">Balanced combined-arms defense. 100% weapon caliber damage, standard threat armor, and baseline R&D upgrade pricing.</p>
+                    </button>
+
+                    <button id="btn-diff-hardcore" type="button" class="p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-rose-500/60 text-left transition flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-bold text-rose-400 font-mono-tech">💀 HARDCORE ATTRITION</span>
+                            <span id="badge-diff-hardcore" class="text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded">CLICK TO SELECT</span>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-1.5">
+                            <span class="text-rose-300 font-semibold">• -35% Weaker Player Bullets</span> &nbsp;
+                            <span class="text-rose-300 font-semibold">• +65% Drone Armor & +22% Speed</span><br>
+                            <span class="text-amber-300 font-semibold">• 1.65x Pricier Upgrades</span> &nbsp;
+                            <span class="text-emerald-300 font-semibold">• 2x Score Multiplier</span>
+                        </p>
+                    </button>
                 </div>
             </div>
 
@@ -980,6 +1011,7 @@ const state = {
     running: false,
     pausedModal: false,
     gameOver: false,
+    hardcore: false,
     combatMode: 'ground', // 'ground' | 'jet' | 'fpv' | 'heli'
     opticsMode: 'standard', // 'standard' | 'nvg' | 'flir'
     weatherMode: 'clear', // 'clear' | 'overcast' | 'storm' | 'fog'
@@ -1473,7 +1505,8 @@ function getUpgradeCost(upg) {
     ];
     const offset = zeroBaseIds.includes(upg.id) ? 0 : 1;
     const exp = Math.max(0, upg.level - offset);
-    return Math.round(upg.baseCost * Math.pow(upg.costMult, exp));
+    const hardcoreCostMult = state.hardcore ? 1.65 : 1.0;
+    return Math.round(upg.baseCost * Math.pow(upg.costMult, exp) * hardcoreCostMult);
 }
 
 function isOverclockActive(id) {
@@ -1483,7 +1516,8 @@ function isOverclockActive(id) {
 
 function getUpgradeCoreCost(upg) {
     if (upg.currency !== 'both') return 0;
-    return Math.round(upg.baseCores * Math.pow(1.45, upg.level));
+    const hardcoreCoreMult = state.hardcore ? 1.5 : 1.0;
+    return Math.round(upg.baseCores * Math.pow(1.45, upg.level) * hardcoreCoreMult);
 }
 
 function generateWaveBounty(waveNum) {
@@ -1619,16 +1653,17 @@ function getBulletDamage() {
     const thermoMult = isOverclockActive('ocThermobaric')
         ? (1.85 + (state.upgrades.ocThermobaric.level - 1) * 0.25)
         : 1.0;
+    const hardcoreWeakerMult = state.hardcore ? 0.65 : 1.0;
     if (state.combatMode === 'jet') {
-        return (15 + (state.upgrades.jetVulcan.level - 1) * 5.5) * zvook * thermoMult;
+        return (15 + (state.upgrades.jetVulcan.level - 1) * 5.5) * zvook * thermoMult * hardcoreWeakerMult;
     }
     if (state.combatMode === 'heli') {
-        return (22 + (state.upgrades.heliChinGun.level - 1) * 8.0) * zvook * thermoMult;
+        return (22 + (state.upgrades.heliChinGun.level - 1) * 8.0) * zvook * thermoMult * hardcoreWeakerMult;
     }
     if (state.combatMode === 'fpv') {
-        return (12 + (state.upgrades.fpvQuadUpgrade.level - 1) * 4.5) * zvook * thermoMult;
+        return (12 + (state.upgrades.fpvQuadUpgrade.level - 1) * 4.5) * zvook * thermoMult * hardcoreWeakerMult;
     }
-    return (16 + (state.upgrades.flakShells.level - 1) * 7.0) * zvook * thermoMult;
+    return (16 + (state.upgrades.flakShells.level - 1) * 7.0) * zvook * thermoMult * hardcoreWeakerMult;
 }
 
 function getFlakRadius() {
@@ -1787,24 +1822,24 @@ function spawnDrone(forcedType = null, customX = null, customY = null) {
             state.bossSpawnedThisWave = true;
         } else {
             const r = Math.random();
-            if (wave >= 5 && r < 0.07) type = 'kinzhal';
-            else if (wave >= 4 && r < 0.14) type = 'okhotnik';
-            else if (wave >= 4 && r < 0.22) type = 'iskander';
-            else if (wave >= 3 && r < 0.31) type = 'kh101';
-            else if (wave >= 3 && r < 0.40) type = 'forpost';
-            else if (wave >= 3 && r < 0.49) type = 'mohajer';
-            else if (wave >= 2 && r < 0.58) type = 'garpiya';
-            else if (wave >= 2 && r < 0.67) type = 'shahed238';
-            else if (wave >= 2 && r < 0.76) type = 'supercam';
-            else if (wave >= 2 && r < 0.84) type = 'lancet';
-            else if (wave >= 2 && r < 0.91) type = 'orlan';
+            if ((wave >= 5 || (state.hardcore && wave >= 3)) && r < 0.09) type = 'kinzhal';
+            else if ((wave >= 4 || (state.hardcore && wave >= 3)) && r < 0.16) type = 'okhotnik';
+            else if ((wave >= 4 || (state.hardcore && wave >= 2)) && r < 0.24) type = 'iskander';
+            else if (wave >= 3 && r < 0.33) type = 'kh101';
+            else if (wave >= 3 && r < 0.42) type = 'forpost';
+            else if (wave >= 3 && r < 0.51) type = 'mohajer';
+            else if (wave >= 2 && r < 0.60) type = 'garpiya';
+            else if (wave >= 2 && r < 0.69) type = 'shahed238';
+            else if (wave >= 2 && r < 0.77) type = 'supercam';
+            else if (wave >= 2 && r < 0.85) type = 'lancet';
+            else if (wave >= 2 && r < 0.92) type = 'orlan';
             else if (wave >= 1 && r < 0.96) type = 'gerbera';
             else type = 'shahed';
         }
     }
 
     const fromLeft = Math.random() < 0.5;
-    const speedScale = 1 + Math.min(0.95, (wave - 1) * 0.065);
+    const speedScale = (1 + Math.min(0.95, (wave - 1) * 0.065)) * (state.hardcore ? 1.22 : 1.0);
     const meta = THREAT_CATALOG[type] || THREAT_CATALOG.shahed;
 
     let x = customX !== null ? customX : (fromLeft ? -50 : W + 50);
@@ -1920,6 +1955,10 @@ function spawnDrone(forcedType = null, customX = null, customY = null) {
         spawnFloatingText(W / 2, 95, '🛩️ BOSS ALERT: TU-95MS "BEAR" STRATEGIC BOMBER IN SECTOR!', '#fbbf24');
     }
 
+    if (state.hardcore) {
+        hp = Math.round(hp * 1.65);
+    }
+
     drones.push({
         type,
         label: meta.name,
@@ -1928,7 +1967,7 @@ function spawnDrone(forcedType = null, customX = null, customY = null) {
         baseVy: vy,
         hp, maxHp: hp,
         scrapBase: meta.scrapBase,
-        scoreVal: meta.scoreVal,
+        scoreVal: state.hardcore ? meta.scoreVal * 2 : meta.scoreVal,
         radius,
         propAngle: 0,
         state: 'flying',
@@ -2746,7 +2785,8 @@ function updateGame(dt) {
             const reactorMult = isOverclockActive('ocUraniumLaser')
                 ? (2.2 + (state.upgrades.ocUraniumLaser.level - 1) * 0.4)
                 : 1.0;
-            const laserDps = (22 + state.upgrades.laserTurret.level * 12) * reactorMult * getCodexDamageMultiplier(bestDrone.type) * getZvookDamageBonus();
+            const hardcoreLaserMult = state.hardcore ? 0.65 : 1.0;
+            const laserDps = (22 + state.upgrades.laserTurret.level * 12) * reactorMult * hardcoreLaserMult * getCodexDamageMultiplier(bestDrone.type) * getZvookDamageBonus();
             bestDrone.hp -= laserDps * dt;
             bestDrone.hitFlash = 0.05;
             if (Math.random() < 0.35) {
@@ -2892,8 +2932,9 @@ function updateGame(dt) {
             if (Math.hypot(m.target.x - m.x, m.target.y - m.y) < m.target.radius + 22) {
                 const amraamMult = 1 + state.upgrades.labAmraam.level * 0.45;
                 const hyperMult = m.isPatriot ? (1 + state.upgrades.labHypersonicSam.level * 0.65) : 1;
+                const hardcoreMissileMult = state.hardcore ? 0.72 : 1.0;
                 const baseDmg = m.isPatriot ? 195 : (m.isHeliRocket ? 68 : (m.isAim9x ? 105 : 120));
-                m.target.hp -= baseDmg * amraamMult * hyperMult * getCodexDamageMultiplier(m.target.type) * getZvookDamageBonus();
+                m.target.hp -= baseDmg * amraamMult * hyperMult * hardcoreMissileMult * getCodexDamageMultiplier(m.target.type) * getZvookDamageBonus();
                 spawnExplosion(m.x, m.y, m.isPatriot ? '#34d399' : (m.isHeliRocket ? '#a3e635' : (m.isAim9x ? '#f43f5e' : '#38bdf8')), 22);
                 if (m.target.hp <= 0) {
                     triggerDroneShotDown(m.target, 'missile');
@@ -3106,7 +3147,8 @@ function updateGame(dt) {
 
             // Check impact with City Skyline
             if (d.y >= GROUND_Y - 12) {
-                const dmg = d.type === 'kinzhal' ? 34 : d.type === 'iskander' ? 26 : d.type === 'kh101' ? 22 : d.type === 'lancet' ? 14 : d.type === 'gerbera' ? 4 : 11;
+                const baseImpactDmg = d.type === 'kinzhal' ? 34 : d.type === 'iskander' ? 26 : d.type === 'kh101' ? 22 : d.type === 'lancet' ? 14 : d.type === 'gerbera' ? 4 : 11;
+                const dmg = state.hardcore ? Math.round(baseImpactDmg * 1.35) : baseImpactDmg;
                 damageCity(dmg, d.x, GROUND_Y - 10, `${d.label} IMPACT!`);
                 sfx.playExplosion(true);
                 spawnExplosion(d.x, GROUND_Y - 10, '#ef4444', 28);
@@ -3284,6 +3326,7 @@ function updatePerimeterTowers(dt) {
     const reactorMult = isOverclockActive('ocUraniumLaser')
         ? (2.2 + (state.upgrades.ocUraniumLaser.level - 1) * 0.4)
         : 1.0;
+    const hardcoreTowerMult = state.hardcore ? 0.65 : 1.0;
 
     // Gepard 35mm Radar Flakpanzer on Right Perimeter (W/2 + 88)
     if (state.upgrades.gepardTrack.level > 0) {
@@ -3300,7 +3343,7 @@ function updatePerimeterTowers(dt) {
                 y: gy + Math.sin(ang) * 20,
                 vx: Math.cos(ang + (Math.random() - 0.5) * 0.03) * 860,
                 vy: Math.sin(ang + (Math.random() - 0.5) * 0.03) * 860,
-                dmg: (14 + state.upgrades.gepardTrack.level * 5) * reactorMult * getZvookDamageBonus(),
+                dmg: (14 + state.upgrades.gepardTrack.level * 5) * reactorMult * hardcoreTowerMult * getZvookDamageBonus(),
                 flakRadius: 22,
                 isJetBullet: false,
                 isFpvNet: false,
@@ -3324,7 +3367,7 @@ function updatePerimeterTowers(dt) {
                 y: sy + Math.sin(ang) * 22,
                 vx: Math.cos(ang + (Math.random() - 0.5) * 0.025) * 920,
                 vy: Math.sin(ang + (Math.random() - 0.5) * 0.025) * 920,
-                dmg: (18 + state.upgrades.skynexTower.level * 6.5) * reactorMult * getZvookDamageBonus(),
+                dmg: (18 + state.upgrades.skynexTower.level * 6.5) * reactorMult * hardcoreTowerMult * getZvookDamageBonus(),
                 flakRadius: 26,
                 isJetBullet: false,
                 isFpvNet: false,
@@ -3412,6 +3455,7 @@ function updateAutomatedGroundTurret(dt, turretX, turretY) {
 
 function updatePickupFireGroups(dt) {
     const flying = drones.filter(d => d.state === 'flying' && !d.hijacked);
+    const hardcorePickupMult = state.hardcore ? 0.65 : 1.0;
     pickupTrucks.forEach((p, idx) => {
         p.x += p.dir * 52 * dt;
         if (p.x > W - 90) p.dir = -1;
@@ -3428,7 +3472,7 @@ function updatePickupFireGroups(dt) {
                     y: (GROUND_Y - 14) + Math.sin(p.aimAngle) * 18,
                     vx: Math.cos(p.aimAngle + (Math.random() - 0.5) * 0.05) * 760,
                     vy: Math.sin(p.aimAngle + (Math.random() - 0.5) * 0.05) * 760,
-                    dmg: 9 + state.upgrades.pickupFleet.level * 3,
+                    dmg: (9 + state.upgrades.pickupFleet.level * 3) * hardcorePickupMult,
                     flakRadius: 12,
                     isJetBullet: false,
                     isFpvNet: false,
@@ -3597,7 +3641,7 @@ function advanceToNextWave() {
 
     state.wave++;
     state.waveEnemiesSpawned = 0;
-    state.waveEnemiesToSpawn = Math.round(8 + state.wave * 3.6);
+    state.waveEnemiesToSpawn = Math.round((8 + state.wave * 3.6) * (state.hardcore ? 1.3 : 1.0));
     state.waveCooldown = 0;
     state.waveSpawnTimer = 1.1;
     state.bossSpawnedThisWave = false;
@@ -5149,47 +5193,83 @@ function renderCodexCards() {
                 <p class="text-xs text-slate-300 leading-relaxed">${meta.desc}</p>
             </div>
             <div class="pt-2 border-t border-slate-800/90 mt-1 flex items-center justify-between text-xs font-mono-tech">
-                <div class="flex items-center gap-1.5 text-amber-300">
-                    <span>${meta.partIcon}</span>
-                    <span class="truncate max-w-[155px]" title="${meta.partName}">${meta.partName}</span>
-                </div>
-                <div class="text-slate-300">
-                    DOWNED: <b class="text-white">${stats.kills}</b>
-                </div>
+                <span class="text-amber-300">${meta.partIcon} ${meta.partName}</span>
+                <span class="text-slate-400">DOWNED: <b class="text-white">${stats.kills}</b></span>
             </div>
         `;
         container.appendChild(card);
     });
 }
 
-function toggleArmoryModal(forceState) {
-    if (state.gameOver || !state.running) return;
-    document.getElementById('codex-modal').classList.add('hidden');
+function toggleArmoryModal(forceState = null) {
+    if (!state.running || state.gameOver) return;
     const modal = document.getElementById('armory-modal');
-    const willOpen = typeof forceState === 'boolean' ? forceState : modal.classList.contains('hidden');
-    state.pausedModal = willOpen;
+    const codexModal = document.getElementById('codex-modal');
+    codexModal.classList.add('hidden');
+
+    const willOpen = forceState !== null ? forceState : modal.classList.contains('hidden');
     if (willOpen) {
+        state.pausedModal = true;
         state.isFiring = false;
         renderArmoryCards();
         modal.classList.remove('hidden');
     } else {
+        state.pausedModal = false;
         modal.classList.add('hidden');
+        lastTime = performance.now();
     }
 }
 
-function toggleCodexModal(forceState) {
-    if (state.gameOver || !state.running) return;
-    document.getElementById('armory-modal').classList.add('hidden');
-    document.getElementById('codex-badge').classList.add('hidden');
+function toggleCodexModal(forceState = null) {
+    if (!state.running || state.gameOver) return;
     const modal = document.getElementById('codex-modal');
-    const willOpen = typeof forceState === 'boolean' ? forceState : modal.classList.contains('hidden');
-    state.pausedModal = willOpen;
+    const armoryModal = document.getElementById('armory-modal');
+    armoryModal.classList.add('hidden');
+    document.getElementById('codex-badge').classList.add('hidden');
+
+    const willOpen = forceState !== null ? forceState : modal.classList.contains('hidden');
     if (willOpen) {
+        state.pausedModal = true;
         state.isFiring = false;
         renderCodexCards();
         modal.classList.remove('hidden');
     } else {
+        state.pausedModal = false;
         modal.classList.add('hidden');
+        lastTime = performance.now();
+    }
+}
+
+function setDifficultyMode(isHardcore) {
+    state.hardcore = Boolean(isHardcore);
+    const btnStd = document.getElementById('btn-diff-standard');
+    const btnHc = document.getElementById('btn-diff-hardcore');
+    const badgeStd = document.getElementById('badge-diff-standard');
+    const badgeHc = document.getElementById('badge-diff-hardcore');
+    const startBtn = document.getElementById('btn-start-game');
+
+    if (state.hardcore) {
+        btnStd.className = 'p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-emerald-500/50 text-left transition flex flex-col justify-between';
+        badgeStd.className = 'text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded';
+        badgeStd.textContent = 'CLICK TO SELECT';
+
+        btnHc.className = 'p-3.5 rounded-xl border-2 border-rose-500 bg-rose-950/40 text-left transition flex flex-col justify-between shadow-lg shadow-rose-500/15';
+        badgeHc.className = 'text-[10px] font-mono-tech bg-rose-500 text-slate-950 font-bold px-2 py-0.5 rounded';
+        badgeHc.textContent = 'ACTIVE DOCTRINE';
+
+        startBtn.className = 'w-full py-3.5 rounded-xl bg-gradient-to-r from-rose-600 via-red-500 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-slate-950 font-bold text-base tracking-wider uppercase font-mono-tech shadow-lg shadow-rose-500/25 transition transform hover:-translate-y-0.5';
+        startBtn.textContent = '💀 SCRAMBLE HARDCORE ATTRITION DEFENSE ▶';
+    } else {
+        btnStd.className = 'p-3.5 rounded-xl border-2 border-emerald-400 bg-emerald-950/35 text-left transition flex flex-col justify-between shadow-lg shadow-emerald-500/10';
+        badgeStd.className = 'text-[10px] font-mono-tech bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded';
+        badgeStd.textContent = 'SELECTED';
+
+        btnHc.className = 'p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-rose-500/60 text-left transition flex flex-col justify-between';
+        badgeHc.className = 'text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded';
+        badgeHc.textContent = 'CLICK TO SELECT';
+
+        startBtn.className = 'w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 hover:from-emerald-400 hover:to-cyan-300 text-slate-950 font-bold text-base tracking-wider uppercase font-mono-tech shadow-lg shadow-emerald-500/25 transition transform hover:-translate-y-0.5';
+        startBtn.textContent = 'SCRAMBLE SUPREME AIR DEFENSE ▶';
     }
 }
 
@@ -5199,18 +5279,29 @@ function startNewGame() {
     state.pausedModal = false;
     state.gameOver = false;
     state.score = 0;
-    state.scrap = 220;
-    state.techCores = 2;
+    state.scrap = state.hardcore ? 180 : 220;
+    state.techCores = state.hardcore ? 1 : 2;
     state.cityHp = 100;
     state.maxCityHp = 100;
     state.wave = 1;
-    state.waveEnemiesToSpawn = 9;
+    state.waveEnemiesToSpawn = state.hardcore ? 12 : 9;
     state.waveEnemiesSpawned = 0;
     state.waveSpawnTimer = 0.7;
     state.bossSpawnedThisWave = false;
     state.weatherMode = 'clear';
     const wBadge = document.getElementById('weather-badge');
     if (wBadge) wBadge.textContent = '🌙 CLEAR STARLIGHT';
+
+    const diffBadge = document.getElementById('difficulty-badge');
+    if (diffBadge) {
+        if (state.hardcore) {
+            diffBadge.className = 'px-1.5 py-0.2 rounded bg-rose-500/25 text-rose-300 font-bold border border-rose-500/50';
+            diffBadge.textContent = '💀 HARDCORE';
+        } else {
+            diffBadge.className = 'px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40';
+            diffBadge.textContent = '🛡️ STANDARD';
+        }
+    }
 
     Object.keys(state.codex).forEach(k => {
         state.codex[k].kills = 0;
@@ -5282,10 +5373,11 @@ function triggerGameOver() {
     document.getElementById('final-waves').textContent = state.wave - 1;
     document.getElementById('final-kills').textContent = totalKills;
 
+    const modeTag = state.hardcore ? '[HARDCORE ATTRITION]' : '[STANDARD]';
     document.getElementById('modal-main-title').innerHTML = `GRID COLLAPSED: <span class="text-rose-500">SECTOR LOST</span>`;
-    document.getElementById('modal-subtitle').textContent = `The city power grid was overwhelmed during Wave ${state.wave}. Review your combat telemetry below and scramble a new defense.`;
+    document.getElementById('modal-subtitle').textContent = `${modeTag} The city power grid was overwhelmed during Wave ${state.wave}. Select your combat doctrine below and scramble a new defense.`;
     document.getElementById('gameover-stats').classList.remove('hidden');
-    document.getElementById('btn-start-game').textContent = 'REDEPLOY AIR DEFENSE ▶';
+    setDifficultyMode(state.hardcore);
     document.getElementById('start-modal').classList.remove('hidden');
 }
 
@@ -5441,6 +5533,8 @@ document.querySelectorAll('.armory-tab-btn').forEach(btn => {
     });
 });
 
+document.getElementById('btn-diff-standard').addEventListener('click', () => setDifficultyMode(false));
+document.getElementById('btn-diff-hardcore').addEventListener('click', () => setDifficultyMode(true));
 document.getElementById('btn-start-game').addEventListener('click', () => startNewGame());
 
 // ==========================================
