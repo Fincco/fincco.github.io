@@ -140,7 +140,7 @@
             <div>
                 <div class="text-[10px] uppercase tracking-widest text-emerald-400 font-mono-tech flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    CITY POWER GRID
+                    CITY POWER GRID <span id="shield-text" class="text-cyan-300 font-bold hidden">[🛡️0]</span>
                 </div>
                 <div class="w-24 sm:w-32 h-3 bg-slate-900/90 rounded-full overflow-hidden border border-slate-700 mt-1 p-0.5">
                     <div id="hp-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-300" style="width: 100%"></div>
@@ -151,18 +151,20 @@
                 </div>
             </div>
 
-            <!-- Jet & FPV Status Bar (Shield / Battery & Cannon Heat) -->
-            <div class="border-l border-slate-700/80 pl-2.5">
-                <div class="text-[10px] uppercase tracking-widest text-cyan-400 font-mono-tech flex items-center justify-between gap-2">
-                    <span id="air-unit-label">✈️ F-16 AIRFRAME</span>
-                    <span id="jet-hp-text" class="text-white">100%</span>
+            <div class="h-9 w-px bg-slate-700/80 hidden sm:block"></div>
+
+            <!-- Jet, Heli & FPV Status Bar (Shield / Battery & Cannon Heat) -->
+            <div class="hidden sm:block">
+                <div class="flex items-center justify-between gap-2 text-[10px] uppercase tracking-widest text-cyan-300 font-mono-tech">
+                    <span id="air-unit-label">✈️ AIRWING STANDBY</span>
+                    <span id="jet-hp-text" class="text-white font-bold">100%</span>
                 </div>
-                <div class="w-24 sm:w-28 h-2.5 bg-slate-900/90 rounded-full overflow-hidden border border-slate-700 mt-1 p-0.5">
-                    <div id="jet-hp-bar" class="h-full bg-gradient-to-r from-cyan-500 to-sky-400 rounded-full transition-all duration-200" style="width: 100%"></div>
+                <div class="w-28 h-2 bg-slate-900/90 rounded-full overflow-hidden border border-slate-700 mt-1">
+                    <div id="jet-hp-bar" class="h-full bg-gradient-to-r from-cyan-500 to-sky-400 transition-all duration-200" style="width: 100%"></div>
                 </div>
-                <div class="flex items-center justify-between text-[10px] font-mono-tech mt-1 text-slate-400">
-                    <span id="heat-label">HEAT</span>
-                    <div class="w-14 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-700">
+                <div class="flex items-center gap-1.5 mt-1">
+                    <span id="heat-label" class="text-[9px] font-mono-tech text-amber-300">HEAT</span>
+                    <div class="flex-1 h-1.5 bg-slate-900/90 rounded-full overflow-hidden border border-slate-700">
                         <div id="heat-bar" class="h-full bg-amber-500 transition-all duration-75" style="width: 0%"></div>
                     </div>
                 </div>
@@ -216,23 +218,25 @@
         <!-- Right: Scrap Counter, Tech Cores, Optics & Menu Buttons -->
         <div class="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
             <div class="hud-panel-amber rounded-xl p-2 sm:px-3 sm:py-2 flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 text-sm font-bold">
-                    ⚙️
-                </div>
-                <div>
-                    <div class="text-[9px] uppercase tracking-widest text-amber-300/80 font-mono-tech">SCRAP</div>
-                    <div id="scrap-display" class="text-sm sm:text-lg font-bold text-amber-400 font-mono-tech leading-none">220</div>
-                </div>
-                <div class="h-7 w-px bg-amber-700/40 mx-0.5"></div>
-                <div>
-                    <div class="text-[9px] uppercase tracking-widest text-cyan-300/80 font-mono-tech">CORES</div>
-                    <div class="flex items-center gap-0.5">
-                        <span class="text-xs">💎</span>
-                        <span id="cores-display" class="text-sm sm:text-lg font-bold text-cyan-300 font-mono-tech leading-none">2</span>
+                <div id="hud-scrap-group" class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 text-sm font-bold">
+                        ⚙️
                     </div>
+                    <div>
+                        <div class="text-[9px] uppercase tracking-widest text-amber-300/80 font-mono-tech">SCRAP</div>
+                        <div id="scrap-display" class="text-sm sm:text-lg font-bold text-amber-400 font-mono-tech leading-none">220</div>
+                    </div>
+                    <div class="h-7 w-px bg-amber-700/40 mx-0.5"></div>
+                    <div>
+                        <div class="text-[9px] uppercase tracking-widest text-cyan-300/80 font-mono-tech">CORES</div>
+                        <div class="flex items-center gap-0.5">
+                            <span class="text-xs">💎</span>
+                            <span id="cores-display" class="text-sm sm:text-lg font-bold text-cyan-300 font-mono-tech leading-none">2</span>
+                        </div>
+                    </div>
+                    <div class="h-7 w-px bg-amber-700/40 mx-0.5 hidden sm:block"></div>
                 </div>
-                <div class="h-7 w-px bg-amber-700/40 mx-0.5 hidden sm:block"></div>
-                <div class="hidden sm:block">
+                <div>
                     <div class="text-[9px] uppercase tracking-widest text-slate-400 font-mono-tech">SCORE</div>
                     <div id="score-display" class="text-sm sm:text-base font-bold text-white font-mono-tech leading-none">0</div>
                 </div>
@@ -258,12 +262,37 @@
                 <span class="text-[9px] font-mono-tech mt-1 font-semibold">CODEX [C]</span>
             </button>
 
+            <!-- Achievements Button -->
+            <button id="btn-achievements" class="hud-panel-amber hover:border-amber-400 rounded-xl p-2 sm:px-2.5 sm:py-2 text-amber-300 hover:bg-amber-950/50 transition flex flex-col items-center justify-center relative" title="Open Career Achievements & High Scores [Key: A]">
+                <span id="ach-badge" class="hidden absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-bold text-[10px] flex items-center justify-center animate-bounce">🏆</span>
+                <span class="text-base leading-none">🏆</span>
+                <span id="hud-ach-count" class="text-[9px] font-mono-tech mt-1 font-semibold">MEDALS [A]</span>
+            </button>
+
+            <!-- Settings Button -->
+            <button id="btn-settings" class="hud-panel hover:border-emerald-400 rounded-xl p-2 sm:py-2 sm:px-2.5 text-slate-300 hover:text-white transition flex flex-col items-center justify-center" title="Open Persistent Game Settings [Key: O]">
+                <span class="text-base leading-none">⚙️</span>
+                <span class="text-[9px] font-mono-tech mt-1 font-semibold">SET [O]</span>
+            </button>
+
             <!-- Audio Toggle -->
             <button id="btn-mute" class="hud-panel hover:border-emerald-400 rounded-xl p-2 sm:py-2 sm:px-2.5 text-slate-300 hover:text-white transition flex flex-col items-center justify-center" title="Toggle Sound Effects">
                 <span id="icon-sound-on" class="text-base leading-none">🔊</span>
                 <span id="icon-sound-off" class="text-base leading-none hidden">🔇</span>
                 <span class="text-[9px] font-mono-tech mt-1">AUDIO</span>
             </button>
+        </div>
+    </div>
+
+    <!-- ACHIEVEMENT UNLOCK TOAST BANNER -->
+    <div id="achievement-toast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300">
+        <div class="hud-panel-amber border-2 border-amber-400 rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-3">
+            <div id="toast-icon" class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400 flex items-center justify-center text-2xl">🏆</div>
+            <div>
+                <div class="text-[10px] font-mono-tech uppercase tracking-widest text-amber-300 font-bold">🏆 ACHIEVEMENT UNLOCKED & SAVED</div>
+                <div id="toast-title" class="text-sm sm:text-base font-bold text-white leading-tight">First Intercept</div>
+                <div id="toast-desc" class="text-xs text-slate-300 font-mono-tech">Shoot down your first hostile aerial threat.</div>
+            </div>
         </div>
     </div>
 
@@ -448,8 +477,127 @@
         </div>
     </div>
 
+    <!-- CAREER ACHIEVEMENTS & HIGH SCORES MODAL -->
+    <div id="achievements-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md">
+        <div class="hud-panel-amber rounded-2xl max-w-5xl w-full p-4 sm:p-6 border border-amber-500/50 shadow-2xl max-h-[92vh] flex flex-col">
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 mb-4 gap-2">
+                <div>
+                    <div class="text-xs font-mono-tech uppercase tracking-widest text-amber-400 flex items-center gap-2">
+                        <span>COMMANDER SERVICE RECORD & MEDALS</span>
+                        <span id="cloud-sync-pill" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px]">☁️ CLOUD SAVED</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-white">CAREER HIGH SCORES & 16 TACTICAL ACHIEVEMENTS</h2>
+                </div>
+                <button id="btn-close-achievements" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl font-mono-tech text-xs border border-slate-600 transition">
+                    ESC / CLOSE MEDALS
+                </button>
+            </div>
+
+            <!-- High Scores Summary Row inside Modal -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4 font-mono-tech">
+                <div class="bg-slate-900/90 border border-sky-500/40 rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] text-sky-400 uppercase font-bold">🕊️ PEACEFUL HIGH SCORE</div>
+                        <div id="modal-pf-highscore" class="text-xl font-bold text-white mt-0.5">0</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-slate-400">BEST WAVE</div>
+                        <div id="modal-pf-bestwave" class="text-base font-bold text-sky-300">WAVE 01</div>
+                    </div>
+                </div>
+                <div class="bg-slate-900/90 border border-emerald-500/40 rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] text-emerald-400 uppercase font-bold">🛡️ STANDARD HIGH SCORE</div>
+                        <div id="modal-std-highscore" class="text-xl font-bold text-white mt-0.5">0</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-slate-400">BEST WAVE</div>
+                        <div id="modal-std-bestwave" class="text-base font-bold text-emerald-300">WAVE 01</div>
+                    </div>
+                </div>
+                <div class="bg-slate-900/90 border border-rose-500/40 rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] text-rose-400 uppercase font-bold">💀 HARDCORE HIGH SCORE</div>
+                        <div id="modal-hc-highscore" class="text-xl font-bold text-white mt-0.5">0</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-slate-400">BEST WAVE</div>
+                        <div id="modal-hc-bestwave" class="text-base font-bold text-rose-300">WAVE 01</div>
+                    </div>
+                </div>
+                <div class="bg-slate-900/90 border border-amber-500/40 rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] text-amber-400 uppercase font-bold">🏆 MEDALS UNLOCKED</div>
+                        <div id="modal-ach-summary" class="text-xl font-bold text-amber-300 mt-0.5">0 / 16</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-slate-400">CAREER KILLS</div>
+                        <div id="modal-career-kills" class="text-base font-bold text-white">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements Grid -->
+            <div id="achievements-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 overflow-y-auto pr-1 flex-1">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- PERSISTENT SETTINGS MODAL -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md">
+        <div class="hud-panel rounded-2xl max-w-lg w-full p-5 sm:p-6 border border-emerald-500/50 shadow-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                    <div class="text-xs font-mono-tech uppercase tracking-widest text-emerald-400 flex items-center gap-2">
+                        <span>SYSTEM CONFIGURATION</span>
+                        <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px]">☁️ AUTO-SAVED</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-white mt-0.5">TACTICAL & AUDIO SETTINGS</h2>
+                </div>
+                <button id="btn-close-settings" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl font-mono-tech text-xs border border-slate-600 transition">
+                    ESC / CLOSE
+                </button>
+            </div>
+
+            <div class="space-y-3 font-mono-tech">
+                <!-- Audio Setting Row -->
+                <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3.5 flex items-center justify-between gap-3">
+                    <div>
+                        <div class="text-sm font-bold text-white flex items-center gap-2">
+                            <span>🔊</span>
+                            <span>SOUND EFFECTS (AUDIO)</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Synthesized weapon fire, explosions, radar alerts, and lock-on tones. Saved across sessions.</p>
+                    </div>
+                    <button id="btn-toggle-setting-audio" type="button" class="px-4 py-2 rounded-xl font-bold text-xs border transition shrink-0 bg-emerald-500 text-slate-950 border-emerald-400">
+                        ON (ACTIVE)
+                    </button>
+                </div>
+
+                <!-- Achievement Notifications Setting Row -->
+                <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3.5 flex items-center justify-between gap-3">
+                    <div>
+                        <div class="text-sm font-bold text-white flex items-center gap-2">
+                            <span>🏆</span>
+                            <span>ACHIEVEMENT NOTIFICATIONS</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Show or hide the pop-up toast banner at the top of the screen when unlocking a new medal.</p>
+                    </div>
+                    <button id="btn-toggle-setting-toasts" type="button" class="px-4 py-2 rounded-xl font-bold text-xs border transition shrink-0 bg-emerald-500 text-slate-950 border-emerald-400">
+                        ON (SHOWN)
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-[11px] text-slate-400 font-mono-tech text-center pt-2 border-t border-slate-800">
+                All preferences automatically sync and persist even after closing the game.
+            </div>
+        </div>
+    </div>
+
     <!-- START / BRIEFING / GAME OVER SCREEN MODAL -->
-    <div id="start-modal" class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+    <div id="start-modal" class="fixed inset-0 z-30 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
         <div class="hud-panel rounded-2xl max-w-4xl w-full p-5 sm:p-7 border border-emerald-500/50 text-center relative overflow-hidden max-h-[94vh] overflow-y-auto">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono-tech mb-2">
                 <span>🛡️ QUAD-MODE COMBINED ARMS: GROUND AA • F-16 VIPER • "STING" FPV • Mi-24P HELI GUNSHIP</span>
@@ -458,8 +606,56 @@
                 SKY SHIELD: <span class="text-emerald-400">SUPREME COMMANDER</span>
             </h1>
             <p id="modal-subtitle" class="text-slate-300 text-xs sm:text-sm mb-4 max-w-2xl mx-auto">
-                Command a layered air-defense network across 4 playable combat vehicles! Complete Live Wave Contracts, unlock 28 multi-tier upgrades across a 5-Tab Armory, and intercept 15 threat types including Kinzhal Hypersonic Missiles, A-50U AWACS, and Tu-95MS Strategic Bombers.
+                Command a layered air-defense network across 4 playable combat vehicles! Choose Peaceful Patrol, Standard Command, or Hardcore Attrition below.
             </p>
+
+            <!-- PERSISTENT HIGH SCORES, ACHIEVEMENTS & SETTINGS BAR IN MAIN MENU -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4 text-left font-mono-tech">
+                <div class="bg-slate-900/95 border border-sky-500/40 rounded-xl p-2.5 flex items-center justify-between">
+                    <div>
+                        <div class="text-[9px] text-sky-400 uppercase font-bold">🕊️ PEACEFUL</div>
+                        <div id="menu-pf-highscore" class="text-base sm:text-lg font-bold text-white">0</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[8px] text-slate-400 uppercase">BEST</div>
+                        <div id="menu-pf-bestwave" class="text-xs font-bold text-sky-300">W01</div>
+                    </div>
+                </div>
+                <div class="bg-slate-900/95 border border-emerald-500/40 rounded-xl p-2.5 flex items-center justify-between">
+                    <div>
+                        <div class="text-[9px] text-emerald-400 uppercase font-bold">🛡️ STANDARD</div>
+                        <div id="menu-std-highscore" class="text-base sm:text-lg font-bold text-white">0</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[8px] text-slate-400 uppercase">BEST</div>
+                        <div id="menu-std-bestwave" class="text-xs font-bold text-emerald-300">W01</div>
+                    </div>
+                </div>
+                <div class="bg-slate-900/95 border border-rose-500/40 rounded-xl p-2.5 flex items-center justify-between">
+                    <div>
+                        <div class="text-[9px] text-rose-400 uppercase font-bold">💀 HARDCORE</div>
+                        <div id="menu-hc-highscore" class="text-base sm:text-lg font-bold text-white">0</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[8px] text-slate-400 uppercase">BEST</div>
+                        <div id="menu-hc-bestwave" class="text-xs font-bold text-rose-300">W01</div>
+                    </div>
+                </div>
+                <button id="btn-menu-achievements" type="button" class="bg-amber-950/30 hover:bg-amber-900/40 border border-amber-500/50 rounded-xl p-2.5 flex items-center justify-between transition group text-left">
+                    <div>
+                        <div class="text-[9px] text-amber-300 uppercase font-bold">🏆 MEDALS</div>
+                        <div id="menu-ach-progress" class="text-base sm:text-lg font-bold text-amber-400">0 / 16</div>
+                    </div>
+                    <div class="text-xl group-hover:scale-110 transition">🎖️</div>
+                </button>
+                <button id="btn-menu-settings" type="button" class="bg-slate-900/95 hover:bg-slate-800 border border-slate-700 hover:border-emerald-400 rounded-xl p-2.5 flex items-center justify-between transition group text-left col-span-2 sm:col-span-1">
+                    <div>
+                        <div class="text-[9px] text-emerald-300 uppercase font-bold">⚙️ SETTINGS</div>
+                        <div id="menu-settings-summary" class="text-xs font-bold text-slate-200 mt-0.5">🔊 ON • 🔔 ON</div>
+                    </div>
+                    <div class="text-xl group-hover:rotate-45 transition">⚙️</div>
+                </button>
+            </div>
 
             <!-- Quad-Mode Feature Highlight -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-left mb-4">
@@ -501,72 +697,140 @@
                 </div>
                 <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl">
                     <div class="text-[11px] font-bold text-cyan-400 font-mono-tech">FORPOST & MOHAJER</div>
-                    <p class="text-[10px] text-slate-400 mt-0.5">Orlan-10, Supercam S350 & glide-bomb UCAVs.</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">High-altitude UCAVs dropping laser-guided glide bombs.</p>
                 </div>
                 <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl">
                     <div class="text-[11px] font-bold text-rose-400 font-mono-tech">KINZHAL & ISKANDER</div>
-                    <p class="text-[10px] text-slate-400 mt-0.5">Kh-101, Iskander-M & Mach-10 Kinzhal hypersonics.</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Mach-10 hypersonic & ballistic missiles plunging from orbit.</p>
                 </div>
                 <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl">
-                    <div class="text-[11px] font-bold text-purple-400 font-mono-tech">A-50U & TU-95MS BOSS</div>
-                    <p class="text-[10px] text-slate-400 mt-0.5">S-70 Stealth UCAV, AWACS & Strategic Missile Bombers.</p>
+                    <div class="text-[11px] font-bold text-yellow-400 font-mono-tech">A-50U & TU-95MS BOSS</div>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Command AWACS & Strategic Bombers dropping 💎 Tech Cores!</p>
                 </div>
             </div>
 
-            <!-- Difficulty Mode Selector (Standard vs Hardcore) -->
-            <div class="mb-5 text-left">
-                <div class="text-[11px] font-mono-tech uppercase tracking-widest text-slate-400 mb-2 text-center">
-                    SELECT COMBAT DOCTRINE / DIFFICULTY MODE
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button id="btn-diff-standard" type="button" class="p-3.5 rounded-xl border-2 border-emerald-400 bg-emerald-950/35 text-left transition flex flex-col justify-between">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-bold text-emerald-300 font-mono-tech">🛡️ STANDARD COMMAND</span>
+            <!-- Combat Doctrine / Difficulty Selector -->
+            <div class="mb-4 text-left">
+                <div class="text-[10px] font-mono-tech uppercase tracking-widest text-slate-400 mb-2 text-center">SELECT COMBAT DOCTRINE (DIFFICULTY MODE)</div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <button id="btn-diff-peaceful" type="button" class="p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-sky-400/60 text-left transition flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-sky-300 font-mono-tech text-xs sm:text-sm">🕊️ PEACEFUL PATROL</span>
+                            <span id="badge-diff-peaceful" class="text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded">CLICK TO SELECT</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300 leading-snug">Pure interception practice! <b>No upgrades, no scrap collecting, and no grid repair</b>. Waves only spawn <b>Gerberas (90%)</b> and <b>Shahed-136s (10%)</b>.</p>
+                    </button>
+
+                    <button id="btn-diff-standard" type="button" class="p-3.5 rounded-xl border-2 border-emerald-400 bg-emerald-950/35 text-left transition flex flex-col justify-between shadow-lg shadow-emerald-500/10">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-emerald-300 font-mono-tech text-xs sm:text-sm">🛡️ STANDARD COMMAND</span>
                             <span id="badge-diff-standard" class="text-[10px] font-mono-tech bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded">SELECTED</span>
                         </div>
-                        <p class="text-xs text-slate-300 mt-1.5">Balanced combined-arms defense. 100% weapon caliber damage, standard threat armor, and baseline R&D upgrade pricing.</p>
+                        <p class="text-[11px] text-slate-300 leading-snug">Balanced combined-arms progression. Standard drone armor, normal R&D upgrade costs, and full-caliber ammunition damage.</p>
                     </button>
 
                     <button id="btn-diff-hardcore" type="button" class="p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-rose-500/60 text-left transition flex flex-col justify-between">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-bold text-rose-400 font-mono-tech">💀 HARDCORE ATTRITION</span>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-rose-400 font-mono-tech text-xs sm:text-sm">💀 HARDCORE ATTRITION</span>
                             <span id="badge-diff-hardcore" class="text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded">CLICK TO SELECT</span>
                         </div>
-                        <p class="text-xs text-slate-300 mt-1.5">
-                            <span class="text-rose-300 font-semibold">• -35% Weaker Player Bullets</span> &nbsp;
-                            <span class="text-rose-300 font-semibold">• +65% Drone Armor & +22% Speed</span><br>
-                            <span class="text-amber-300 font-semibold">• 1.65x Pricier Upgrades</span> &nbsp;
-                            <span class="text-emerald-300 font-semibold">• 2x Score Multiplier</span>
-                        </p>
+                        <p class="text-[11px] text-slate-300 leading-snug"><b>+65% Enemy Armor & +22% Speed</b>, <b>1.65x Upgrade Costs</b>, and <b>-35% Player Bullet Damage</b>. Grants <b>2x Score</b>!</p>
                     </button>
                 </div>
             </div>
 
-            <!-- Final Stats Box (Shown on Game Over) -->
-            <div id="gameover-stats" class="hidden bg-slate-900/95 border border-rose-500/40 rounded-xl p-4 mb-5 text-left font-mono-tech">
-                <div class="text-xs text-rose-400 uppercase mb-2 font-bold">AFTER-ACTION COMBAT REPORT</div>
+            <!-- Game Over Stats Summary (Hidden on initial launch) -->
+            <div id="gameover-stats" class="hidden mb-4 p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/40 font-mono-tech">
+                <div class="text-xs uppercase tracking-widest text-rose-300 mb-2 font-bold">AFTER-ACTION REPORT</div>
                 <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="bg-slate-950 p-2 rounded-lg">
+                    <div class="bg-slate-900/80 p-2 rounded-lg">
                         <div class="text-[10px] text-slate-400">FINAL SCORE</div>
-                        <div id="final-score" class="text-lg font-bold text-white">0</div>
+                        <div id="final-score" class="text-base sm:text-lg font-bold text-white">0</div>
                     </div>
-                    <div class="bg-slate-950 p-2 rounded-lg">
+                    <div class="bg-slate-900/80 p-2 rounded-lg">
                         <div class="text-[10px] text-slate-400">WAVES CLEARED</div>
-                        <div id="final-waves" class="text-lg font-bold text-emerald-400">0</div>
+                        <div id="final-waves" class="text-base sm:text-lg font-bold text-emerald-400">0</div>
                     </div>
-                    <div class="bg-slate-950 p-2 rounded-lg">
+                    <div class="bg-slate-900/80 p-2 rounded-lg">
                         <div class="text-[10px] text-slate-400">THREATS DOWNED</div>
-                        <div id="final-kills" class="text-lg font-bold text-amber-400">0</div>
+                        <div id="final-kills" class="text-base sm:text-lg font-bold text-amber-400">0</div>
                     </div>
                 </div>
             </div>
 
-            <button id="btn-start-game" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 hover:from-emerald-400 hover:to-cyan-300 text-slate-950 font-bold text-base tracking-wider uppercase font-mono-tech shadow-lg shadow-emerald-500/25 transition transform hover:-translate-y-0.5">
+            <button id="btn-start-game" type="button" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 hover:from-emerald-400 hover:to-cyan-300 text-slate-950 font-bold text-base tracking-wider uppercase font-mono-tech shadow-lg shadow-emerald-500/25 transition transform hover:-translate-y-0.5">
                 SCRAMBLE SUPREME AIR DEFENSE ▶
             </button>
         </div>
     </div>
 </div>
+
+<!-- FIREBASE CLOUD PERSISTENCE FOR ACHIEVEMENTS & HIGH SCORES -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+async function initCloudPersistence() {
+    try {
+        if (typeof __firebase_config === 'undefined' || !__firebase_config) return;
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+            await signInAnonymously(auth);
+        }
+
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const profileDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'careerData');
+
+        window.__saveCareerToCloud = async (careerData) => {
+            if (!auth.currentUser) return;
+            try {
+                await setDoc(profileDocRef, {
+                    pfHighScore: careerData.pfHighScore || 0,
+                    pfBestWave: careerData.pfBestWave || 1,
+                    stdHighScore: careerData.stdHighScore || 0,
+                    stdBestWave: careerData.stdBestWave || 1,
+                    hcHighScore: careerData.hcHighScore || 0,
+                    hcBestWave: careerData.hcBestWave || 1,
+                    careerKills: careerData.careerKills || 0,
+                    careerSkyhooks: careerData.careerSkyhooks || 0,
+                    careerContracts: careerData.careerContracts || 0,
+                    unlockedAchievements: careerData.unlockedAchievements || {},
+                    settings: careerData.settings || { audioMuted: false, showAchievementToasts: true },
+                    updatedAt: Date.now()
+                }, { merge: true });
+            } catch (err) {
+                console.warn('Cloud save deferred:', err);
+            }
+        };
+
+        onSnapshot(
+            profileDocRef,
+            (snap) => {
+                if (snap.exists() && typeof window.__applyCloudCareerData === 'function') {
+                    window.__applyCloudCareerData(snap.data());
+                }
+            },
+            (err) => {
+                console.warn('Cloud listener warning:', err);
+            }
+        );
+    } catch (e) {
+        console.warn('Running with session persistence:', e);
+    }
+}
+
+initCloudPersistence();
+</script>
 
 <script>
 /**
@@ -996,6 +1260,144 @@ const THREAT_CATALOG = {
 };
 
 // ==========================================
+// 2B. 16 PERSISTENT TACTICAL ACHIEVEMENTS CATALOG
+// ==========================================
+const ACHIEVEMENTS_CATALOG = [
+    {
+        id: 'first_blood',
+        name: 'First Intercept',
+        icon: '🎯',
+        desc: 'Shoot down your first hostile aerial threat.',
+        rewardScrap: 75
+    },
+    {
+        id: 'ghost_of_kyiv',
+        name: 'Ghost of the Skies',
+        icon: '✈️',
+        desc: 'Intercept 20 hostile threats while piloting the F-16AM Fighter Jet.',
+        rewardScrap: 200
+    },
+    {
+        id: 'sting_operator',
+        name: 'FPV Master Operator',
+        icon: '🛸',
+        desc: 'Neutralize 20 threats using the "Sting" C-UAS FPV Quadcopter.',
+        rewardScrap: 200
+    },
+    {
+        id: 'night_hunter',
+        name: 'Mi-24P Night Hunter',
+        icon: '🚁',
+        desc: 'Destroy 20 threats using the Mi-24P Helicopter Gunship.',
+        rewardScrap: 200
+    },
+    {
+        id: 'skyhook_ace',
+        name: 'Mid-Air Skyhook Ace',
+        icon: '🪝',
+        desc: 'Catch or winch 15 parachuting salvage crates in mid-air.',
+        rewardScrap: 250
+    },
+    {
+        id: 'hypersonic_killer',
+        name: 'Hypersonic Slingshot',
+        icon: '⚡',
+        desc: 'Intercept a Mach-10 Kh-47M2 "Kinzhal" hypersonic missile before impact.',
+        rewardScrap: 300
+    },
+    {
+        id: 'awacs_down',
+        name: 'Mainstay Downed',
+        icon: '👑',
+        desc: 'Destroy an A-50U "Mainstay" AWACS Command Aircraft boss.',
+        rewardScrap: 400
+    },
+    {
+        id: 'bear_hunter',
+        name: 'Strategic Bear Hunter',
+        icon: '🛩️',
+        desc: 'Shoot down a Tu-95MS "Bear" Strategic Missile Carrier boss.',
+        rewardScrap: 450
+    },
+    {
+        id: 'scrap_tycoon',
+        name: 'Salvage Tycoon',
+        icon: '⚙️',
+        desc: 'Hold 3,500+ Scrap (⚙️) in reserve during a defense sortie.',
+        rewardScrap: 250
+    },
+    {
+        id: 'core_scientist',
+        name: 'Quantum R&D Director',
+        icon: '🧬',
+        desc: 'Purchase 5 Experimental Lab (⚙️+💎) upgrades in a single sortie.',
+        rewardScrap: 350
+    },
+    {
+        id: 'mad_overclocker',
+        name: 'Mad Overclocker',
+        icon: '⚠️',
+        desc: 'Have 3 or more Dangerous Overclocks active simultaneously.',
+        rewardScrap: 300
+    },
+    {
+        id: 'codex_scholar',
+        name: 'Reverse-Engineering Savant',
+        icon: '🔬',
+        desc: 'Unlock +25% Reverse-Engineered Damage on at least 5 threat types.',
+        rewardScrap: 300
+    },
+    {
+        id: 'wave_10',
+        name: 'Iron Dome Commander',
+        icon: '🛡️',
+        desc: 'Reach Wave 10 in any combat doctrine.',
+        rewardScrap: 400
+    },
+    {
+        id: 'hardcore_survivor',
+        name: 'Attrition Veteran',
+        icon: '💀',
+        desc: 'Reach Wave 5 in Hardcore Attrition mode.',
+        rewardScrap: 500
+    },
+    {
+        id: 'contract_pro',
+        name: 'Bounty Specialist',
+        icon: '📋',
+        desc: 'Complete 5 Live Wave Contracts across your career.',
+        rewardScrap: 250
+    },
+    {
+        id: 'orbital_strike',
+        name: 'Rods from God',
+        icon: '🛰️',
+        desc: 'Deploy the "Sich-3" Orbital Kinetic Railgun or Quantum Core Infuser.',
+        rewardScrap: 350
+    }
+];
+
+const career = {
+    pfHighScore: 0,
+    pfBestWave: 1,
+    stdHighScore: 0,
+    stdBestWave: 1,
+    hcHighScore: 0,
+    hcBestWave: 1,
+    careerKills: 0,
+    careerSkyhooks: 0,
+    careerContracts: 0,
+    jetKills: 0,
+    fpvKills: 0,
+    heliKills: 0,
+    unlockedAchievements: {},
+    settings: {
+        audioMuted: false,
+        showAchievementToasts: true
+    }
+};
+
+// ==========================================
 // 3. GAME STATE & REBALANCED EXPENSIVE ECONOMY
 // ==========================================
 const canvas = document.getElementById('gameCanvas');
@@ -1011,7 +1413,9 @@ const state = {
     running: false,
     pausedModal: false,
     gameOver: false,
+    difficulty: 'standard', // 'peaceful' | 'standard' | 'hardcore'
     hardcore: false,
+    peaceful: false,
     combatMode: 'ground', // 'ground' | 'jet' | 'fpv' | 'heli'
     opticsMode: 'standard', // 'standard' | 'nvg' | 'flir'
     weatherMode: 'clear', // 'clear' | 'overcast' | 'storm' | 'fog'
@@ -1022,6 +1426,8 @@ const state = {
     techCores: 2,
     cityHp: 100,
     maxCityHp: 100,
+    cityShield: 0,
+    maxCityShield: 0,
 
     wave: 1,
     waveEnemiesToSpawn: 9,
@@ -1075,6 +1481,13 @@ const state = {
     autoGroundTimer: 0,
     gepardTimer: 0,
     skynexTimer: 0,
+    boforsTimer: 0,
+    cramTimer: 0,
+    s300Timer: 0,
+    teslaTimer: 0,
+    orbitalTimer: 4.0,
+    stormShadowTimer: 6.0,
+    motherDroneTimer: 3.5,
     barrelRecoil: [0, 0],
     activeBarrel: 0,
     samTimer: 0,
@@ -1174,6 +1587,18 @@ const state = {
             desc: 'Widens night xenon beam and computes predictive target-lead reticles.',
             level: 1, maxLevel: 8, baseCost: 150, costMult: 1.85, icon: '🔦'
         },
+        bofors40mm: {
+            id: 'bofors40mm', tab: 'ground', currency: 'scrap',
+            name: 'Bofors 40mm L/70 Heavy Flak Bunker',
+            desc: 'Fires high-caliber 40mm programmable airburst shells that detonate in wide flak clouds.',
+            level: 0, maxLevel: 8, baseCost: 760, costMult: 2.0, icon: '💣'
+        },
+        cramPhalanx: {
+            id: 'cramPhalanx', tab: 'ground', currency: 'scrap',
+            name: 'Centurion C-RAM 20mm Phalanx Dome',
+            desc: '4,500 RPM radar-guided rotary dome that shreds low-altitude missiles & drones near the grid.',
+            level: 0, maxLevel: 8, baseCost: 960, costMult: 2.05, icon: '🛡️'
+        },
         gridRepair: {
             id: 'gridRepair', tab: 'ground', currency: 'scrap',
             name: 'Grid Armor Plating & Repair',
@@ -1182,7 +1607,7 @@ const state = {
         },
 
         // ==========================================
-        // TAB 2: JET & HELI AIRWING (6 Upgrades)
+        // TAB 2: JET & HELI AIRWING (8 Upgrades)
         // ==========================================
         jetVulcan: {
             id: 'jetVulcan', tab: 'airwing', currency: 'scrap',
@@ -1220,9 +1645,21 @@ const state = {
             desc: 'Widens Helicopter & Jet mid-air/ground winch magnet range and boosts air salvage +15%.',
             level: 1, maxLevel: 8, baseCost: 310, costMult: 1.9, icon: '🪝'
         },
+        airWingman: {
+            id: 'airWingman', tab: 'airwing', currency: 'scrap',
+            name: 'Autonomous F-16 Loyal Wingman',
+            desc: 'Scramble an AI-piloted F-16 Wingman jet that continuously patrols the sky and strafes targets!',
+            level: 0, maxLevel: 8, baseCost: 880, costMult: 2.05, icon: '🦅'
+        },
+        stormShadow: {
+            id: 'stormShadow', tab: 'airwing', currency: 'scrap',
+            name: 'SCALP-EG / Storm Shadow Cruise Pod',
+            desc: 'Automatically launches heavy air-launched cruise missiles that obliterate bosses & swarms.',
+            level: 0, maxLevel: 8, baseCost: 1050, costMult: 2.1, icon: '☄️'
+        },
 
         // ==========================================
-        // TAB 3: FPV & SALVAGE SUPPORT (5 Upgrades)
+        // TAB 3: FPV & SALVAGE SUPPORT (7 Upgrades)
         // ==========================================
         fpvQuadUpgrade: {
             id: 'fpvQuadUpgrade', tab: 'support', currency: 'scrap',
@@ -1254,9 +1691,21 @@ const state = {
             desc: 'Deploys armored 4x4 pickup trucks with twin .50 cal MGs & spotlights along the road.',
             level: 0, maxLevel: 8, baseCost: 560, costMult: 2.05, icon: '🛻'
         },
+        fpvMotherDrone: {
+            id: 'fpvMotherDrone', tab: 'support', currency: 'scrap',
+            name: '"Queen Hornet" FPV Carrier Blimp',
+            desc: 'Deploys a high-altitude carrier drone that releases autonomous kamikaze FPV seekers.',
+            level: 0, maxLevel: 8, baseCost: 780, costMult: 2.0, icon: '🎈'
+        },
+        coreRefinery: {
+            id: 'coreRefinery', tab: 'support', currency: 'scrap',
+            name: 'Quantum Core Smelter & Refinery',
+            desc: 'Every salvaged crate gains +4% extra chance per level to yield a bonus 💎 Tech Core and +15% ⚙️ Scrap!',
+            level: 0, maxLevel: 8, baseCost: 840, costMult: 2.05, icon: '💎'
+        },
 
         // ==========================================
-        // TAB 4: SAM PERIMETER & EW (5 Upgrades)
+        // TAB 4: SAM PERIMETER & EW (7 Upgrades)
         // ==========================================
         samBattery: {
             id: 'samBattery', tab: 'perimeter', currency: 'scrap',
@@ -1288,9 +1737,21 @@ const state = {
             desc: 'Acoustic microphone array that boosts all weapon critical damage +10% per level.',
             level: 0, maxLevel: 8, baseCost: 640, costMult: 1.95, icon: '🔊'
         },
+        s300Battery: {
+            id: 's300Battery', tab: 'perimeter', currency: 'scrap',
+            name: 'S-300PS / FrankenSAM Heavy VLS',
+            desc: 'Vertical-launch heavy SAMs that detonate in a 100m shrapnel cloud damaging entire drone clusters.',
+            level: 0, maxLevel: 8, baseCost: 1250, costMult: 2.1, icon: '🚀'
+        },
+        empPylons: {
+            id: 'empPylons', tab: 'perimeter', currency: 'scrap',
+            name: 'High-Voltage Tesla Arc Pylons',
+            desc: 'Electrifies city rooftops, zapping low-flying drones & cruise missiles with continuous lightning arcs.',
+            level: 0, maxLevel: 8, baseCost: 980, costMult: 2.05, icon: '⚡'
+        },
 
         // ==========================================
-        // TAB 5: EXPERIMENTAL LAB (6 Upgrades — Costs Scrap ⚙️ + Tech Cores 💎)
+        // TAB 5: EXPERIMENTAL LAB (12 Upgrades — Costs Scrap ⚙️ + Tech Cores 💎)
         // ==========================================
         labAutoTurret: {
             id: 'labAutoTurret', tab: 'lab', currency: 'both',
@@ -1328,9 +1789,45 @@ const state = {
             desc: 'Upgrades Patriot & SAM batteries with Mach-12 hit-to-kill interceptors that obliterate Kinzhals & Bosses!',
             level: 0, maxLevel: 3, baseCost: 5400, baseCores: 10, costMult: 2.25, icon: '☄️'
         },
+        labOrbitalRailgun: {
+            id: 'labOrbitalRailgun', tab: 'lab', currency: 'both',
+            name: '"Sich-3" Orbital Kinetic Railgun',
+            desc: 'Satellite weapons platform that periodically strikes the highest-HP threat from orbit with a hyper-velocity tungsten rod!',
+            level: 0, maxLevel: 5, baseCost: 3200, baseCores: 5, costMult: 2.1, icon: '🛰️'
+        },
+        labDroneSwarm: {
+            id: 'labDroneSwarm', tab: 'lab', currency: 'both',
+            name: 'Autonomous "Saker" AI Swarm',
+            desc: 'Maintains a permanent squadron of autonomous friendly micro-drones patrolling the sky and ramming enemies.',
+            level: 0, maxLevel: 5, baseCost: 2600, baseCores: 4, costMult: 2.05, icon: '🐝'
+        },
+        labPlasmaShield: {
+            id: 'labPlasmaShield', tab: 'lab', currency: 'both',
+            name: 'Substation Ion-Dome Energy Barrier',
+            desc: 'Projects a regenerating plasma dome over the City Power Grid (+45 Shield HP/lvl) that absorbs impacts before grid damage!',
+            level: 0, maxLevel: 5, baseCost: 2200, baseCores: 3, costMult: 2.0, icon: '🛡️'
+        },
+        labRailSabot: {
+            id: 'labRailSabot', tab: 'lab', currency: 'both',
+            name: 'Depleted-Alloy Piercing Sabots',
+            desc: 'Primary shells in all 4 modes punch straight through multiple targets (+1 Pierce per level) with +25% muzzle velocity!',
+            level: 0, maxLevel: 4, baseCost: 2800, baseCores: 4, costMult: 2.1, icon: '🗡️'
+        },
+        labChronoField: {
+            id: 'labChronoField', tab: 'lab', currency: 'both',
+            name: 'High-Altitude Cryo-Stasis Matrix',
+            desc: 'Ionizes the upper atmosphere, slowing all enemy drones, cruise missiles & Kinzhals by 9% per level!',
+            level: 0, maxLevel: 4, baseCost: 3400, baseCores: 6, costMult: 2.15, icon: '❄️'
+        },
+        labCoreOvercharge: {
+            id: 'labCoreOvercharge', tab: 'lab', currency: 'both',
+            name: 'Infinite Quantum Core Infuser',
+            desc: 'INFINITE CORE SINK: Infuse excess 💎 Tech Cores directly into the sector grid for +12% All Weapon Damage & +25 Max Grid HP per level!',
+            level: 0, maxLevel: 999, baseCost: 1200, baseCores: 2, costMult: 1.35, icon: '♾️'
+        },
 
         // ==========================================
-        // TAB 6: DANGEROUS OVERCLOCKS (High Risk / High Reward — Toggleable!)
+        // TAB 6: DANGEROUS OVERCLOCKS (7 Upgrades — Toggleable!)
         // ==========================================
         ocFastJam: {
             id: 'ocFastJam', tab: 'overclock', currency: 'scrap', active: true,
@@ -1379,6 +1876,14 @@ const state = {
             riskText: '🔴 RISK: 15% of missiles prematurely airburst into flak mid-flight!',
             desc: 'Hyper-sensitizes radar fuses on all SAMs, Sidewinders, and S-8 Rockets for massive swarm saturation.',
             level: 0, maxLevel: 3, baseCost: 680, costMult: 2.1, icon: '🧨'
+        },
+        ocDoubleBarrel: {
+            id: 'ocDoubleBarrel', tab: 'overclock', currency: 'scrap', active: true,
+            name: 'Twin-Linked Overpressure Ammo Feed',
+            buffText: '🟢 BUFF: Fires +1 Extra Projectile per shot in ALL 4 Modes!',
+            riskText: '🔴 RISK: Consumes 2 ⚙️ Scrap per shot fired (when Scrap > 20)!',
+            desc: 'Feeds experimental duplex ammunition belts into your Ground AA, Jet Vulcan, Heli 30mm, and FPV Shotgun.',
+            level: 0, maxLevel: 3, baseCost: 750, costMult: 2.1, icon: '🔥'
         }
     }
 };
@@ -1393,11 +1898,195 @@ let drones = [];
 let wreckages = [];
 let particles = [];
 let shockwaves = [];
+let orbitalBeams = [];
+let friendlySwarm = [];
+let wingmanJet = { x: 200, y: 140, vx: 190, vy: 0, angle: 0, fireTimer: 0 };
+let motherBlimp = { x: 300, y: 82, dir: 1 };
 let floatingTexts = [];
 let shellCasings = [];
 let rovers = [];
 let pickupTrucks = [];
 let radarSweepAngle = 0;
+
+// ==========================================
+// 3B. ACHIEVEMENTS & HIGH SCORE PERSISTENCE ENGINE
+// ==========================================
+let toastTimeout = null;
+
+function syncCareerUI() {
+    const unlockedCount = Object.keys(career.unlockedAchievements).length;
+    const totalAch = ACHIEVEMENTS_CATALOG.length;
+
+    const elMenuPfScore = document.getElementById('menu-pf-highscore');
+    const elMenuPfWave = document.getElementById('menu-pf-bestwave');
+    const elMenuStdScore = document.getElementById('menu-std-highscore');
+    const elMenuStdWave = document.getElementById('menu-std-bestwave');
+    const elMenuHcScore = document.getElementById('menu-hc-highscore');
+    const elMenuHcWave = document.getElementById('menu-hc-bestwave');
+    const elMenuAch = document.getElementById('menu-ach-progress');
+    const elHudAch = document.getElementById('hud-ach-count');
+
+    if (elMenuPfScore) elMenuPfScore.textContent = career.pfHighScore.toLocaleString();
+    if (elMenuPfWave) elMenuPfWave.textContent = `W${String(career.pfBestWave).padStart(2, '0')}`;
+    if (elMenuStdScore) elMenuStdScore.textContent = career.stdHighScore.toLocaleString();
+    if (elMenuStdWave) elMenuStdWave.textContent = `W${String(career.stdBestWave).padStart(2, '0')}`;
+    if (elMenuHcScore) elMenuHcScore.textContent = career.hcHighScore.toLocaleString();
+    if (elMenuHcWave) elMenuHcWave.textContent = `W${String(career.hcBestWave).padStart(2, '0')}`;
+    if (elMenuAch) elMenuAch.textContent = `${unlockedCount} / ${totalAch}`;
+    if (elHudAch) elHudAch.textContent = `${unlockedCount}/${totalAch} [A]`;
+
+    const elModPfScore = document.getElementById('modal-pf-highscore');
+    const elModPfWave = document.getElementById('modal-pf-bestwave');
+    const elModStdScore = document.getElementById('modal-std-highscore');
+    const elModStdWave = document.getElementById('modal-std-bestwave');
+    const elModHcScore = document.getElementById('modal-hc-highscore');
+    const elModHcWave = document.getElementById('modal-hc-bestwave');
+    const elModAch = document.getElementById('modal-ach-summary');
+    const elModKills = document.getElementById('modal-career-kills');
+
+    if (elModPfScore) elModPfScore.textContent = career.pfHighScore.toLocaleString();
+    if (elModPfWave) elModPfWave.textContent = `WAVE ${String(career.pfBestWave).padStart(2, '0')}`;
+    if (elModStdScore) elModStdScore.textContent = career.stdHighScore.toLocaleString();
+    if (elModStdWave) elModStdWave.textContent = `WAVE ${String(career.stdBestWave).padStart(2, '0')}`;
+    if (elModHcScore) elModHcScore.textContent = career.hcHighScore.toLocaleString();
+    if (elModHcWave) elModHcWave.textContent = `WAVE ${String(career.hcBestWave).padStart(2, '0')}`;
+    if (elModAch) elModAch.textContent = `${unlockedCount} / ${totalAch}`;
+    if (elModKills) elModKills.textContent = career.careerKills.toLocaleString();
+
+    syncSettingsUI();
+}
+
+function syncSettingsUI() {
+    const isMuted = Boolean(career.settings.audioMuted);
+    const showToasts = career.settings.showAchievementToasts !== false;
+
+    sfx.muted = isMuted;
+    document.getElementById('icon-sound-on')?.classList.toggle('hidden', isMuted);
+    document.getElementById('icon-sound-off')?.classList.toggle('hidden', !isMuted);
+
+    const btnAudio = document.getElementById('btn-toggle-setting-audio');
+    if (btnAudio) {
+        if (isMuted) {
+            btnAudio.className = 'px-4 py-2 rounded-xl font-bold text-xs border transition shrink-0 bg-slate-800 text-rose-300 border-rose-500/40';
+            btnAudio.textContent = '🔇 OFF (MUTED)';
+        } else {
+            btnAudio.className = 'px-4 py-2 rounded-xl font-bold text-xs border transition shrink-0 bg-emerald-500 text-slate-950 border-emerald-400';
+            btnAudio.textContent = '🔊 ON (ACTIVE)';
+        }
+    }
+
+    const btnToasts = document.getElementById('btn-toggle-setting-toasts');
+    if (btnToasts) {
+        if (showToasts) {
+            btnToasts.className = 'px-4 py-2 rounded-xl font-bold text-xs border transition shrink-0 bg-emerald-500 text-slate-950 border-emerald-400';
+            btnToasts.textContent = '🔔 ON (SHOWN)';
+        } else {
+            btnToasts.className = 'px-4 py-2 rounded-xl font-bold text-xs border transition shrink-0 bg-slate-800 text-slate-400 border-slate-700';
+            btnToasts.textContent = '🔕 OFF (HIDDEN)';
+        }
+    }
+
+    const menuSummary = document.getElementById('menu-settings-summary');
+    if (menuSummary) {
+        menuSummary.textContent = `${isMuted ? '🔇 OFF' : '🔊 ON'} • ${showToasts ? '🔔 ON' : '🔕 OFF'}`;
+    }
+}
+
+window.__applyCloudCareerData = (cloudData) => {
+    if (!cloudData) return;
+    career.pfHighScore = Math.max(career.pfHighScore, cloudData.pfHighScore || 0);
+    career.pfBestWave = Math.max(career.pfBestWave, cloudData.pfBestWave || 1);
+    career.stdHighScore = Math.max(career.stdHighScore, cloudData.stdHighScore || 0);
+    career.stdBestWave = Math.max(career.stdBestWave, cloudData.stdBestWave || 1);
+    career.hcHighScore = Math.max(career.hcHighScore, cloudData.hcHighScore || 0);
+    career.hcBestWave = Math.max(career.hcBestWave, cloudData.hcBestWave || 1);
+    career.careerKills = Math.max(career.careerKills, cloudData.careerKills || 0);
+    career.careerSkyhooks = Math.max(career.careerSkyhooks, cloudData.careerSkyhooks || 0);
+    career.careerContracts = Math.max(career.careerContracts, cloudData.careerContracts || 0);
+    if (cloudData.unlockedAchievements) {
+        career.unlockedAchievements = {
+            ...career.unlockedAchievements,
+            ...cloudData.unlockedAchievements
+        };
+    }
+    if (cloudData.settings) {
+        career.settings = {
+            audioMuted: Boolean(cloudData.settings.audioMuted),
+            showAchievementToasts: cloudData.settings.showAchievementToasts !== false
+        };
+    }
+    syncCareerUI();
+};
+
+function saveCareerProgress() {
+    if (state.peaceful) {
+        if (state.score > career.pfHighScore) career.pfHighScore = state.score;
+        if (state.wave > career.pfBestWave) career.pfBestWave = state.wave;
+    } else if (state.hardcore) {
+        if (state.score > career.hcHighScore) career.hcHighScore = state.score;
+        if (state.wave > career.hcBestWave) career.hcBestWave = state.wave;
+    } else {
+        if (state.score > career.stdHighScore) career.stdHighScore = state.score;
+        if (state.wave > career.stdBestWave) career.stdBestWave = state.wave;
+    }
+    syncCareerUI();
+    if (typeof window.__saveCareerToCloud === 'function') {
+        window.__saveCareerToCloud(career);
+    }
+}
+
+function unlockAchievement(id) {
+    if (career.unlockedAchievements[id]) return;
+    const meta = ACHIEVEMENTS_CATALOG.find(a => a.id === id);
+    if (!meta) return;
+
+    career.unlockedAchievements[id] = Date.now();
+    sfx.playScrapCollect(true);
+    document.getElementById('ach-badge')?.classList.remove('hidden');
+
+    if (career.settings.showAchievementToasts !== false) {
+        const toast = document.getElementById('achievement-toast');
+        if (toast) {
+            document.getElementById('toast-icon').textContent = meta.icon;
+            document.getElementById('toast-title').textContent = meta.name;
+            document.getElementById('toast-desc').textContent = meta.desc;
+            toast.classList.remove('hidden');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => toast.classList.add('hidden'), 4200);
+        }
+    }
+
+    saveCareerProgress();
+    updateHudUI();
+}
+
+function checkAchievements() {
+    if (career.careerKills >= 1) unlockAchievement('first_blood');
+    if (career.jetKills >= 20) unlockAchievement('ghost_of_kyiv');
+    if (career.fpvKills >= 20) unlockAchievement('sting_operator');
+    if (career.heliKills >= 20) unlockAchievement('night_hunter');
+    if (career.careerSkyhooks >= 15) unlockAchievement('skyhook_ace');
+    if (state.scrap >= 3500) unlockAchievement('scrap_tycoon');
+    if (state.wave >= 10) unlockAchievement('wave_10');
+    if (state.hardcore && state.wave >= 5) unlockAchievement('hardcore_survivor');
+    if (career.careerContracts >= 5) unlockAchievement('contract_pro');
+
+    const labLevels = Object.values(state.upgrades)
+        .filter(u => u.tab === 'lab')
+        .reduce((sum, u) => sum + u.level, 0);
+    if (labLevels >= 5) unlockAchievement('core_scientist');
+
+    if (state.upgrades.labOrbitalRailgun.level > 0 || state.upgrades.labCoreOvercharge.level > 0) {
+        unlockAchievement('orbital_strike');
+    }
+
+    const activeOverclocks = Object.values(state.upgrades)
+        .filter(u => u.tab === 'overclock' && u.level > 0 && u.active !== false).length;
+    if (activeOverclocks >= 3) unlockAchievement('mad_overclocker');
+
+    const masteredCodex = Object.values(state.codex).filter(c => c.salvaged >= 3).length;
+    if (masteredCodex >= 5) unlockAchievement('codex_scholar');
+}
 
 // ==========================================
 // 4. ENVIRONMENT, WEATHER & FLEET INITIALIZATION
@@ -1462,6 +2151,10 @@ function initEnvironment() {
 }
 
 function syncRoverFleet() {
+    if (state.peaceful) {
+        rovers = [];
+        return;
+    }
     const desiredCount = Math.min(4, 1 + Math.floor(state.upgrades.salvageRover.level / 2));
     const colors = ['#d97706', '#059669', '#0284c7', '#9333ea'];
     while (rovers.length < desiredCount) {
@@ -1496,12 +2189,14 @@ initEnvironment();
 // ==========================================
 function getUpgradeCost(upg) {
     const zeroBaseIds = [
-        'laserTurret', 'gepardTrack', 'gridRepair', 'pickupFleet',
-        'samBattery', 'patriotBattery', 'skynexTower', 'zvookSensor',
+        'laserTurret', 'gepardTrack', 'bofors40mm', 'cramPhalanx', 'gridRepair',
+        'airWingman', 'stormShadow', 'pickupFleet', 'fpvMotherDrone', 'coreRefinery',
+        'samBattery', 'patriotBattery', 'skynexTower', 'zvookSensor', 's300Battery', 'empPylons',
         'labAutoTurret', 'labEwHijack', 'labAmraam', 'labClusterFlak',
-        'labSkyhookVacuum', 'labHypersonicSam',
+        'labSkyhookVacuum', 'labHypersonicSam', 'labOrbitalRailgun', 'labDroneSwarm',
+        'labPlasmaShield', 'labRailSabot', 'labChronoField', 'labCoreOvercharge',
         'ocFastJam', 'ocThermobaric', 'ocRedlineAir', 'ocUraniumLaser',
-        'ocRogueMagnet', 'ocHairTriggerSam'
+        'ocRogueMagnet', 'ocHairTriggerSam', 'ocDoubleBarrel'
     ];
     const offset = zeroBaseIds.includes(upg.id) ? 0 : 1;
     const exp = Math.max(0, upg.level - offset);
@@ -1517,7 +2212,8 @@ function isOverclockActive(id) {
 function getUpgradeCoreCost(upg) {
     if (upg.currency !== 'both') return 0;
     const hardcoreCoreMult = state.hardcore ? 1.5 : 1.0;
-    return Math.round(upg.baseCores * Math.pow(1.45, upg.level) * hardcoreCoreMult);
+    const growth = upg.id === 'labCoreOvercharge' ? 1.18 : 1.45;
+    return Math.round(upg.baseCores * Math.pow(growth, upg.level) * hardcoreCoreMult);
 }
 
 function generateWaveBounty(waveNum) {
@@ -1582,8 +2278,11 @@ function completeWaveBounty() {
     b.completed = true;
     state.scrap += b.rewardScrap;
     state.techCores += b.rewardCores;
+    career.careerContracts++;
     sfx.playScrapCollect(true);
     spawnFloatingText(W / 2, H * 0.28, `📋 CONTRACT COMPLETED! +${b.rewardScrap}⚙️ & +${b.rewardCores}💎`, '#fde047');
+    checkAchievements();
+    saveCareerProgress();
     updateBountyUI();
     updateHudUI();
 }
@@ -1591,6 +2290,11 @@ function completeWaveBounty() {
 function updateBountyUI() {
     const el = document.getElementById('bounty-text');
     if (!el) return;
+    if (state.peaceful) {
+        el.className = 'text-sky-300 font-semibold';
+        el.textContent = '🕊️ PEACEFUL PATROL: 90% Gerbera / 10% Shahed-136 • No Upgrades or Scrap';
+        return;
+    }
     const b = state.bounty;
     if (b.completed) {
         el.className = 'text-emerald-400 font-bold';
@@ -1608,7 +2312,8 @@ function updateBountyUI() {
 }
 
 function getZvookDamageBonus() {
-    return 1 + state.upgrades.zvookSensor.level * 0.10;
+    const infuserBonus = state.upgrades.labCoreOvercharge ? state.upgrades.labCoreOvercharge.level * 0.12 : 0;
+    return 1 + state.upgrades.zvookSensor.level * 0.10 + infuserBonus;
 }
 
 function getFireInterval() {
@@ -1636,16 +2341,17 @@ function getFireInterval() {
 
 function getBulletSpeed() {
     const thermoSlow = isOverclockActive('ocThermobaric') ? 0.80 : 1.0;
+    const sabotBoost = 1 + (state.upgrades.labRailSabot?.level || 0) * 0.25;
     if (state.combatMode === 'jet') {
-        return (1060 + (state.upgrades.jetVulcan.level - 1) * 80) * thermoSlow;
+        return (1060 + (state.upgrades.jetVulcan.level - 1) * 80) * thermoSlow * sabotBoost;
     }
     if (state.combatMode === 'heli') {
-        return (940 + (state.upgrades.heliChinGun.level - 1) * 70) * thermoSlow;
+        return (940 + (state.upgrades.heliChinGun.level - 1) * 70) * thermoSlow * sabotBoost;
     }
     if (state.combatMode === 'fpv') {
-        return (880 + (state.upgrades.fpvQuadUpgrade.level - 1) * 60) * thermoSlow;
+        return (880 + (state.upgrades.fpvQuadUpgrade.level - 1) * 60) * thermoSlow * sabotBoost;
     }
-    return (790 + (state.upgrades.fireRate.level - 1) * 85) * thermoSlow;
+    return (790 + (state.upgrades.fireRate.level - 1) * 85) * thermoSlow * sabotBoost;
 }
 
 function getBulletDamage() {
@@ -1672,7 +2378,7 @@ function getFlakRadius() {
 }
 
 function getScrapMultiplier(isMidAir = false) {
-    let mult = 1 + (state.upgrades.tractorBeam.level - 1) * 0.12;
+    let mult = 1 + (state.upgrades.tractorBeam.level - 1) * 0.12 + (state.upgrades.coreRefinery?.level || 0) * 0.15;
     if (isMidAir || state.combatMode === 'heli') {
         mult *= 1.45 + (state.upgrades.heliWinch.level - 1) * 0.15;
     }
@@ -1815,7 +2521,9 @@ function spawnDrone(forcedType = null, customX = null, customY = null) {
     const wave = state.wave;
     let type = forcedType || 'shahed';
 
-    if (!forcedType) {
+    if (state.peaceful) {
+        type = Math.random() < 0.10 ? 'shahed' : 'gerbera';
+    } else if (!forcedType) {
         // Boss spawns on Wave 3, 6, 9, 12... alternating A-50U AWACS & Tu-95MS Strategic Bomber!
         if (wave % 3 === 0 && !state.bossSpawnedThisWave && state.waveEnemiesSpawned === 2) {
             type = (wave % 6 === 0) ? 'tu95' : 'a50';
@@ -2024,6 +2732,13 @@ function firePrimaryWeapon() {
     const speed = getBulletSpeed();
     const dmg = getBulletDamage();
     const flakRadius = getFlakRadius();
+    const pierceCount = state.upgrades.labRailSabot?.level || 0;
+    const extraDuplex = isOverclockActive('ocDoubleBarrel') ? state.upgrades.ocDoubleBarrel.level : 0;
+
+    if (extraDuplex > 0 && state.scrap > 20) {
+        state.scrap = Math.max(0, state.scrap - 2);
+        updateHudUI();
+    }
 
     if (state.combatMode === 'jet') {
         const j = state.jet;
@@ -2039,7 +2754,8 @@ function firePrimaryWeapon() {
             }
         }
 
-        const streams = state.upgrades.jetVulcan.level >= 3 ? [-5, 5] : [0];
+        const baseStreams = state.upgrades.jetVulcan.level >= 3 ? [-5, 5] : [0];
+        const streams = extraDuplex > 0 ? [...baseStreams, 0] : baseStreams;
         const perp = j.angle + Math.PI / 2;
         const spreadMult = isOverclockActive('ocThermobaric') ? 3.0 : 1.0;
 
@@ -2052,8 +2768,9 @@ function firePrimaryWeapon() {
                 y: my,
                 vx: Math.cos(j.angle + spread) * speed + j.vx * 0.25,
                 vy: Math.sin(j.angle + spread) * speed + j.vy * 0.25,
-                dmg: streams.length > 1 ? dmg * 0.72 : dmg,
+                dmg: baseStreams.length > 1 ? dmg * 0.72 : dmg,
                 flakRadius: 20 * (isOverclockActive('ocThermobaric') ? 1.5 : 1),
+                pierce: pierceCount,
                 isJetBullet: true,
                 isFpvNet: false,
                 isHeliShell: false,
@@ -2075,20 +2792,24 @@ function firePrimaryWeapon() {
         h.gunAngle = aimAngle;
 
         const spreadMult = isOverclockActive('ocThermobaric') ? 3.0 : 1.0;
-        const spread = (Math.random() - 0.5) * 0.03 * spreadMult;
-        bullets.push({
-            x: chinX + Math.cos(aimAngle) * 14,
-            y: chinY + Math.sin(aimAngle) * 14,
-            vx: Math.cos(aimAngle + spread) * speed + h.vx * 0.2,
-            vy: Math.sin(aimAngle + spread) * speed + h.vy * 0.2,
-            dmg,
-            flakRadius: (26 + state.upgrades.heliChinGun.level * 2) * (isOverclockActive('ocThermobaric') ? 1.5 : 1),
-            isJetBullet: false,
-            isFpvNet: false,
-            isHeliShell: true,
-            isThermobaric: isOverclockActive('ocThermobaric'),
-            life: 1.5
-        });
+        const shotCount = 1 + (extraDuplex > 0 ? 1 : 0);
+        for (let s = 0; s < shotCount; s++) {
+            const spread = (Math.random() - 0.5) * 0.03 * spreadMult + (s - (shotCount - 1) / 2) * 0.03;
+            bullets.push({
+                x: chinX + Math.cos(aimAngle) * 14,
+                y: chinY + Math.sin(aimAngle) * 14,
+                vx: Math.cos(aimAngle + spread) * speed + h.vx * 0.2,
+                vy: Math.sin(aimAngle + spread) * speed + h.vy * 0.2,
+                dmg,
+                flakRadius: (26 + state.upgrades.heliChinGun.level * 2) * (isOverclockActive('ocThermobaric') ? 1.5 : 1),
+                pierce: pierceCount,
+                isJetBullet: false,
+                isFpvNet: false,
+                isHeliShell: true,
+                isThermobaric: isOverclockActive('ocThermobaric'),
+                life: 1.5
+            });
+        }
 
         particles.push({
             x: chinX + Math.cos(aimAngle) * 16,
@@ -2104,7 +2825,7 @@ function firePrimaryWeapon() {
 
     if (state.combatMode === 'fpv') {
         const f = state.fpv;
-        const pelletCount = 5 + state.upgrades.fpvQuadUpgrade.level + (state.upgrades.fpvEmpNet.level - 1) * 2;
+        const pelletCount = 5 + state.upgrades.fpvQuadUpgrade.level + (state.upgrades.fpvEmpNet.level - 1) * 2 + (extraDuplex > 0 ? 2 : 0);
         const aimAngle = Math.atan2(state.mouseY - f.y, state.mouseX - f.x);
 
         for (let i = 0; i < pelletCount; i++) {
@@ -2116,6 +2837,7 @@ function firePrimaryWeapon() {
                 vy: Math.sin(aimAngle + spread) * speed + f.vy * 0.2,
                 dmg: dmg * 0.85,
                 flakRadius: 24,
+                pierce: pierceCount,
                 isJetBullet: false,
                 isFpvNet: true,
                 isHeliShell: false,
@@ -2157,6 +2879,8 @@ function fireGroundAutocannon(angle) {
     const speed = getBulletSpeed();
     const dmg = getBulletDamage();
     const flakRadius = getFlakRadius();
+    const pierceCount = state.upgrades.labRailSabot?.level || 0;
+    const shotCount = isOverclockActive('ocDoubleBarrel') ? 2 : 1;
 
     state.activeBarrel = 1 - state.activeBarrel;
     const barrelOffset = state.activeBarrel === 0 ? -6 : 6;
@@ -2167,40 +2891,23 @@ function fireGroundAutocannon(angle) {
     const muzzleY = turretY + Math.sin(angle) * 38 + Math.sin(perpAngle) * barrelOffset;
 
     const spreadMult = isOverclockActive('ocThermobaric') ? 3.2 : 1.0;
-    const spread = (Math.random() - 0.5) * 0.03 * spreadMult;
-    const finalAngle = angle + spread;
 
-    bullets.push({
-        x: muzzleX,
-        y: muzzleY,
-        vx: Math.cos(finalAngle) * speed,
-        vy: Math.sin(finalAngle) * speed,
-        dmg,
-        flakRadius,
-        isJetBullet: false,
-        isFpvNet: false,
-        isThermobaric: isOverclockActive('ocThermobaric'),
-        life: 1.8
-    });
+    for (let s = 0; s < shotCount; s++) {
+        const spread = (Math.random() - 0.5) * 0.03 * spreadMult + (s - (shotCount - 1) / 2) * 0.025;
+        const finalAngle = angle + spread;
 
-    shellCasings.push({
-        x: turretX + Math.cos(perpAngle) * (barrelOffset * 1.4),
-        y: turretY - 6,
-        vx: (barrelOffset < 0 ? -1 : 1) * (45 + Math.random() * 40),
-        vy: -90 - Math.random() * 50,
-        angle: Math.random() * Math.PI,
-        vAngle: (Math.random() - 0.5) * 14,
-        life: 0.7
-    });
-
-    for (let i = 0; i < 3; i++) {
-        particles.push({
-            x: muzzleX, y: muzzleY,
-            vx: Math.cos(finalAngle + (Math.random() - 0.5) * 0.5) * (90 + Math.random() * 100),
-            vy: Math.sin(finalAngle + (Math.random() - 0.5) * 0.5) * (90 + Math.random() * 100),
-            r: 2 + Math.random() * 2,
-            color: isOverclockActive('ocThermobaric') ? '#f43f5e' : (Math.random() < 0.5 ? '#fde047' : '#f97316'),
-            alpha: 1, life: 0.09, maxLife: 0.12
+        bullets.push({
+            x: muzzleX,
+            y: muzzleY,
+            vx: Math.cos(finalAngle) * speed,
+            vy: Math.sin(finalAngle) * speed,
+            dmg,
+            flakRadius,
+            pierce: pierceCount,
+            isJetBullet: false,
+            isFpvNet: false,
+            isThermobaric: isOverclockActive('ocThermobaric'),
+            life: 1.8
         });
     }
 
@@ -2512,19 +3219,38 @@ function triggerDroneShotDown(d, source = 'ground') {
         state.codex[d.type].kills++;
     }
 
+    career.careerKills++;
+    if (state.combatMode === 'jet') career.jetKills++;
+    else if (state.combatMode === 'fpv') career.fpvKills++;
+    else if (state.combatMode === 'heli') career.heliKills++;
+
+    if (d.type === 'kinzhal') unlockAchievement('hypersonic_killer');
+    if (d.type === 'a50') unlockAchievement('awacs_down');
+    if (d.type === 'tu95') unlockAchievement('bear_hunter');
+
     // Track Live Wave Contracts
-    if (source === 'air' || (source === 'primary' && state.combatMode !== 'ground')) {
-        advanceBountyProgress('airKills', 1);
-    }
-    if (source === 'missile') {
-        advanceBountyProgress('missileKills', 1);
-        if (state.combatMode !== 'ground') advanceBountyProgress('airKills', 1);
+    if (!state.peaceful) {
+        if (source === 'air' || (source === 'primary' && state.combatMode !== 'ground')) {
+            advanceBountyProgress('airKills', 1);
+        }
+        if (source === 'missile') {
+            advanceBountyProgress('missileKills', 1);
+            if (state.combatMode !== 'ground') advanceBountyProgress('airKills', 1);
+        }
     }
 
     state.score += d.scoreVal;
+    checkAchievements();
+    saveCareerProgress();
     const isBoss = d.type === 'a50' || d.type === 'tu95' || d.type === 'okhotnik';
     sfx.playExplosion(isBoss);
     spawnExplosion(d.x, d.y, THREAT_CATALOG[d.type]?.color || '#f59e0b', isBoss ? 45 : 18);
+
+    if (state.peaceful) {
+        spawnFloatingText(d.x, d.y - 14, `INTERCEPTED +${d.scoreVal}`, '#38bdf8');
+        updateHudUI();
+        return;
+    }
 
     if (d.type === 'a50' || d.type === 'tu95') {
         state.techCores += 3;
@@ -2548,6 +3274,7 @@ function triggerDroneShotDown(d, source = 'ground') {
 }
 
 function spawnWreckageEntity(d, x, y, isMidAirParachute = false, isDoubleCrate = false) {
+    if (state.peaceful) return;
     const clampedX = Math.max(45, Math.min(W - 45, x));
     const meta = THREAT_CATALOG[d.type] || THREAT_CATALOG.shahed;
     const baseVal = d.scrapBase * (isDoubleCrate ? 2.0 : 1.0);
@@ -2580,11 +3307,13 @@ function collectWreckage(w, index, isMidAirCatch = false) {
 
     if (isMidAirCatch || state.combatMode === 'heli') {
         advanceBountyProgress('skyhook', 1);
+        career.careerSkyhooks++;
     }
 
     let foundCore = false;
     const rogueCoreMult = isOverclockActive('ocRogueMagnet') ? 2.0 : 1.0;
-    const coreChance = ((isMidAirCatch ? 0.20 : 0.05) + (w.isDoubleCrate ? 0.18 : 0)) * rogueCoreMult;
+    const refineryBonus = (state.upgrades.coreRefinery?.level || 0) * 0.04;
+    const coreChance = ((isMidAirCatch ? 0.20 : 0.05) + (w.isDoubleCrate ? 0.18 : 0) + refineryBonus) * rogueCoreMult;
     if (Math.random() < coreChance) {
         state.techCores++;
         foundCore = true;
@@ -2599,6 +3328,8 @@ function collectWreckage(w, index, isMidAirCatch = false) {
         }
     }
 
+    checkAchievements();
+    saveCareerProgress();
     sfx.playScrapCollect(isMidAirCatch);
 
     const coreText = foundCore ? ' +1💎 CORE!' : '';
@@ -2803,9 +3534,9 @@ function updateGame(dt) {
             }
         }
     }
-
-    // 5. Update Mobile 4x4 Pickup Fire Groups
+    // 5. Update Mobile 4x4 Pickup Fire Groups & New Experimental Lab Systems
     updatePickupFireGroups(dt);
+    updateExperimentalLabSystems(dt);
 
     // 6. Wave Spawning & Progression
     if (state.waveEnemiesSpawned < state.waveEnemiesToSpawn) {
@@ -2884,7 +3615,12 @@ function updateGame(dt) {
                     const src = (b.isJetBullet || b.isFpvNet || b.isHeliShell) ? 'air' : 'primary';
                     triggerDroneShotDown(d, src);
                 }
-                break;
+                if (b.pierce && b.pierce > 0) {
+                    b.pierce--;
+                    hit = false;
+                } else {
+                    break;
+                }
             }
         }
         if (hit) bullets.splice(i, 1);
@@ -2933,9 +3669,21 @@ function updateGame(dt) {
                 const amraamMult = 1 + state.upgrades.labAmraam.level * 0.45;
                 const hyperMult = m.isPatriot ? (1 + state.upgrades.labHypersonicSam.level * 0.65) : 1;
                 const hardcoreMissileMult = state.hardcore ? 0.72 : 1.0;
-                const baseDmg = m.isPatriot ? 195 : (m.isHeliRocket ? 68 : (m.isAim9x ? 105 : 120));
+                const baseDmg = m.isStormShadow ? 320 : (m.isS300 ? 185 : (m.isPatriot ? 195 : (m.isHeliRocket ? 68 : (m.isAim9x ? 105 : 120))));
                 m.target.hp -= baseDmg * amraamMult * hyperMult * hardcoreMissileMult * getCodexDamageMultiplier(m.target.type) * getZvookDamageBonus();
-                spawnExplosion(m.x, m.y, m.isPatriot ? '#34d399' : (m.isHeliRocket ? '#a3e635' : (m.isAim9x ? '#f43f5e' : '#38bdf8')), 22);
+                spawnExplosion(m.x, m.y, m.isStormShadow ? '#facc15' : (m.isPatriot ? '#34d399' : (m.isHeliRocket ? '#a3e635' : (m.isAim9x ? '#f43f5e' : '#38bdf8'))), m.isStormShadow || m.isS300 ? 34 : 22);
+
+                if (m.isStormShadow || m.isS300) {
+                    const aoeRad = m.isStormShadow ? 135 : 95;
+                    shockwaves.push({ x: m.x, y: m.y, r: 10, maxR: aoeRad, color: m.isStormShadow ? '#facc15' : '#38bdf8', alpha: 0.95 });
+                    for (const other of drones) {
+                        if (other !== m.target && other.state === 'flying' && !other.hijacked && Math.hypot(other.x - m.x, other.y - m.y) <= aoeRad) {
+                            other.hp -= baseDmg * 0.65 * getZvookDamageBonus();
+                            if (other.hp <= 0) triggerDroneShotDown(other, 'missile');
+                        }
+                    }
+                }
+
                 if (m.target.hp <= 0) {
                     triggerDroneShotDown(m.target, 'missile');
                 }
@@ -3004,7 +3752,8 @@ function updateGame(dt) {
             }
 
             const rogueSpeedMult = isOverclockActive('ocRogueMagnet') ? 1.20 : 1.0;
-            const speedFactor = (ewActive ? 0.35 : 1.0) * rogueSpeedMult;
+            const cryoSlowMult = Math.max(0.55, 1 - (state.upgrades.labChronoField?.level || 0) * 0.09);
+            const speedFactor = (ewActive ? 0.35 : 1.0) * rogueSpeedMult * cryoSlowMult;
 
             if (d.type === 'orlan' || d.type === 'supercam') {
                 if (d.x < 70 && d.vx < 0) d.vx = -d.vx;
@@ -3284,7 +4033,12 @@ function updateGame(dt) {
         }
     });
 
-    // 12. Update Casings, Shockwaves, Particles & Floating Texts
+    // 12. Update Casings, Shockwaves, Orbital Beams, Particles & Floating Texts
+    for (let i = orbitalBeams.length - 1; i >= 0; i--) {
+        orbitalBeams[i].life -= dt;
+        if (orbitalBeams[i].life <= 0) orbitalBeams.splice(i, 1);
+    }
+
     for (let i = shockwaves.length - 1; i >= 0; i--) {
         const sw = shockwaves[i];
         sw.r += (sw.maxR - sw.r) * Math.min(1, dt * 10);
@@ -3317,6 +4071,182 @@ function updateGame(dt) {
         ft.life -= dt;
         if (ft.life <= 0) floatingTexts.splice(i, 1);
     }
+}
+
+function updateFighterJet(dt) {
+    const j = state.jet;
+    const redlineSpeed = isOverclockActive('ocRedlineAir') ? 1.45 : 1.0;
+    j.afterburner = Boolean(keys['ShiftLeft'] || keys['ShiftRight'] || state.abilities.overdrive.active > 0);
+    const baseSpeed = (290 + (state.upgrades.jetVulcan.level - 1) * 24) * (j.afterburner ? 1.42 : 1.0) * redlineSpeed;
+
+    const desiredAngle = Math.atan2(state.mouseY - j.y, state.mouseX - j.x);
+    let diff = desiredAngle - j.angle;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+
+    j.bank = Math.max(-1, Math.min(1, diff * 2.2));
+    j.angle += diff * Math.min(1, dt * 6.5);
+    j.vx = Math.cos(j.angle) * baseSpeed;
+    j.vy = Math.sin(j.angle) * baseSpeed;
+
+    j.x += j.vx * dt;
+    j.y += j.vy * dt;
+
+    if (j.x < 35) { j.x = 35; j.angle = 0; }
+    if (j.x > W - 35) { j.x = W - 35; j.angle = Math.PI; }
+    if (j.y < 38) { j.y = 38; j.angle = Math.abs(j.angle) * 0.5; }
+    if (j.y > GROUND_Y - 36) { j.y = GROUND_Y - 36; j.angle = -Math.abs(j.angle) * 0.5; }
+
+    const coolRate = j.overheated ? 28 : 42;
+    j.heat = Math.max(0, j.heat - dt * coolRate);
+    if (j.overheated && j.heat <= 18) j.overheated = false;
+    if (j.missileCooldown > 0) j.missileCooldown = Math.max(0, j.missileCooldown - dt);
+
+    // Update forward radar cone target locks
+    const maxLocks = 1 + Math.floor(state.upgrades.jetSidewinder.level / 2) + (state.upgrades.labAmraam.level * 2);
+    j.lockedTargets = [];
+    for (const d of drones) {
+        if (d.state !== 'flying' || d.hijacked) continue;
+        const angTo = Math.atan2(d.y - j.y, d.x - j.x);
+        let ad = Math.abs(angTo - j.angle);
+        if (ad > Math.PI) ad = Math.PI * 2 - ad;
+        if (ad < 0.65 && Math.hypot(d.x - j.x, d.y - j.y) < 680) {
+            j.lockedTargets.push(d);
+            if (j.lockedTargets.length >= maxLocks) break;
+        }
+    }
+}
+
+function updateFpvQuad(dt) {
+    const f = state.fpv;
+    f.rotorPhase += dt * 45;
+    const redlineSpeed = isOverclockActive('ocRedlineAir') ? 1.45 : 1.0;
+    const maxSpd = (340 + (state.upgrades.fpvQuadUpgrade.level - 1) * 28) * redlineSpeed;
+
+    const dx = state.mouseX - f.x;
+    const dy = state.mouseY - f.y;
+    const dist = Math.hypot(dx, dy);
+    const desiredVx = dist > 8 ? (dx / dist) * Math.min(maxSpd, dist * 5.2) : 0;
+    const desiredVy = dist > 8 ? (dy / dist) * Math.min(maxSpd, dist * 5.2) : 0;
+
+    f.vx += (desiredVx - f.vx) * Math.min(1, dt * 9);
+    f.vy += (desiredVy - f.vy) * Math.min(1, dt * 9);
+    f.x = Math.max(30, Math.min(W - 30, f.x + f.vx * dt));
+    f.y = Math.max(35, Math.min(GROUND_Y - 28, f.y + f.vy * dt));
+    f.tilt = Math.max(-0.48, Math.min(0.48, f.vx / 480));
+
+    if (f.empCooldown > 0) f.empCooldown = Math.max(0, f.empCooldown - dt);
+    if (f.dashTimer > 0) f.dashTimer = Math.max(0, f.dashTimer - dt);
+
+    const drain = Math.max(0.8, 2.2 - state.upgrades.fpvQuadUpgrade.level * 0.18);
+    f.battery = Math.max(0, f.battery - drain * dt);
+    if (f.battery <= 0) {
+        f.battery = 100;
+        f.x = W / 2;
+        f.y = GROUND_Y - 45;
+        spawnFloatingText(f.x, f.y - 20, '🔋 FRESH 6S LIPO FPV QUAD LAUNCHED!', '#fbbf24');
+    }
+}
+
+function updateHeliGunship(dt) {
+    const h = state.heli;
+    h.rotorPhase += dt * 36;
+    const redlineSpeed = isOverclockActive('ocRedlineAir') ? 1.45 : 1.0;
+    const maxSpd = (230 + (state.upgrades.heliChinGun.level - 1) * 18) * redlineSpeed;
+
+    let targetX = state.mouseX;
+    let targetY = Math.min(GROUND_Y - 85, state.mouseY);
+
+    if (keys['KeyA'] || keys['ArrowLeft']) targetX = h.x - 160;
+    if (keys['KeyD'] || keys['ArrowRight']) targetX = h.x + 160;
+    if (keys['KeyW'] || keys['ArrowUp']) targetY = h.y - 140;
+    if (keys['KeyS'] || keys['ArrowDown']) targetY = h.y + 140;
+
+    const dx = targetX - h.x;
+    const dy = targetY - h.y;
+    const desiredVx = Math.max(-maxSpd, Math.min(maxSpd, dx * 2.4));
+    const desiredVy = Math.max(-maxSpd * 0.75, Math.min(maxSpd * 0.75, dy * 2.4));
+
+    h.vx += (desiredVx - h.vx) * Math.min(1, dt * 5.5);
+    h.vy += (desiredVy - h.vy) * Math.min(1, dt * 5.5);
+    h.x = Math.max(45, Math.min(W - 45, h.x + h.vx * dt));
+    h.y = Math.max(48, Math.min(GROUND_Y - 62, h.y + h.vy * dt));
+
+    h.facing = state.mouseX >= h.x ? 1 : -1;
+    h.tilt = Math.max(-0.28, Math.min(0.28, h.vx / 520));
+    h.gunAngle = Math.atan2(state.mouseY - (h.y + 10), state.mouseX - (h.x + h.facing * 18));
+
+    if (h.rocketCooldown > 0) h.rocketCooldown = Math.max(0, h.rocketCooldown - dt);
+    if (h.rocketBurstRemaining > 0) {
+        h.rocketBurstTimer -= dt;
+        if (h.rocketBurstTimer <= 0) {
+            h.rocketBurstTimer = 0.065;
+            h.rocketBurstRemaining--;
+            spawnSingleHeliRocket();
+        }
+    }
+}
+
+function updateAutomatedGroundTurret(dt, turretX, turretY) {
+    const flying = drones.filter(d => d.state === 'flying' && !d.hijacked);
+    if (flying.length === 0) return;
+
+    let closest = flying[0];
+    let bestDist = Math.hypot(closest.x - turretX, closest.y - turretY);
+    for (const d of flying) {
+        const dist = Math.hypot(d.x - turretX, d.y - turretY);
+        if (dist < bestDist) {
+            bestDist = dist;
+            closest = d;
+        }
+    }
+
+    const leadTime = bestDist / 850;
+    const aimX = closest.x + closest.vx * leadTime;
+    const aimY = closest.y + closest.vy * leadTime;
+    state.turretAngle = Math.atan2(aimY - turretY, aimX - turretX);
+
+    state.autoGroundTimer -= dt;
+    const aiBrainLvl = state.upgrades.labAutoTurret.level;
+    const interval = aiBrainLvl > 0
+        ? Math.max(0.05, getFireInterval() * (1.25 - aiBrainLvl * 0.25))
+        : 0.34;
+    if (state.autoGroundTimer <= 0) {
+        state.autoGroundTimer = interval;
+        fireGroundAutocannon(state.turretAngle);
+    }
+}
+
+function updatePickupFireGroups(dt) {
+    if (pickupTrucks.length === 0) return;
+    const flying = drones.filter(d => d.state === 'flying' && !d.hijacked);
+
+    pickupTrucks.forEach((p, idx) => {
+        p.x += p.dir * 52 * dt;
+        if (p.x > W - 85) p.dir = -1;
+        if (p.x < 85) p.dir = 1;
+
+        if (flying.length > 0) {
+            const target = flying[idx % flying.length];
+            p.aimAngle = Math.atan2(target.y - (GROUND_Y - 14), target.x - p.x);
+            p.fireTimer -= dt;
+            const interval = Math.max(0.14, 0.38 - state.upgrades.pickupFleet.level * 0.025);
+            if (p.fireTimer <= 0) {
+                p.fireTimer = interval;
+                bullets.push({
+                    x: p.x + Math.cos(p.aimAngle) * 14,
+                    y: (GROUND_Y - 14) + Math.sin(p.aimAngle) * 14,
+                    vx: Math.cos(p.aimAngle + (Math.random() - 0.5) * 0.04) * 820,
+                    vy: Math.sin(p.aimAngle + (Math.random() - 0.5) * 0.04) * 820,
+                    dmg: (10 + state.upgrades.pickupFleet.level * 3.5) * (state.hardcore ? 0.65 : 1) * getZvookDamageBonus(),
+                    flakRadius: 16,
+                    isJetBullet: false,
+                    isFpvNet: false,
+                    life: 1.3
+                });
+            }
+        }
+    });
 }
 
 function updatePerimeterTowers(dt) {
@@ -3375,258 +4305,282 @@ function updatePerimeterTowers(dt) {
             });
         }
     }
-}
 
-function updateHeliGunship(dt) {
-    const h = state.heli;
-    h.maxHp = 140 + (state.upgrades.jetChaff.level - 1) * 40;
-    h.rotorPhase += dt * 42;
-    if (h.rocketCooldown > 0) h.rocketCooldown = Math.max(0, h.rocketCooldown - dt);
-
-    // Handle S-8V Rocket Pod ripple salvo
-    if (h.rocketBurstRemaining > 0) {
-        h.rocketBurstTimer -= dt;
-        if (h.rocketBurstTimer <= 0) {
-            spawnSingleHeliRocket();
-            h.rocketBurstRemaining--;
-            h.rocketBurstTimer = 0.055;
+    // Bofors 40mm L/70 Heavy Flak Bunker on Far-Left Perimeter (W/2 - 158)
+    if (state.upgrades.bofors40mm.level > 0) {
+        state.boforsTimer -= dt;
+        const interval = Math.max(0.35, 1.1 - state.upgrades.bofors40mm.level * 0.08);
+        if (state.boforsTimer <= 0) {
+            state.boforsTimer = interval;
+            const bx = W / 2 - 158;
+            const by = GROUND_Y - 18;
+            const target = flying[Math.floor(Math.random() * flying.length)];
+            const ang = Math.atan2(target.y - by, target.x - bx);
+            bullets.push({
+                x: bx + Math.cos(ang) * 24,
+                y: by + Math.sin(ang) * 24,
+                vx: Math.cos(ang) * 780,
+                vy: Math.sin(ang) * 780,
+                dmg: (42 + state.upgrades.bofors40mm.level * 14) * reactorMult * hardcoreTowerMult * getZvookDamageBonus(),
+                flakRadius: 48,
+                isJetBullet: false,
+                isFpvNet: false,
+                isHeliShell: true,
+                life: 1.6
+            });
         }
     }
 
-    let moveX = 0, moveY = 0;
-    if (keys['KeyW'] || keys['ArrowUp']) moveY -= 1;
-    if (keys['KeyS'] || keys['ArrowDown']) moveY += 1;
-    if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
-    if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
+    // Centurion C-RAM 20mm Phalanx Dome on Far-Right Perimeter (W/2 + 165)
+    if (state.upgrades.cramPhalanx.level > 0) {
+        state.cramTimer -= dt;
+        const interval = Math.max(0.05, 0.14 - state.upgrades.cramPhalanx.level * 0.01);
+        if (state.cramTimer <= 0) {
+            state.cramTimer = interval;
+            const cx = W / 2 + 165;
+            const cy = GROUND_Y - 18;
+            // Prioritize lowest altitude threat
+            const sortedLow = [...flying].sort((a, b) => b.y - a.y);
+            const target = sortedLow[0];
+            const ang = Math.atan2(target.y - cy, target.x - cx);
+            bullets.push({
+                x: cx + Math.cos(ang) * 18,
+                y: cy + Math.sin(ang) * 18,
+                vx: Math.cos(ang + (Math.random() - 0.5) * 0.04) * 1020,
+                vy: Math.sin(ang + (Math.random() - 0.5) * 0.04) * 1020,
+                dmg: (11 + state.upgrades.cramPhalanx.level * 4) * reactorMult * hardcoreTowerMult * getZvookDamageBonus(),
+                flakRadius: 18,
+                isJetBullet: true,
+                isFpvNet: false,
+                life: 1.2
+            });
+        }
+    }
 
-    const redlineBoost = isOverclockActive('ocRedlineAir') ? (1.45 + (state.upgrades.ocRedlineAir.level - 1) * 0.15) : 1.0;
-    const maxSpeed = (270 + (state.upgrades.heliChinGun.level - 1) * 22) * redlineBoost;
+    // S-300PS Long-Range VLS Battery
+    if (state.upgrades.s300Battery.level > 0) {
+        state.s300Timer -= dt;
+        const interval = Math.max(2.2, 6.5 - state.upgrades.s300Battery.level * 0.5);
+        if (state.s300Timer <= 0) {
+            state.s300Timer = interval;
+            const target = flying[0];
+            missiles.push({
+                x: W * 0.14,
+                y: GROUND_Y - 20,
+                vx: 0,
+                vy: -520,
+                speed: 740 + state.upgrades.s300Battery.level * 45,
+                target,
+                isAim9x: false,
+                isPatriot: true,
+                isS300: true,
+                life: 5.0
+            });
+            sfx.playMissileLaunch();
+        }
+    }
 
-    if (moveX !== 0 || moveY !== 0) {
-        const ang = Math.atan2(moveY, moveX);
-        h.vx += Math.cos(ang) * maxSpeed * 4.5 * dt;
-        h.vy += Math.sin(ang) * maxSpeed * 4.5 * dt;
+    // High-Voltage Tesla Arc Pylons (Zaps low-altitude threats)
+    if (state.upgrades.empPylons.level > 0) {
+        state.teslaTimer -= dt;
+        if (state.teslaTimer <= 0) {
+            state.teslaTimer = 0.35;
+            const lowThreats = flying.filter(d => d.y >= GROUND_Y - 155);
+            for (const d of lowThreats) {
+                const teslaDmg = (18 + state.upgrades.empPylons.level * 9) * hardcoreTowerMult * getZvookDamageBonus();
+                d.hp -= teslaDmg;
+                d.hitFlash = 0.15;
+                orbitalBeams.push({
+                    x1: d.x + (Math.random() - 0.5) * 40,
+                    y1: GROUND_Y,
+                    x2: d.x,
+                    y2: d.y,
+                    color: '#38bdf8',
+                    width: 2.5,
+                    life: 0.14
+                });
+                if (d.hp <= 0) triggerDroneShotDown(d, 'ground');
+            }
+        }
+    }
+}
+
+function updateExperimentalLabSystems(dt) {
+    // 1. Substation Ion-Dome Energy Shield Regeneration
+    if (state.upgrades.labPlasmaShield.level > 0) {
+        state.maxCityShield = state.upgrades.labPlasmaShield.level * 45;
+        state.cityShield = Math.min(state.maxCityShield, state.cityShield + dt * (2.5 + state.upgrades.labPlasmaShield.level * 1.5));
     } else {
-        // Hover smoothly toward standoff position near cursor
-        const standOffX = state.mouseX > h.x ? state.mouseX - 90 : state.mouseX + 90;
-        const standOffY = Math.max(55, Math.min(GROUND_Y - 75, state.mouseY - 25));
-        const dx = standOffX - h.x;
-        const dy = standOffY - h.y;
-        h.vx += (dx * 2.2 - h.vx) * Math.min(1, dt * 4.5);
-        h.vy += (dy * 2.2 - h.vy) * Math.min(1, dt * 4.5);
+        state.maxCityShield = 0;
+        state.cityShield = 0;
     }
 
-    const spd = Math.hypot(h.vx, h.vy);
-    if (spd > maxSpeed) {
-        h.vx = (h.vx / spd) * maxSpeed;
-        h.vy = (h.vy / spd) * maxSpeed;
-    }
-
-    h.x = Math.max(45, Math.min(W - 45, h.x + h.vx * dt));
-    h.y = Math.max(48, Math.min(GROUND_Y - 52, h.y + h.vy * dt));
-    h.facing = state.mouseX >= h.x ? 1 : -1;
-    h.tilt = Math.max(-0.28, Math.min(0.28, (h.vx / maxSpeed) * 0.26));
-    h.gunAngle = Math.atan2(state.mouseY - (h.y + 10), state.mouseX - (h.x + h.facing * 18));
-}
-
-function updateAutomatedGroundTurret(dt, turretX, turretY) {
     const flying = drones.filter(d => d.state === 'flying' && !d.hijacked);
-    if (flying.length === 0) return;
 
-    // Aim at closest threat
-    flying.sort((a, b) => Math.hypot(a.x - turretX, a.y - turretY) - Math.hypot(b.x - turretX, b.y - turretY));
-    const target = flying[0];
-    const flightTime = Math.hypot(target.x - turretX, target.y - turretY) / 850;
-    const leadX = target.x + target.vx * flightTime;
-    const leadY = target.y + target.vy * flightTime;
-    state.turretAngle = Math.atan2(leadY - turretY, leadX - turretX);
+    // 2. "Sich-3" Orbital Kinetic Railgun Strike
+    if (state.upgrades.labOrbitalRailgun.level > 0 && flying.length > 0) {
+        state.orbitalTimer -= dt;
+        const interval = Math.max(2.4, 8.2 - state.upgrades.labOrbitalRailgun.level * 1.1);
+        if (state.orbitalTimer <= 0) {
+            state.orbitalTimer = interval;
+            const sortedHp = [...flying].sort((a, b) => b.hp - a.hp);
+            const target = sortedHp[0];
+            const railDmg = (260 + state.upgrades.labOrbitalRailgun.level * 150) * getZvookDamageBonus() * (state.hardcore ? 0.75 : 1);
+            target.hp -= railDmg;
+            target.hitFlash = 0.25;
 
-    // If AI Auto-Defense Brain is unlocked (or at base 35% cover rate), fire automatically!
-    state.autoGroundTimer -= dt;
-    let interval = state.upgrades.labAutoTurret.level > 0 ? 0.11 : 0.35;
-    if (isOverclockActive('ocFastJam')) {
-        interval /= (2.0 + (state.upgrades.ocFastJam.level - 1) * 0.25);
+            orbitalBeams.push({
+                x1: target.x + (Math.random() - 0.5) * 30,
+                y1: 0,
+                x2: target.x,
+                y2: target.y,
+                color: '#22d3ee',
+                width: 7,
+                life: 0.45
+            });
+            shockwaves.push({ x: target.x, y: target.y, r: 8, maxR: 85, color: '#22d3ee', alpha: 1 });
+            sfx.playEmpBlast();
+            spawnFloatingText(target.x, target.y - 28, `🛰️ SICH-3 ORBITAL RAILGUN! -${Math.round(railDmg)}`, '#22d3ee');
+            if (target.hp <= 0) triggerDroneShotDown(target, 'air');
+        }
     }
-    if (state.autoGroundTimer <= 0) {
-        fireGroundAutocannon(state.turretAngle);
-        state.autoGroundTimer = interval;
-    }
-}
 
-function updatePickupFireGroups(dt) {
-    const flying = drones.filter(d => d.state === 'flying' && !d.hijacked);
-    const hardcorePickupMult = state.hardcore ? 0.65 : 1.0;
-    pickupTrucks.forEach((p, idx) => {
-        p.x += p.dir * 52 * dt;
-        if (p.x > W - 90) p.dir = -1;
-        if (p.x < 90) p.dir = 1;
+    // 3. Autonomous "Saker" AI Micro-Interceptor Swarm
+    const desiredSwarm = state.upgrades.labDroneSwarm.level;
+    while (friendlySwarm.length < desiredSwarm) {
+        friendlySwarm.push({
+            x: W / 2 + (Math.random() - 0.5) * 200,
+            y: GROUND_Y - 60 - Math.random() * 120,
+            angle: -Math.PI / 2
+        });
+    }
+    for (let i = 0; i < friendlySwarm.length; i++) {
+        const s = friendlySwarm[i];
+        if (flying.length > 0) {
+            const target = flying[i % flying.length];
+            const ang = Math.atan2(target.y - s.y, target.x - s.x);
+            s.angle = ang;
+            const spd = 290 + state.upgrades.labDroneSwarm.level * 25;
+            s.x += Math.cos(ang) * spd * dt;
+            s.y += Math.sin(ang) * spd * dt;
+            if (Math.hypot(target.x - s.x, target.y - s.y) < target.radius + 14) {
+                const swarmDmg = (95 + state.upgrades.labDroneSwarm.level * 35) * getZvookDamageBonus();
+                target.hp -= swarmDmg;
+                target.netCaptured = true;
+                spawnExplosion(s.x, s.y, '#38bdf8', 12);
+                if (target.hp <= 0) triggerDroneShotDown(target, 'air');
+                // Respawn Saker micro-interceptor from base
+                s.x = W / 2 + (Math.random() - 0.5) * 90;
+                s.y = GROUND_Y - 30;
+            }
+        } else {
+            // Orbit around center airspace
+            s.angle += dt * 2.2;
+            s.x += Math.cos(s.angle) * 110 * dt;
+            s.y = Math.max(70, Math.min(GROUND_Y - 90, s.y + Math.sin(s.angle * 2) * 40 * dt));
+        }
+    }
+
+    // 4. Autonomous F-16 Loyal Wingman
+    if (state.upgrades.airWingman.level > 0) {
+        wingmanJet.x += wingmanJet.vx * dt;
+        if (wingmanJet.x > W - 80) wingmanJet.vx = -(190 + state.upgrades.airWingman.level * 15);
+        if (wingmanJet.x < 80) wingmanJet.vx = (190 + state.upgrades.airWingman.level * 15);
+        wingmanJet.y = 115 + Math.sin(performance.now() * 0.002) * 28;
+        wingmanJet.angle = wingmanJet.vx >= 0 ? 0 : Math.PI;
 
         if (flying.length > 0) {
-            const target = flying[idx % flying.length];
-            p.aimAngle = Math.atan2(target.y - (GROUND_Y - 14), target.x - p.x);
-            p.fireTimer -= dt;
-            if (p.fireTimer <= 0) {
-                p.fireTimer = 0.22;
+            wingmanJet.fireTimer -= dt;
+            if (wingmanJet.fireTimer <= 0) {
+                wingmanJet.fireTimer = Math.max(0.14, 0.36 - state.upgrades.airWingman.level * 0.025);
+                const target = flying[0];
+                const ang = Math.atan2(target.y - wingmanJet.y, target.x - wingmanJet.x);
                 bullets.push({
-                    x: p.x + Math.cos(p.aimAngle) * 18,
-                    y: (GROUND_Y - 14) + Math.sin(p.aimAngle) * 18,
-                    vx: Math.cos(p.aimAngle + (Math.random() - 0.5) * 0.05) * 760,
-                    vy: Math.sin(p.aimAngle + (Math.random() - 0.5) * 0.05) * 760,
-                    dmg: (9 + state.upgrades.pickupFleet.level * 3) * hardcorePickupMult,
-                    flakRadius: 12,
-                    isJetBullet: false,
+                    x: wingmanJet.x,
+                    y: wingmanJet.y,
+                    vx: Math.cos(ang) * 950,
+                    vy: Math.sin(ang) * 950,
+                    dmg: (16 + state.upgrades.airWingman.level * 6) * getZvookDamageBonus() * (state.hardcore ? 0.65 : 1),
+                    flakRadius: 20,
+                    isJetBullet: true,
                     isFpvNet: false,
                     life: 1.4
                 });
             }
-        } else {
-            p.aimAngle = -Math.PI / 2 + Math.sin(performance.now() * 0.002 + idx) * 0.4;
         }
-    });
-}
-
-function updateFpvQuad(dt) {
-    const f = state.fpv;
-    f.rotorPhase += dt * 55;
-    if (f.empCooldown > 0) f.empCooldown = Math.max(0, f.empCooldown - dt);
-    if (f.dashTimer > 0) f.dashTimer = Math.max(0, f.dashTimer - dt);
-
-    let moveX = 0, moveY = 0;
-    if (keys['KeyW'] || keys['ArrowUp']) moveY -= 1;
-    if (keys['KeyS'] || keys['ArrowDown']) moveY += 1;
-    if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
-    if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
-
-    const redlineBoost = isOverclockActive('ocRedlineAir') ? (1.45 + (state.upgrades.ocRedlineAir.level - 1) * 0.15) : 1.0;
-    const maxSpeed = (360 + (state.upgrades.fpvQuadUpgrade.level - 1) * 45) * redlineBoost;
-    const toMouseX = state.mouseX - f.x;
-    const toMouseY = state.mouseY - f.y;
-    const distToMouse = Math.hypot(toMouseX, toMouseY);
-    f.angle = Math.atan2(toMouseY, toMouseX);
-
-    if (moveX !== 0 || moveY !== 0) {
-        const inputAngle = Math.atan2(moveY, moveX);
-        f.vx += Math.cos(inputAngle) * maxSpeed * 6.0 * dt;
-        f.vy += Math.sin(inputAngle) * maxSpeed * 6.0 * dt;
-    } else if (distToMouse > 24) {
-        const desiredSpeed = Math.min(maxSpeed, distToMouse * 3.2);
-        f.vx += (Math.cos(f.angle) * desiredSpeed - f.vx) * Math.min(1, dt * 8);
-        f.vy += (Math.sin(f.angle) * desiredSpeed - f.vy) * Math.min(1, dt * 8);
-    } else {
-        f.vx *= 0.88;
-        f.vy *= 0.88;
     }
 
-    const curSpd = Math.hypot(f.vx, f.vy);
-    if (curSpd > maxSpeed) {
-        f.vx = (f.vx / curSpd) * maxSpeed;
-        f.vy = (f.vy / curSpd) * maxSpeed;
-    }
-
-    f.tilt = Math.max(-0.48, Math.min(0.48, f.vx / maxSpeed * 0.45));
-    f.x = Math.max(30, Math.min(W - 30, f.x + f.vx * dt));
-    f.y = Math.max(35, Math.min(GROUND_Y - 30, f.y + f.vy * dt));
-
-    // Gentle battery drain & auto-swap at 0%
-    f.battery = Math.max(15, f.battery - dt * 1.5);
-}
-
-function updateFighterJet(dt) {
-    const j = state.jet;
-    j.maxHp = 100 + (state.upgrades.jetChaff.level - 1) * 30;
-    if (j.missileCooldown > 0) j.missileCooldown = Math.max(0, j.missileCooldown - dt);
-
-    const coolRate = (26 + state.upgrades.jetVulcan.level * 5) * (state.abilities.overdrive.active > 0 ? 3 : 1);
-    j.heat = Math.max(0, j.heat - coolRate * dt);
-    if (j.overheated && j.heat <= 25) {
-        j.overheated = false;
-    }
-
-    let moveX = 0, moveY = 0;
-    if (keys['KeyW'] || keys['ArrowUp']) moveY -= 1;
-    if (keys['KeyS'] || keys['ArrowDown']) moveY += 1;
-    if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
-    if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
-
-    j.afterburner = Boolean(keys['ShiftLeft'] || keys['ShiftRight'] || state.abilities.overdrive.active > 0);
-    const redlineBoost = isOverclockActive('ocRedlineAir') ? (1.45 + (state.upgrades.ocRedlineAir.level - 1) * 0.15) : 1.0;
-    const maxSpeed = (325 + (state.upgrades.jetVulcan.level - 1) * 35) * (j.afterburner ? 1.45 : 1.0) * redlineBoost;
-
-    const toMouseX = state.mouseX - j.x;
-    const toMouseY = state.mouseY - j.y;
-    const distToMouse = Math.hypot(toMouseX, toMouseY);
-    const desiredAimAngle = Math.atan2(toMouseY, toMouseX);
-
-    if (moveX !== 0 || moveY !== 0) {
-        const inputAngle = Math.atan2(moveY, moveX);
-        j.vx += Math.cos(inputAngle) * maxSpeed * 4.5 * dt;
-        j.vy += Math.sin(inputAngle) * maxSpeed * 4.5 * dt;
-        const curSpd = Math.hypot(j.vx, j.vy);
-        if (curSpd > maxSpeed) {
-            j.vx = (j.vx / curSpd) * maxSpeed;
-            j.vy = (j.vy / curSpd) * maxSpeed;
+    // 5. SCALP-EG / Storm Shadow Cruise Pod
+    if (state.upgrades.stormShadow.level > 0 && flying.length > 0) {
+        state.stormShadowTimer -= dt;
+        const interval = Math.max(3.2, 9.5 - state.upgrades.stormShadow.level * 0.75);
+        if (state.stormShadowTimer <= 0) {
+            state.stormShadowTimer = interval;
+            const sortedHp = [...flying].sort((a, b) => b.hp - a.hp);
+            const target = sortedHp[0];
+            const launchX = state.combatMode === 'jet' ? state.jet.x : (state.combatMode === 'heli' ? state.heli.x : W / 2);
+            const launchY = state.combatMode === 'jet' ? state.jet.y : (state.combatMode === 'heli' ? state.heli.y : GROUND_Y - 30);
+            missiles.push({
+                x: launchX,
+                y: launchY,
+                vx: 0,
+                vy: -240,
+                speed: 680,
+                target,
+                isAim9x: true,
+                isStormShadow: true,
+                life: 5.5
+            });
+            sfx.playMissileLaunch();
         }
-        let diff = desiredAimAngle - j.angle;
-        while (diff > Math.PI) diff -= Math.PI * 2;
-        while (diff < -Math.PI) diff += Math.PI * 2;
-        j.angle += diff * Math.min(1, dt * 10);
-        j.bank = Math.max(-1, Math.min(1, diff * 2.5));
-    } else {
-        let diff = desiredAimAngle - j.angle;
-        while (diff > Math.PI) diff -= Math.PI * 2;
-        while (diff < -Math.PI) diff += Math.PI * 2;
-        const turnAgility = 6.5 + state.upgrades.jetVulcan.level * 0.7;
-        j.angle += diff * Math.min(1, dt * turnAgility);
-        j.bank = Math.max(-1, Math.min(1, diff * 3.0));
-
-        const throttle = Math.min(1.0, Math.max(0.28, (distToMouse - 45) / 160));
-        const targetSpeed = maxSpeed * throttle;
-        j.vx = Math.cos(j.angle) * targetSpeed;
-        j.vy = Math.sin(j.angle) * targetSpeed;
     }
 
-    j.x += j.vx * dt;
-    j.y += j.vy * dt;
-
-    j.x = Math.max(35, Math.min(W - 35, j.x));
-    j.y = Math.max(40, Math.min(GROUND_Y - 38, j.y));
-
-    if (Math.random() < (j.afterburner ? 0.95 : 0.6)) {
-        const tailX = j.x - Math.cos(j.angle) * 22;
-        const tailY = j.y - Math.sin(j.angle) * 22;
-        particles.push({
-            x: tailX, y: tailY,
-            vx: -Math.cos(j.angle) * (120 + Math.random() * 80),
-            vy: -Math.sin(j.angle) * (120 + Math.random() * 80),
-            r: j.afterburner ? 3.5 : 2.2,
-            color: j.afterburner ? '#38bdf8' : '#f97316',
-            alpha: 0.85, life: 0.14, maxLife: 0.14
-        });
-    }
-
-    j.lockedTargets = [];
-    const maxLocks = 1 + Math.floor(state.upgrades.jetSidewinder.level / 2) + (state.upgrades.labAmraam.level > 0 ? 2 : 0);
-    for (const d of drones) {
-        if (d.state !== 'flying' || d.hijacked) continue;
-        const dist = Math.hypot(d.x - j.x, d.y - j.y);
-        if (dist > 680) continue;
-        const angToDrone = Math.atan2(d.y - j.y, d.x - j.x);
-        let diff = Math.abs(angToDrone - j.angle);
-        if (diff > Math.PI) diff = Math.PI * 2 - diff;
-        if (diff < 0.65) {
-            j.lockedTargets.push(d);
-            if (j.lockedTargets.length >= maxLocks) break;
+    // 6. "Queen Hornet" FPV Carrier Blimp
+    if (state.upgrades.fpvMotherDrone.level > 0) {
+        motherBlimp.x += motherBlimp.dir * 38 * dt;
+        if (motherBlimp.x > W - 120) motherBlimp.dir = -1;
+        if (motherBlimp.x < 120) motherBlimp.dir = 1;
+        if (flying.length > 0) {
+            state.motherDroneTimer -= dt;
+            const interval = Math.max(1.4, 4.5 - state.upgrades.fpvMotherDrone.level * 0.35);
+            if (state.motherDroneTimer <= 0) {
+                state.motherDroneTimer = interval;
+                const target = flying[Math.floor(Math.random() * flying.length)];
+                missiles.push({
+                    x: motherBlimp.x,
+                    y: motherBlimp.y + 12,
+                    vx: (Math.random() - 0.5) * 80,
+                    vy: 140,
+                    speed: 540,
+                    target,
+                    isAim9x: true,
+                    life: 4.5
+                });
+            }
         }
     }
 }
 
 function damageCity(amount, x, y, message) {
-    state.cityHp = Math.max(0, state.cityHp - amount);
+    let remaining = amount;
+    if (state.cityShield > 0) {
+        const absorbed = Math.min(state.cityShield, remaining);
+        state.cityShield -= absorbed;
+        remaining -= absorbed;
+        shockwaves.push({ x, y: GROUND_Y - 25, r: 10, maxR: 75, color: '#22d3ee', alpha: 0.9 });
+        if (remaining <= 0) {
+            spawnFloatingText(x, y - 24, `🛡️ ION SHIELD ABSORBED (-${Math.round(absorbed)})`, '#22d3ee');
+            updateHudUI();
+            return;
+        }
+    }
+
+    state.cityHp = Math.max(0, state.cityHp - remaining);
     if (state.bounty && state.bounty.type === 'noDamage' && !state.bounty.completed) {
         state.bounty.failed = true;
         updateBountyUI();
     }
-    spawnFloatingText(x, y - 24, `-${amount}% GRID (${message})`, '#f43f5e');
+    spawnFloatingText(x, y - 24, `-${Math.round(remaining)}% GRID (${message})`, '#f43f5e');
     updateHudUI();
     if (state.cityHp <= 0) {
         triggerGameOver();
@@ -3635,11 +4589,13 @@ function damageCity(amount, x, y, message) {
 
 function advanceToNextWave() {
     // Check if "noDamage" contract succeeded
-    if (state.bounty && state.bounty.type === 'noDamage' && !state.bounty.failed && !state.bounty.completed) {
+    if (!state.peaceful && state.bounty && state.bounty.type === 'noDamage' && !state.bounty.failed && !state.bounty.completed) {
         completeWaveBounty();
     }
 
     state.wave++;
+    checkAchievements();
+    saveCareerProgress();
     state.waveEnemiesSpawned = 0;
     state.waveEnemiesToSpawn = Math.round((8 + state.wave * 3.6) * (state.hardcore ? 1.3 : 1.0));
     state.waveCooldown = 0;
@@ -3658,23 +4614,29 @@ function advanceToNextWave() {
     const wBadge = document.getElementById('weather-badge');
     if (wBadge) wBadge.textContent = wPick.label;
 
-    generateWaveBounty(state.wave);
-
-    const waveBonus = 90 + state.wave * 35;
-    state.scrap += waveBonus;
-    state.techCores += 1;
+    const banner = document.getElementById('alert-banner');
     sfx.playWaveSiren();
 
-    spawnFloatingText(W / 2, H * 0.35, `WAVE ${state.wave} INCOMING! (+${waveBonus}⚙️ & +1💎 TECH CORE)`, '#34d399');
+    if (state.peaceful) {
+        updateBountyUI();
+        spawnFloatingText(W / 2, H * 0.35, `WAVE ${state.wave} INCOMING! (PEACEFUL PATROL)`, '#38bdf8');
+        banner.textContent = `🕊️ WAVE ${String(state.wave).padStart(2, '0')} — GERBERA & SHAHED-136 SWARM`;
+    } else {
+        generateWaveBounty(state.wave);
+        const waveBonus = 90 + state.wave * 35;
+        state.scrap += waveBonus;
+        state.techCores += 1;
+        spawnFloatingText(W / 2, H * 0.35, `WAVE ${state.wave} INCOMING! (+${waveBonus}⚙️ & +1💎 TECH CORE)`, '#34d399');
 
-    const banner = document.getElementById('alert-banner');
-    let threatNote = `${state.waveEnemiesToSpawn} HOSTILE TARGETS`;
-    if (state.wave % 6 === 0) threatNote = '🛩️ TU-95MS "BEAR" STRATEGIC BOMBER BOSS DETECTED';
-    else if (state.wave % 3 === 0) threatNote = '👑 A-50U AWACS BOSS COMMAND AIRCRAFT DETECTED';
-    else if (state.wave === 2) threatNote = 'GARPIYA-A1 & SUPERCAM S350 DETECTED';
-    else if (state.wave >= 5) threatNote = 'KH-47M2 KINZHAL HYPERSONIC & S-70 STEALTH DETECTED';
+        let threatNote = `${state.waveEnemiesToSpawn} HOSTILE TARGETS`;
+        if (state.wave % 6 === 0) threatNote = '🛩️ TU-95MS "BEAR" STRATEGIC BOMBER BOSS DETECTED';
+        else if (state.wave % 3 === 0) threatNote = '👑 A-50U AWACS BOSS COMMAND AIRCRAFT DETECTED';
+        else if (state.wave === 2) threatNote = 'GARPIYA-A1 & SUPERCAM S350 DETECTED';
+        else if (state.wave >= 5) threatNote = 'KH-47M2 KINZHAL HYPERSONIC & S-70 STEALTH DETECTED';
 
-    banner.textContent = `⚠️ WAVE ${String(state.wave).padStart(2, '0')} — ${threatNote}`;
+        banner.textContent = `⚠️ WAVE ${String(state.wave).padStart(2, '0')} — ${threatNote}`;
+    }
+
     banner.classList.remove('hidden');
     setTimeout(() => banner.classList.add('hidden'), 4000);
 
@@ -3844,12 +4806,15 @@ function renderGame() {
         drawHeliGunship(time);
     }
 
+    // 11B. Draw Friendly AI Wingman, Queen Hornet Blimp, Saker Swarm, Orbital Railgun Beams & Ion Dome Shield
+    drawSupportUnitsAndBeams(time);
+
     // 12. Draw Shockwaves, Tracer Bullets & Missiles
     for (const sw of shockwaves) {
         ctx.save();
         ctx.strokeStyle = sw.color;
         ctx.globalAlpha = Math.max(0, sw.alpha);
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
         ctx.stroke();
@@ -3858,13 +4823,24 @@ function renderGame() {
 
     for (const b of bullets) {
         ctx.save();
-        const angle = Math.atan2(b.vy, b.vx);
-        ctx.strokeStyle = isFlir ? '#ffffff' : (b.isHeliShell ? '#a3e635' : (b.isFpvNet ? '#fbbf24' : (b.isJetBullet ? '#38bdf8' : '#fde047')));
-        ctx.lineWidth = b.isHeliShell ? 3.0 : (b.isFpvNet ? 2.2 : 2.6);
+        const ang = Math.atan2(b.vy, b.vx);
+        const tracerColor = b.isThermobaric
+            ? '#f97316'
+            : (b.isHeliShell ? '#fde047' : (b.isFpvNet ? '#fbbf24' : (b.isJetBullet ? '#fde047' : '#fde047')));
+        ctx.strokeStyle = tracerColor;
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 6;
+        ctx.lineWidth = b.isHeliShell || b.isThermobaric ? 2.8 : 2.2;
         ctx.beginPath();
         ctx.moveTo(b.x, b.y);
-        ctx.lineTo(b.x - Math.cos(angle) * (b.isFpvNet ? 10 : 18), b.y - Math.sin(angle) * (b.isFpvNet ? 10 : 18));
+        ctx.lineTo(b.x - Math.cos(ang) * 15, b.y - Math.sin(ang) * 15);
         ctx.stroke();
+
+        // Bright tracer tip
+        ctx.fillStyle = '#fef9c3';
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, 1.6, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
     }
 
@@ -3872,27 +4848,20 @@ function renderGame() {
         ctx.save();
         ctx.translate(m.x, m.y);
         ctx.rotate(Math.atan2(m.vy, m.vx));
-        ctx.fillStyle = isFlir ? '#ffffff' : (m.isPatriot ? '#10b981' : (m.isHeliRocket ? '#a3e635' : (m.isAim9x ? '#f43f5e' : '#38bdf8')));
-        ctx.fillRect(-7, -2.5, 14, 5);
+        ctx.fillStyle = m.isStormShadow ? '#facc15' : (m.isPatriot ? '#10b981' : (m.isHeliRocket ? '#a3e635' : '#f43f5e'));
+        ctx.fillRect(-7, -2, 14, 4);
         ctx.fillStyle = '#fde047';
-        ctx.fillRect(4, -2.5, 4, 5);
+        ctx.beginPath();
+        ctx.arc(-8, 0, 2.5, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
     }
 
-    // 13. Draw Shell Casings, Particles & Floating Texts
-    ctx.fillStyle = '#f59e0b';
-    for (const c of shellCasings) {
-        ctx.save();
-        ctx.translate(c.x, c.y);
-        ctx.rotate(c.angle);
-        ctx.fillRect(-2.5, -1, 5, 2);
-        ctx.restore();
-    }
-
+    // 13. Draw Particles & Floating Texts
     for (const p of particles) {
         ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = isFlir ? '#ffffff' : p.color;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
@@ -3901,26 +4870,104 @@ function renderGame() {
 
     for (const ft of floatingTexts) {
         ctx.save();
-        ctx.globalAlpha = Math.min(1, ft.life / ft.maxLife * 1.4);
+        ctx.globalAlpha = Math.max(0, ft.life / ft.maxLife);
         ctx.font = 'bold 12px "JetBrains Mono", monospace';
         ctx.fillStyle = ft.color;
         ctx.textAlign = 'center';
-        ctx.shadowColor = '#000';
-        ctx.shadowBlur = 4;
         ctx.fillText(ft.text, ft.x, ft.y);
         ctx.restore();
     }
 
-    // 14. Draw FPV OSD Overlay if in FPV Quad Mode
+    // 14. Draw FPV OSD Overlay, Tactical Radar Scope & Crosshair
     if (state.combatMode === 'fpv') {
         drawFpvOsdOverlay(time);
     }
-
-    // 15. Draw Circular Tactical Radar Scope
     drawRadarScope();
-
-    // 16. Draw Custom Tactical Crosshair
     drawCrosshair();
+}
+
+function drawSupportUnitsAndBeams(time) {
+    // Substation Ion-Dome Energy Barrier Arc
+    if (state.cityShield > 0) {
+        ctx.save();
+        const shieldPct = Math.min(1, state.cityShield / Math.max(1, state.maxCityShield));
+        ctx.strokeStyle = `rgba(34, 211, 238, ${0.25 + shieldPct * 0.45})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(W / 2, GROUND_Y + 120, W * 0.55, Math.PI * 1.12, Math.PI * 1.88);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // Orbital Railgun & Tesla Lightning Beams
+    for (const b of orbitalBeams) {
+        ctx.save();
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = b.width;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(b.x1, b.y1);
+        ctx.lineTo(b.x2, b.y2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // Autonomous Saker AI Micro-Interceptor Swarm
+    for (const s of friendlySwarm) {
+        ctx.save();
+        ctx.translate(s.x, s.y);
+        ctx.rotate(s.angle);
+        ctx.fillStyle = '#0284c7';
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(8, 0);
+        ctx.lineTo(-6, -6);
+        ctx.lineTo(-4, 0);
+        ctx.lineTo(-6, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // Autonomous F-16 Loyal Wingman
+    if (state.upgrades.airWingman.level > 0) {
+        ctx.save();
+        ctx.translate(wingmanJet.x, wingmanJet.y);
+        ctx.scale(wingmanJet.vx >= 0 ? 0.78 : -0.78, 0.78);
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(22, 0);
+        ctx.lineTo(-12, -16);
+        ctx.lineTo(-16, 0);
+        ctx.lineTo(-12, 16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // "Queen Hornet" FPV Carrier Blimp
+    if (state.upgrades.fpvMotherDrone.level > 0) {
+        ctx.save();
+        ctx.translate(motherBlimp.x, motherBlimp.y);
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 28, 11, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 8px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('HORNET-CARRIER', 0, 3);
+        ctx.restore();
+    }
 }
 
 function drawWreckages(time) {
@@ -4922,6 +5969,25 @@ function updateHudUI() {
     document.getElementById('score-display').textContent = state.score.toLocaleString();
     document.getElementById('wave-display').textContent = String(state.wave).padStart(2, '0');
 
+    const scrapGroup = document.getElementById('hud-scrap-group');
+    if (scrapGroup) {
+        scrapGroup.classList.toggle('hidden', Boolean(state.peaceful));
+    }
+    const armoryBtn = document.getElementById('btn-armory');
+    if (armoryBtn) {
+        armoryBtn.classList.toggle('hidden', Boolean(state.peaceful));
+    }
+
+    const shieldEl = document.getElementById('shield-text');
+    if (shieldEl) {
+        if (state.maxCityShield > 0) {
+            shieldEl.classList.remove('hidden');
+            shieldEl.textContent = `[🛡️${Math.round(state.cityShield)}]`;
+        } else {
+            shieldEl.classList.add('hidden');
+        }
+    }
+
     const remaining = (state.waveEnemiesToSpawn - state.waveEnemiesSpawned) + drones.filter(d => !d.hijacked).length;
     document.getElementById('wave-progress-text').textContent = `${remaining} LEFT`;
 
@@ -4955,7 +6021,7 @@ function updateHudUI() {
             : 'h-full bg-amber-500 transition-all duration-75';
     }
 
-    const canAffordAny = Object.values(state.upgrades).some(u => {
+    const canAffordAny = !state.peaceful && Object.values(state.upgrades).some(u => {
         if (u.id === 'gridRepair' && state.cityHp >= state.maxCityHp) return false;
         if (u.level >= u.maxLevel) return false;
         const scrapCost = getUpgradeCost(u);
@@ -5073,6 +6139,8 @@ function renderArmoryCards() {
 
             const levelPips = upg.id === 'gridRepair'
                 ? `<span class="text-xs font-mono-tech text-emerald-400">GRID: ${Math.round(state.cityHp)}/${state.maxCityHp}</span>`
+                : upg.maxLevel > 20
+                ? `<span class="text-xs font-mono-tech text-purple-300 font-bold">TIER ${upg.level} / ∞</span>`
                 : Array.from({ length: upg.maxLevel }, (_, idx) =>
                     `<span class="inline-block w-2 h-1.5 rounded-sm ${idx < upg.level ? (isOverclock ? 'bg-orange-400' : (isDual ? 'bg-purple-400' : 'bg-emerald-400')) : 'bg-slate-700'}"></span>`
                   ).join(' ');
@@ -5157,6 +6225,16 @@ function purchaseUpgrade(id) {
     state.techCores -= coreCost;
     upg.level++;
 
+    if (id === 'labCoreOvercharge') {
+        state.maxCityHp += 25;
+        state.cityHp = Math.min(state.maxCityHp, state.cityHp + 25);
+        spawnFloatingText(W / 2, H * 0.3, `♾️ QUANTUM CORE INFUSED! +12% ALL DMG & +25 MAX GRID HP!`, '#c084fc');
+    }
+    if (id === 'labPlasmaShield') {
+        state.maxCityShield = upg.level * 45;
+        state.cityShield = state.maxCityShield;
+    }
+
     if (id === 'salvageRover') syncRoverFleet();
     if (id === 'pickupFleet') syncPickupFleet();
     if (id === 'jetChaff') {
@@ -5166,6 +6244,8 @@ function purchaseUpgrade(id) {
         state.heli.hp = state.heli.maxHp;
     }
 
+    checkAchievements();
+    saveCareerProgress();
     sfx.playScrapCollect(coreCost > 0);
     updateHudUI();
 }
@@ -5203,9 +6283,17 @@ function renderCodexCards() {
 
 function toggleArmoryModal(forceState = null) {
     if (!state.running || state.gameOver) return;
+    if (state.peaceful) {
+        spawnFloatingText(W / 2, H * 0.3, '🕊️ UPGRADES & GRID REPAIR DISABLED IN PEACEFUL MODE', '#38bdf8');
+        return;
+    }
     const modal = document.getElementById('armory-modal');
     const codexModal = document.getElementById('codex-modal');
+    const achModal = document.getElementById('achievements-modal');
+    const setModal = document.getElementById('settings-modal');
     codexModal.classList.add('hidden');
+    achModal.classList.add('hidden');
+    setModal.classList.add('hidden');
 
     const willOpen = forceState !== null ? forceState : modal.classList.contains('hidden');
     if (willOpen) {
@@ -5224,7 +6312,11 @@ function toggleCodexModal(forceState = null) {
     if (!state.running || state.gameOver) return;
     const modal = document.getElementById('codex-modal');
     const armoryModal = document.getElementById('armory-modal');
+    const achModal = document.getElementById('achievements-modal');
+    const setModal = document.getElementById('settings-modal');
     armoryModal.classList.add('hidden');
+    achModal.classList.add('hidden');
+    setModal.classList.add('hidden');
     document.getElementById('codex-badge').classList.add('hidden');
 
     const willOpen = forceState !== null ? forceState : modal.classList.contains('hidden');
@@ -5240,19 +6332,129 @@ function toggleCodexModal(forceState = null) {
     }
 }
 
-function setDifficultyMode(isHardcore) {
-    state.hardcore = Boolean(isHardcore);
+function renderAchievementsCards() {
+    syncCareerUI();
+    const container = document.getElementById('achievements-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    ACHIEVEMENTS_CATALOG.forEach(ach => {
+        const isUnlocked = Boolean(career.unlockedAchievements[ach.id]);
+        const card = document.createElement('div');
+        card.className = `rounded-xl p-3 border flex flex-col justify-between gap-2 ${
+            isUnlocked
+                ? 'bg-amber-950/30 border-amber-400/70 shadow-lg shadow-amber-500/10'
+                : 'bg-slate-900/80 border-slate-800 opacity-65'
+        }`;
+
+        card.innerHTML = `
+            <div>
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-2xl">${ach.icon}</span>
+                    <span class="text-[10px] font-mono-tech px-2 py-0.5 rounded font-bold ${
+                        isUnlocked ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-400'
+                    }">${isUnlocked ? 'UNLOCKED' : 'LOCKED'}</span>
+                </div>
+                <h3 class="text-sm font-bold text-white mt-1.5">${ach.name}</h3>
+                <p class="text-[11px] text-slate-300 mt-1 leading-snug">${ach.desc}</p>
+            </div>
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono-tech">
+                <span class="text-amber-300">🎖️ SERVICE MEDAL</span>
+                <span class="${isUnlocked ? 'text-emerald-400' : 'text-slate-500'}">${isUnlocked ? '✓ SAVED' : 'IN PROGRESS'}</span>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function toggleAchievementsModal(forceState = null) {
+    const modal = document.getElementById('achievements-modal');
+    const armoryModal = document.getElementById('armory-modal');
+    const codexModal = document.getElementById('codex-modal');
+    const setModal = document.getElementById('settings-modal');
+    armoryModal.classList.add('hidden');
+    codexModal.classList.add('hidden');
+    setModal.classList.add('hidden');
+    document.getElementById('ach-badge')?.classList.add('hidden');
+
+    const willOpen = forceState !== null ? forceState : modal.classList.contains('hidden');
+    if (willOpen) {
+        if (state.running && !state.gameOver) {
+            state.pausedModal = true;
+            state.isFiring = false;
+        }
+        renderAchievementsCards();
+        modal.classList.remove('hidden');
+    } else {
+        modal.classList.add('hidden');
+        if (state.running && !state.gameOver) {
+            state.pausedModal = false;
+            lastTime = performance.now();
+        }
+    }
+}
+
+function toggleSettingsModal(forceState = null) {
+    const modal = document.getElementById('settings-modal');
+    const armoryModal = document.getElementById('armory-modal');
+    const codexModal = document.getElementById('codex-modal');
+    const achModal = document.getElementById('achievements-modal');
+    armoryModal.classList.add('hidden');
+    codexModal.classList.add('hidden');
+    achModal.classList.add('hidden');
+
+    const willOpen = forceState !== null ? forceState : modal.classList.contains('hidden');
+    if (willOpen) {
+        if (state.running && !state.gameOver) {
+            state.pausedModal = true;
+            state.isFiring = false;
+        }
+        syncSettingsUI();
+        modal.classList.remove('hidden');
+    } else {
+        modal.classList.add('hidden');
+        if (state.running && !state.gameOver) {
+            state.pausedModal = false;
+            lastTime = performance.now();
+        }
+    }
+}
+
+function setDifficultyMode(mode) {
+    if (mode === true) mode = 'hardcore';
+    if (mode === false) mode = 'standard';
+    state.difficulty = mode;
+    state.hardcore = mode === 'hardcore';
+    state.peaceful = mode === 'peaceful';
+
+    const btnPf = document.getElementById('btn-diff-peaceful');
     const btnStd = document.getElementById('btn-diff-standard');
     const btnHc = document.getElementById('btn-diff-hardcore');
+    const badgePf = document.getElementById('badge-diff-peaceful');
     const badgeStd = document.getElementById('badge-diff-standard');
     const badgeHc = document.getElementById('badge-diff-hardcore');
     const startBtn = document.getElementById('btn-start-game');
 
-    if (state.hardcore) {
-        btnStd.className = 'p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-emerald-500/50 text-left transition flex flex-col justify-between';
-        badgeStd.className = 'text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded';
-        badgeStd.textContent = 'CLICK TO SELECT';
+    btnPf.className = 'p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-sky-400/60 text-left transition flex flex-col justify-between';
+    badgePf.className = 'text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded';
+    badgePf.textContent = 'CLICK TO SELECT';
 
+    btnStd.className = 'p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-emerald-500/50 text-left transition flex flex-col justify-between';
+    badgeStd.className = 'text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded';
+    badgeStd.textContent = 'CLICK TO SELECT';
+
+    btnHc.className = 'p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-rose-500/60 text-left transition flex flex-col justify-between';
+    badgeHc.className = 'text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded';
+    badgeHc.textContent = 'CLICK TO SELECT';
+
+    if (state.peaceful) {
+        btnPf.className = 'p-3.5 rounded-xl border-2 border-sky-400 bg-sky-950/40 text-left transition flex flex-col justify-between shadow-lg shadow-sky-500/15';
+        badgePf.className = 'text-[10px] font-mono-tech bg-sky-400 text-slate-950 font-bold px-2 py-0.5 rounded';
+        badgePf.textContent = 'ACTIVE DOCTRINE';
+
+        startBtn.className = 'w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-300 hover:from-sky-300 hover:to-teal-200 text-slate-950 font-bold text-base tracking-wider uppercase font-mono-tech shadow-lg shadow-sky-500/25 transition transform hover:-translate-y-0.5';
+        startBtn.textContent = '🕊️ LAUNCH PEACEFUL PATROL DEFENSE ▶';
+    } else if (state.hardcore) {
         btnHc.className = 'p-3.5 rounded-xl border-2 border-rose-500 bg-rose-950/40 text-left transition flex flex-col justify-between shadow-lg shadow-rose-500/15';
         badgeHc.className = 'text-[10px] font-mono-tech bg-rose-500 text-slate-950 font-bold px-2 py-0.5 rounded';
         badgeHc.textContent = 'ACTIVE DOCTRINE';
@@ -5263,10 +6465,6 @@ function setDifficultyMode(isHardcore) {
         btnStd.className = 'p-3.5 rounded-xl border-2 border-emerald-400 bg-emerald-950/35 text-left transition flex flex-col justify-between shadow-lg shadow-emerald-500/10';
         badgeStd.className = 'text-[10px] font-mono-tech bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded';
         badgeStd.textContent = 'SELECTED';
-
-        btnHc.className = 'p-3.5 rounded-xl border-2 border-slate-800 bg-slate-900/80 hover:border-rose-500/60 text-left transition flex flex-col justify-between';
-        badgeHc.className = 'text-[10px] font-mono-tech bg-slate-800 text-slate-400 font-bold px-2 py-0.5 rounded';
-        badgeHc.textContent = 'CLICK TO SELECT';
 
         startBtn.className = 'w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 hover:from-emerald-400 hover:to-cyan-300 text-slate-950 font-bold text-base tracking-wider uppercase font-mono-tech shadow-lg shadow-emerald-500/25 transition transform hover:-translate-y-0.5';
         startBtn.textContent = 'SCRAMBLE SUPREME AIR DEFENSE ▶';
@@ -5279,8 +6477,8 @@ function startNewGame() {
     state.pausedModal = false;
     state.gameOver = false;
     state.score = 0;
-    state.scrap = state.hardcore ? 180 : 220;
-    state.techCores = state.hardcore ? 1 : 2;
+    state.scrap = state.peaceful ? 0 : (state.hardcore ? 180 : 220);
+    state.techCores = state.peaceful ? 0 : (state.hardcore ? 1 : 2);
     state.cityHp = 100;
     state.maxCityHp = 100;
     state.wave = 1;
@@ -5294,7 +6492,10 @@ function startNewGame() {
 
     const diffBadge = document.getElementById('difficulty-badge');
     if (diffBadge) {
-        if (state.hardcore) {
+        if (state.peaceful) {
+            diffBadge.className = 'px-1.5 py-0.2 rounded bg-sky-500/25 text-sky-300 font-bold border border-sky-500/50';
+            diffBadge.textContent = '🕊️ PEACEFUL';
+        } else if (state.hardcore) {
             diffBadge.className = 'px-1.5 py-0.2 rounded bg-rose-500/25 text-rose-300 font-bold border border-rose-500/50';
             diffBadge.textContent = '💀 HARDCORE';
         } else {
@@ -5321,6 +6522,8 @@ function startNewGame() {
 
     state.turretJamTimer = 0;
     state.laserVentTimer = 8.0;
+    state.cityShield = 0;
+    state.maxCityShield = 0;
     state.jet.hp = 100;
     state.jet.maxHp = 100;
     state.jet.heat = 0;
@@ -5346,6 +6549,8 @@ function startNewGame() {
     wreckages = [];
     particles = [];
     shockwaves = [];
+    orbitalBeams = [];
+    friendlySwarm = [];
     floatingTexts = [];
     shellCasings = [];
     rovers = [];
@@ -5354,11 +6559,17 @@ function startNewGame() {
     syncPickupFleet();
 
     setCombatMode('ground');
-    generateWaveBounty(1);
+    if (state.peaceful) {
+        updateBountyUI();
+    } else {
+        generateWaveBounty(1);
+    }
 
     document.getElementById('start-modal').classList.add('hidden');
     document.getElementById('armory-modal').classList.add('hidden');
     document.getElementById('codex-modal').classList.add('hidden');
+    document.getElementById('achievements-modal').classList.add('hidden');
+    document.getElementById('settings-modal').classList.add('hidden');
 
     updateHudUI();
 }
@@ -5367,17 +6578,18 @@ function triggerGameOver() {
     state.gameOver = true;
     state.running = false;
     state.isFiring = false;
+    saveCareerProgress();
 
     const totalKills = Object.values(state.codex).reduce((acc, item) => acc + item.kills, 0);
     document.getElementById('final-score').textContent = state.score.toLocaleString();
     document.getElementById('final-waves').textContent = state.wave - 1;
     document.getElementById('final-kills').textContent = totalKills;
 
-    const modeTag = state.hardcore ? '[HARDCORE ATTRITION]' : '[STANDARD]';
+    const modeTag = state.peaceful ? '[PEACEFUL PATROL]' : (state.hardcore ? '[HARDCORE ATTRITION]' : '[STANDARD]');
     document.getElementById('modal-main-title').innerHTML = `GRID COLLAPSED: <span class="text-rose-500">SECTOR LOST</span>`;
     document.getElementById('modal-subtitle').textContent = `${modeTag} The city power grid was overwhelmed during Wave ${state.wave}. Select your combat doctrine below and scramble a new defense.`;
     document.getElementById('gameover-stats').classList.remove('hidden');
-    setDifficultyMode(state.hardcore);
+    setDifficultyMode(state.difficulty);
     document.getElementById('start-modal').classList.remove('hidden');
 }
 
@@ -5451,11 +6663,25 @@ window.addEventListener('keydown', (e) => {
     keys[e.code] = true;
 
     if (e.code === 'Escape') {
-        if (!document.getElementById('armory-modal').classList.contains('hidden')) {
+        if (!document.getElementById('settings-modal').classList.contains('hidden')) {
+            toggleSettingsModal(false);
+        } else if (!document.getElementById('achievements-modal').classList.contains('hidden')) {
+            toggleAchievementsModal(false);
+        } else if (!document.getElementById('armory-modal').classList.contains('hidden')) {
             toggleArmoryModal(false);
         } else if (!document.getElementById('codex-modal').classList.contains('hidden')) {
             toggleCodexModal(false);
         }
+        return;
+    }
+
+    if (e.code === 'KeyO') {
+        toggleSettingsModal();
+        return;
+    }
+
+    if (e.code === 'KeyA') {
+        toggleAchievementsModal();
         return;
     }
 
@@ -5514,10 +6740,30 @@ document.getElementById('btn-next-wave').addEventListener('click', () => toggleA
 document.getElementById('btn-codex').addEventListener('click', () => toggleCodexModal());
 document.getElementById('btn-close-codex').addEventListener('click', () => toggleCodexModal(false));
 
-document.getElementById('btn-mute').addEventListener('click', () => {
-    const isMuted = sfx.toggleMute();
-    document.getElementById('icon-sound-on').classList.toggle('hidden', isMuted);
-    document.getElementById('icon-sound-off').classList.toggle('hidden', !isMuted);
+document.getElementById('btn-achievements').addEventListener('click', () => toggleAchievementsModal());
+document.getElementById('btn-menu-achievements').addEventListener('click', () => toggleAchievementsModal(true));
+document.getElementById('btn-close-achievements').addEventListener('click', () => toggleAchievementsModal(false));
+
+document.getElementById('btn-settings').addEventListener('click', () => toggleSettingsModal());
+document.getElementById('btn-menu-settings').addEventListener('click', () => toggleSettingsModal(true));
+document.getElementById('btn-close-settings').addEventListener('click', () => toggleSettingsModal(false));
+
+function toggleAudioSetting() {
+    career.settings.audioMuted = !career.settings.audioMuted;
+    syncSettingsUI();
+    saveCareerProgress();
+}
+
+document.getElementById('btn-mute').addEventListener('click', toggleAudioSetting);
+document.getElementById('btn-toggle-setting-audio').addEventListener('click', toggleAudioSetting);
+
+document.getElementById('btn-toggle-setting-toasts').addEventListener('click', () => {
+    career.settings.showAchievementToasts = career.settings.showAchievementToasts === false;
+    if (!career.settings.showAchievementToasts) {
+        document.getElementById('achievement-toast')?.classList.add('hidden');
+    }
+    syncSettingsUI();
+    saveCareerProgress();
 });
 
 document.getElementById('btn-ability-ew').addEventListener('click', () => triggerAbilityEW());
@@ -5533,8 +6779,9 @@ document.querySelectorAll('.armory-tab-btn').forEach(btn => {
     });
 });
 
-document.getElementById('btn-diff-standard').addEventListener('click', () => setDifficultyMode(false));
-document.getElementById('btn-diff-hardcore').addEventListener('click', () => setDifficultyMode(true));
+document.getElementById('btn-diff-peaceful').addEventListener('click', () => setDifficultyMode('peaceful'));
+document.getElementById('btn-diff-standard').addEventListener('click', () => setDifficultyMode('standard'));
+document.getElementById('btn-diff-hardcore').addEventListener('click', () => setDifficultyMode('hardcore'));
 document.getElementById('btn-start-game').addEventListener('click', () => startNewGame());
 
 // ==========================================
@@ -5550,11 +6797,24 @@ function gameLoop(now) {
     requestAnimationFrame(gameLoop);
 }
 
-window.onload = function () {
+function bootGame() {
+    if (window.__skyShieldBooted) return;
+    window.__skyShieldBooted = true;
     initEnvironment();
+    syncCareerUI();
+    setDifficultyMode('standard');
     updateHudUI();
+    lastTime = performance.now();
     requestAnimationFrame(gameLoop);
+}
+
+window.onload = function () {
+    bootGame();
 };
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(bootGame, 0);
+}
 </script>
 </body>
 </html>
