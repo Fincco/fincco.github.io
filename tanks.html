@@ -1,0 +1,2303 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steel & Angles: WWII Tactical Armor Simulation (2D)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0c0d0e;
+            color: #e7e5e4;
+            overflow: hidden;
+            user-select: none;
+        }
+        .font-military { font-family: 'Chakra Petch', sans-serif; }
+        .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
+        .tactical-panel {
+            background: rgba(20, 22, 25, 0.92);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(168, 162, 158, 0.22);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #141619; }
+        ::-webkit-scrollbar-thumb { background: #44403c; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+    </style>
+</head>
+<body class="w-screen h-screen relative overflow-hidden">
+
+    <!-- MAIN 2D BATTLEFIELD CANVAS -->
+    <canvas id="battleCanvas" class="block w-full h-full cursor-crosshair"></canvas>
+
+    <!-- TOP IN-GAME HUD -->
+    <div id="topHud" class="hidden fixed top-0 left-0 right-0 p-3 pointer-events-none flex flex-wrap justify-between items-start gap-3 z-20">
+        <!-- Left: Mission & Team Counters -->
+        <div class="tactical-panel rounded-lg p-3 pointer-events-auto min-w-[270px]">
+            <div class="flex items-center justify-between gap-3 border-b border-stone-700/80 pb-1.5 mb-2">
+                <div class="flex items-center gap-2">
+                    <span id="hudBattleTag" class="px-2 py-0.5 text-[10px] font-mono-tech font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded">1943</span>
+                    <h2 id="hudBattleTitle" class="font-military font-bold text-sm uppercase tracking-wider text-stone-100">Battle of Kursk</h2>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button id="btnReturnEditor" class="hidden px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 text-[11px] font-mono-tech font-bold transition" title="Return to Level Editor">
+                        <i class="fa-solid fa-pen-ruler mr-1"></i>RETURN TO EDITOR
+                    </button>
+                    <button id="btnToggleArmor" class="px-2 py-1 rounded bg-stone-800 hover:bg-stone-700 border border-stone-600 text-stone-300 text-[11px] font-mono-tech transition" title="Toggle Armor Plates Overlay [V]">
+                        <i class="fa-solid fa-shield-halved text-amber-400"></i> [V]
+                    </button>
+                    <button id="btnTogglePerf" class="px-2 py-1 rounded bg-stone-800 hover:bg-stone-700 border border-stone-600 text-stone-300 text-[11px] font-mono-tech transition" title="Toggle Performance Mode [P]">
+                        <i class="fa-solid fa-gauge-high text-emerald-400"></i> <span id="lblPerfHud">60FPS: Full</span>
+                    </button>
+                    <button id="btnToggleAudio" class="px-2 py-1 rounded bg-stone-800 hover:bg-stone-700 border border-stone-600 text-stone-300 text-[11px] font-mono-tech transition" title="Mute/Unmute Audio [M]">
+                        <i id="iconAudio" class="fa-solid fa-volume-high text-amber-400"></i>
+                    </button>
+                    <button id="btnOpenMenu" class="px-2.5 py-1 rounded bg-stone-800 hover:bg-red-900/60 border border-stone-600 text-stone-200 text-[11px] font-mono-tech transition">
+                        <i class="fa-solid fa-bars mr-1"></i>HQ
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-xs font-mono-tech mb-1">
+                <span class="text-emerald-400 font-bold"><i class="fa-solid fa-shield mr-1"></i>ALLIES: <span id="hudAlliesAlive">2</span></span>
+                <span class="text-red-400 font-bold"><i class="fa-solid fa-crosshairs mr-1"></i>HOSTILES: <span id="hudEnemiesAlive">5</span></span>
+            </div>
+            <div id="hudObjective" class="text-[11px] text-stone-400 truncate max-w-xs">Eliminate all hostile armor formations</div>
+        </div>
+
+        <!-- Right: X-Ray Hit-Cam & Ballistic Telemetry Log -->
+        <div class="tactical-panel rounded-lg p-3 pointer-events-auto w-80">
+            <div class="flex items-center justify-between border-b border-stone-700/80 pb-1 mb-2">
+                <span class="text-[11px] font-mono-tech font-bold text-amber-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-x-ray mr-1"></i>X-Ray Hit-Cam & Telemetry
+                </span>
+                <span id="hitCamStatusBadge" class="text-[10px] font-mono-tech px-1.5 py-0.5 rounded bg-stone-800 text-stone-400">STANDBY</span>
+            </div>
+            <canvas id="hitCamCanvas" width="294" height="110" class="w-full h-[110px] bg-stone-950 rounded border border-stone-800 mb-2 block"></canvas>
+            <div id="telemetryLog" class="h-20 overflow-y-auto text-[11px] font-mono-tech space-y-1 pr-1 text-stone-300">
+                <div class="text-amber-400">[HQ] Hover over enemy armor to inspect live impact angle and effective thickness.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM IN-GAME HUD -->
+    <div id="bottomHud" class="hidden fixed bottom-0 left-0 right-0 p-3 pointer-events-none flex flex-wrap justify-between items-end gap-3 z-20">
+        <!-- Bottom-Left: Hull Angling Compass ("Diamond Angling" Assistant) & Vehicle Status -->
+        <div class="tactical-panel rounded-lg p-3 pointer-events-auto flex items-center gap-3.5">
+            <div class="relative w-24 h-24 bg-stone-950 rounded-full border border-stone-700 flex items-center justify-center shrink-0">
+                <canvas id="compassCanvas" width="96" height="96" class="w-24 h-24 block"></canvas>
+            </div>
+            <div class="space-y-1.5 min-w-[215px]">
+                <div class="flex items-center justify-between">
+                    <span id="hudPlayerName" class="font-military font-bold text-sm text-amber-400 uppercase">Tiger I</span>
+                    <span id="hudHullAngleText" class="text-[11px] font-mono-tech text-emerald-400 font-bold">Angle: 0°</span>
+                </div>
+                <!-- HP Bar -->
+                <div class="w-full bg-stone-900 h-3.5 rounded overflow-hidden border border-stone-700 relative">
+                    <div id="hudHpBar" class="bg-emerald-500 h-full transition-all duration-150" style="width: 100%;"></div>
+                    <span id="hudHpText" class="absolute inset-0 text-[10px] font-mono-tech font-bold text-white flex items-center justify-center drop-shadow">640 / 640 HP</span>
+                </div>
+                <!-- Effective Frontal Armor Readout -->
+                <div class="text-[10px] font-mono-tech text-stone-300 flex justify-between">
+                    <span>Front Eff vs Aim: <strong id="hudEffFront" class="text-amber-300">100mm</strong></span>
+                    <span>Side Eff: <strong id="hudEffSide" class="text-cyan-300">80mm</strong></span>
+                </div>
+                <!-- Internal Modules Status -->
+                <div class="grid grid-cols-4 gap-1 text-[10px] font-mono-tech text-center pt-0.5">
+                    <div id="modEngine" class="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-emerald-400">ENG OK</div>
+                    <div id="modTracks" class="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-emerald-400">TRK OK</div>
+                    <div id="modBreech" class="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-emerald-400">GUN OK</div>
+                    <div id="modAmmo" class="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-emerald-400">AMMO OK</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom-Center: Ammunition Rack & Breech Reload Bar -->
+        <div class="tactical-panel rounded-lg p-3 pointer-events-auto flex flex-col gap-2 min-w-[330px]">
+            <div class="flex items-center justify-between text-xs font-mono-tech">
+                <span id="hudGunName" class="text-stone-200 font-bold">8.8 cm KwK 36 L/56</span>
+                <span id="hudReloadText" class="text-emerald-400 font-bold">READY TO FIRE</span>
+            </div>
+            <div class="w-full bg-stone-900 h-2 rounded overflow-hidden border border-stone-700">
+                <div id="hudReloadBar" class="bg-amber-400 h-full transition-all duration-75" style="width: 100%;"></div>
+            </div>
+            <!-- 3 Shell Slots -->
+            <div class="grid grid-cols-3 gap-2">
+                <button id="btnShell0" class="p-2 rounded border border-amber-400 bg-amber-500/20 text-left transition">
+                    <div class="flex justify-between text-[11px] font-mono-tech font-bold text-amber-300"><span>[1] AP</span><span id="shell0Pen">145mm</span></div>
+                    <div class="text-[9px] text-stone-300 truncate">Norm 5° | Ric &gt;70°</div>
+                </button>
+                <button id="btnShell1" class="p-2 rounded border border-stone-700 bg-stone-900/80 text-left transition">
+                    <div class="flex justify-between text-[11px] font-mono-tech font-bold text-cyan-300"><span>[2] APCR</span><span id="shell1Pen">195mm</span></div>
+                    <div class="text-[9px] text-stone-400 truncate">High Vel | Ric &gt;78°</div>
+                </button>
+                <button id="btnShell2" class="p-2 rounded border border-stone-700 bg-stone-900/80 text-left transition">
+                    <div class="flex justify-between text-[11px] font-mono-tech font-bold text-orange-300"><span>[3] HE</span><span id="shell2Pen">42mm</span></div>
+                    <div class="text-[9px] text-stone-400 truncate">No Ricochet | Blast</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom-Right: Crew Consumables & Controls -->
+        <div class="tactical-panel rounded-lg p-3 pointer-events-auto flex flex-col gap-2">
+            <div class="text-[10px] font-mono-tech uppercase text-stone-400">Tactical Consumables</div>
+            <div class="flex gap-2">
+                <button id="btnActionRepair" class="px-2.5 py-1.5 rounded bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs font-mono-tech text-stone-200 transition">
+                    <i class="fa-solid fa-wrench text-amber-400 mr-1"></i>[R] Repair
+                </button>
+                <button id="btnActionExtinguish" class="px-2.5 py-1.5 rounded bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs font-mono-tech text-stone-200 transition">
+                    <i class="fa-solid fa-fire-extinguisher text-red-400 mr-1"></i>[F] Fire (<span id="lblExtCount">1</span>)
+                </button>
+                <button id="btnActionSmoke" class="px-2.5 py-1.5 rounded bg-stone-800 hover:bg-stone-700 border border-stone-600 text-xs font-mono-tech text-stone-200 transition">
+                    <i class="fa-solid fa-cloud text-stone-300 mr-1"></i>[G] Smoke (<span id="lblSmokeCount">2</span>)
+                </button>
+            </div>
+            <div class="text-[10px] font-mono-tech text-stone-400">
+                WASD: Drive/Angle | Mouse: Aim | Click/Space: Fire | P: Perf Mode
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN HQ MODAL (CAMPAIGNS, SANDBOX LEVEL EDITOR, IMPORT/SHARE CODE) -->
+    <div id="mainModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-40 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div class="tactical-panel rounded-xl max-w-6xl w-full p-4 sm:p-6 border border-amber-500/30 my-auto">
+            <!-- Modal Header & Navigation Tabs -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between border-b border-stone-700/80 pb-4 mb-4 gap-3">
+                <div>
+                    <div class="flex items-center gap-2 text-amber-400 text-xs font-mono-tech uppercase tracking-widest">
+                        <i class="fa-solid fa-star"></i>
+                        <span>WWII 2D Ballistics & Armor Obliquity Simulator</span>
+                    </div>
+                    <h1 class="font-military font-bold text-2xl sm:text-3xl text-stone-100 uppercase tracking-wide">
+                        STEEL & ANGLES <span class="text-amber-500 font-light text-lg">// 1940–1945</span>
+                    </h1>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="tabBtnCampaigns" class="px-3.5 py-2 rounded-lg font-military font-bold text-sm uppercase bg-amber-500 text-stone-950 transition flex items-center gap-2">
+                        <i class="fa-solid fa-medal"></i><span>Campaigns (8)</span>
+                    </button>
+                    <button id="tabBtnSandbox" class="px-3.5 py-2 rounded-lg font-military font-bold text-sm uppercase bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 transition flex items-center gap-2">
+                        <i class="fa-solid fa-pen-ruler text-amber-400"></i><span>Sandbox & Level Editor</span>
+                    </button>
+                    <button id="tabBtnImport" class="px-3.5 py-2 rounded-lg font-military font-bold text-sm uppercase bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 transition flex items-center gap-2">
+                        <i class="fa-solid fa-share-nodes text-cyan-400"></i><span>Import / Share Code</span>
+                    </button>
+                    <button id="btnModalPerf" class="px-3 py-2 rounded-lg font-mono-tech text-xs bg-stone-900 hover:bg-stone-800 text-emerald-400 border border-stone-700 transition">
+                        <i class="fa-solid fa-bolt mr-1"></i><span id="lblPerfModal">Perf Mode: OFF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 1: 8 HISTORICAL CAMPAIGNS -->
+            <div id="viewCampaigns">
+                <div id="campaignCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 mb-4"></div>
+
+                <!-- Selected Campaign Briefing -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 bg-stone-950/80 rounded-xl p-4 border border-stone-800">
+                    <div class="lg:col-span-7 flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span id="briefDate" class="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono-tech text-xs font-bold">1943</span>
+                                <span id="briefTheater" class="text-xs font-mono-tech text-stone-400 uppercase">Prokhorovka Steppe</span>
+                            </div>
+                            <h2 id="briefTitle" class="font-military font-bold text-2xl text-white uppercase mb-1.5">Battle of Kursk</h2>
+                            <p id="briefHistory" class="text-xs sm:text-sm text-stone-300 leading-relaxed mb-3"></p>
+                            <div class="bg-amber-950/30 border-l-4 border-amber-500 p-3 rounded-r">
+                                <div class="text-xs font-mono-tech font-bold text-amber-400 uppercase mb-0.5">Tactical Armor Doctrine</div>
+                                <p id="briefTactics" class="text-xs text-stone-300 leading-relaxed"></p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-[11px] font-mono-tech text-stone-400 pt-2 border-t border-stone-800">
+                            <div class="bg-stone-900 p-2 rounded border border-stone-800"><strong class="text-amber-400 block">OBLIQUITY FORMULA</strong>T_eff = Nominal / cos(θ)</div>
+                            <div class="bg-stone-900 p-2 rounded border border-stone-800"><strong class="text-cyan-400 block">RICOCHET ANGLES</strong>AP &gt;70° | APCR &gt;78°</div>
+                            <div class="bg-stone-900 p-2 rounded border border-stone-800"><strong class="text-emerald-400 block">HULL-DOWN RIDGES</strong>Shields Hull, Turret Only</div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-5 flex flex-col justify-between bg-stone-900/70 rounded-lg p-3.5 border border-stone-800">
+                        <div class="space-y-2.5">
+                            <div class="text-xs font-mono-tech uppercase text-emerald-400 font-bold">Your Commanded Tank</div>
+                            <div id="briefPlayerBox" class="bg-black/50 p-2.5 rounded border border-stone-800 text-xs font-mono-tech"></div>
+                            <div class="text-xs font-mono-tech uppercase text-red-400 font-bold">Hostile Opposition</div>
+                            <div id="briefEnemyBox" class="space-y-1.5 max-h-32 overflow-y-auto pr-1 text-xs font-mono-tech"></div>
+                        </div>
+                        <button id="btnLaunchCampaign" class="mt-4 w-full py-3 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-stone-950 font-military font-bold text-lg uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i><span>LAUNCH BATTLE</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: SANDBOX & 2D LEVEL EDITOR -->
+            <div id="viewSandbox" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <!-- Editor Controls Palette -->
+                    <div class="lg:col-span-4 flex flex-col justify-between bg-stone-950/85 p-3.5 rounded-xl border border-stone-800 space-y-3">
+                        <div class="space-y-2.5">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] font-mono-tech uppercase text-stone-400 block mb-1">Scenario Name</label>
+                                    <input id="edTitle" type="text" value="Custom Armor Clash" maxlength="30" class="w-full px-2 py-1.5 rounded bg-stone-900 border border-stone-700 text-xs font-mono-tech text-white">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-mono-tech uppercase text-stone-400 block mb-1">Environment Theme</label>
+                                    <select id="edTheme" class="w-full px-2 py-1.5 rounded bg-stone-900 border border-stone-700 text-xs font-mono-tech text-white">
+                                        <option value="steppe">Temperate Steppe</option>
+                                        <option value="desert">Desert Dunes</option>
+                                        <option value="snow">Winter Snow</option>
+                                        <option value="urban">Urban Berlin Ruins</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Brush Mode Selector -->
+                            <div>
+                                <div class="text-[10px] font-mono-tech uppercase text-amber-400 font-bold mb-1">1. Select Placement Tool</div>
+                                <div class="grid grid-cols-3 gap-1.5" id="edToolButtons">
+                                    <button data-tool="player" class="ed-tool px-2 py-1.5 rounded text-xs font-mono-tech border border-stone-700 bg-stone-900 text-stone-300"><i class="fa-solid fa-user text-amber-400 mr-1"></i>Player</button>
+                                    <button data-tool="enemy" class="ed-tool px-2 py-1.5 rounded text-xs font-mono-tech border border-amber-500 bg-amber-500/20 text-amber-300 font-bold"><i class="fa-solid fa-crosshairs text-red-400 mr-1"></i>Enemy</button>
+                                    <button data-tool="ally" class="ed-tool px-2 py-1.5 rounded text-xs font-mono-tech border border-stone-700 bg-stone-900 text-stone-300"><i class="fa-solid fa-shield text-emerald-400 mr-1"></i>Ally</button>
+                                    <button data-tool="terrain" class="ed-tool px-2 py-1.5 rounded text-xs font-mono-tech border border-stone-700 bg-stone-900 text-stone-300"><i class="fa-solid fa-mountain text-amber-400 mr-1"></i>Terrain</button>
+                                    <button data-tool="erase" class="ed-tool px-2 py-1.5 rounded text-xs font-mono-tech border border-stone-700 bg-stone-900 text-stone-300"><i class="fa-solid fa-eraser text-pink-400 mr-1"></i>Eraser</button>
+                                    <button id="btnEdClear" class="px-2 py-1.5 rounded text-xs font-mono-tech border border-red-800/60 bg-red-950/40 hover:bg-red-900/50 text-red-300"><i class="fa-solid fa-trash mr-1"></i>Clear</button>
+                                </div>
+                            </div>
+
+                            <!-- Unit Config Panel -->
+                            <div id="edUnitPanel" class="bg-stone-900/90 p-2.5 rounded border border-stone-800 space-y-2">
+                                <div>
+                                    <label class="text-[10px] font-mono-tech uppercase text-stone-400 block mb-1">Vehicle / AT Gun (18 Historical Units)</label>
+                                    <select id="edVehicleSelect" class="w-full px-2 py-1.5 rounded bg-black border border-stone-700 text-xs font-mono-tech text-amber-300"></select>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-[10px] font-mono-tech uppercase text-stone-400 block mb-1">AI Doctrine</label>
+                                        <select id="edAiDoctrine" class="w-full px-2 py-1 rounded bg-black border border-stone-700 text-xs font-mono-tech text-stone-200">
+                                            <option value="advance">Advance</option>
+                                            <option value="sniper">Hull-Down Sniper</option>
+                                            <option value="flank">Flank Maneuver</option>
+                                            <option value="ambush">Stationary Ambush</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-mono-tech uppercase text-stone-400 block mb-1">Rotation (<span id="lblEdAngle">180°</span>) [R]</label>
+                                        <input id="edAngle" type="range" min="0" max="315" step="45" value="180" class="w-full accent-amber-500 mt-1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Terrain Config Panel -->
+                            <div id="edTerrainPanel" class="hidden bg-stone-900/90 p-2.5 rounded border border-stone-800 space-y-1.5">
+                                <div class="text-[10px] font-mono-tech uppercase text-stone-400">Terrain / Obstacle Type</div>
+                                <div class="grid grid-cols-2 gap-1.5 text-xs font-mono-tech" id="edTerrainButtons">
+                                    <button data-ter="bunker" class="ed-ter p-1.5 rounded border border-amber-500 bg-amber-500/20 text-left text-amber-300">Stone Building</button>
+                                    <button data-ter="ruin" class="ed-ter p-1.5 rounded border border-stone-700 bg-black/50 text-left text-stone-300">Brick Ruin (Destr.)</button>
+                                    <button data-ter="ridge" class="ed-ter p-1.5 rounded border border-stone-700 bg-black/50 text-left text-stone-300">Hull-Down Ridge</button>
+                                    <button data-ter="tree" class="ed-ter p-1.5 rounded border border-stone-700 bg-black/50 text-left text-stone-300">Forest / Bocage</button>
+                                    <button data-ter="water" class="ed-ter p-1.5 rounded border border-stone-700 bg-black/50 text-left text-stone-300">River / Water</button>
+                                    <button data-ter="trap" class="ed-ter p-1.5 rounded border border-stone-700 bg-black/50 text-left text-stone-300">Tank Trap</button>
+                                </div>
+                            </div>
+
+                            <!-- Share Code Generator -->
+                            <div class="bg-black/60 p-2.5 rounded border border-stone-800 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-mono-tech uppercase text-cyan-400 font-bold">Shareable Level Code</span>
+                                    <button id="btnGenCode" class="px-2 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-[10px] font-mono-tech font-bold">
+                                        <i class="fa-solid fa-copy mr-1"></i>GENERATE & COPY CODE
+                                    </button>
+                                </div>
+                                <input id="edCodeOutput" type="text" readonly placeholder="Click GENERATE & COPY CODE..." class="w-full px-2 py-1 rounded bg-stone-950 border border-stone-800 text-[10px] font-mono-tech text-stone-300 select-all">
+                                <div id="edCopyToast" class="hidden text-[10px] font-mono-tech text-emerald-400">✓ Level code copied to clipboard!</div>
+                            </div>
+                        </div>
+
+                        <button id="btnTestPlayLevel" class="w-full py-3 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-stone-950 font-military font-bold text-base uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i><span>TEST PLAY LEVEL</span>
+                        </button>
+                    </div>
+
+                    <!-- Interactive 2D Editor Canvas -->
+                    <div class="lg:col-span-8 flex flex-col bg-stone-950/90 p-3 rounded-xl border border-stone-800">
+                        <div class="flex flex-wrap items-center justify-between text-xs font-mono-tech text-stone-400 mb-2">
+                            <span>Click/Drag on map to place | Right-Click to erase | Press <strong class="text-amber-400">[R]</strong> to rotate +45°</span>
+                            <span id="edCounts" class="text-amber-400 font-bold">1 Player | 4 Enemies | 6 Terrain</span>
+                        </div>
+                        <div class="relative w-full aspect-[16/10] bg-black rounded-lg overflow-hidden border border-stone-700">
+                            <canvas id="editorCanvas" width="800" height="500" class="w-full h-full block cursor-crosshair"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: IMPORT / SHARE CODE & PRESETS -->
+            <div id="viewImport" class="hidden">
+                <div class="bg-stone-950/85 rounded-xl p-5 border border-stone-800 max-w-3xl mx-auto space-y-4">
+                    <div>
+                        <div class="text-xs font-mono-tech uppercase text-cyan-400 font-bold">Shareable Level Code System</div>
+                        <h2 class="font-military font-bold text-2xl text-white uppercase">Import or Select a Custom Scenario</h2>
+                        <p class="text-xs text-stone-400 mt-1">Paste any <code class="text-amber-400 font-mono-tech">SA2D-...</code> code below, or click one of the 3 built-in tactical sandbox scenarios.</p>
+                    </div>
+
+                    <textarea id="importCodeInput" rows="3" placeholder="Paste SA2D-... level code here..." class="w-full p-3 rounded-lg bg-stone-900 border border-stone-700 font-mono-tech text-xs text-stone-100 focus:outline-none focus:border-cyan-400 select-all"></textarea>
+                    <div id="importMsg" class="hidden text-xs font-mono-tech"></div>
+
+                    <div class="flex flex-wrap gap-3">
+                        <button id="btnLoadAndPlay" class="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-stone-950 font-military font-bold uppercase tracking-wider transition">
+                            <i class="fa-solid fa-play mr-1"></i>LOAD & PLAY CODE
+                        </button>
+                        <button id="btnLoadIntoEditor" class="flex-1 py-3 px-4 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 font-military font-bold uppercase tracking-wider transition">
+                            <i class="fa-solid fa-pen-ruler text-amber-400 mr-1"></i>LOAD INTO EDITOR
+                        </button>
+                    </div>
+
+                    <div class="pt-3 border-t border-stone-800">
+                        <div class="text-xs font-mono-tech uppercase text-stone-400 mb-2">Built-in Preset Scenarios (Click to Populate Code):</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <button data-preset="0" class="preset-btn p-3 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-700 text-left transition">
+                                <div class="text-xs font-military font-bold text-amber-400 uppercase">Wittmann's Bocage Ambush</div>
+                                <div class="text-[10px] font-mono-tech text-stone-400 mt-1">Tiger I vs Column of Fireflies & Cromwells</div>
+                            </button>
+                            <button data-preset="1" class="preset-btn p-3 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-700 text-left transition">
+                                <div class="text-xs font-military font-bold text-cyan-400 uppercase">88mm Flak Alley Gauntlet</div>
+                                <div class="text-[10px] font-mono-tech text-stone-400 mt-1">IS-2 (122mm) vs Entrenched 88mm Flak Battery</div>
+                            </button>
+                            <button data-preset="2" class="preset-btn p-3 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-700 text-left transition">
+                                <div class="text-xs font-military font-bold text-emerald-400 uppercase">Clash of Giants 1945</div>
+                                <div class="text-[10px] font-mono-tech text-stone-400 mt-1">Jagdpanther & King Tiger vs IS-2 & T-34/85s</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AFTER-ACTION REPORT (VICTORY / DEFEAT) MODAL -->
+    <div id="aarModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="tactical-panel rounded-xl max-w-md w-full p-6 border border-amber-500/40 text-center space-y-4">
+            <span id="aarBadge" class="inline-block px-3 py-1 rounded text-xs font-mono-tech font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">VICTORY</span>
+            <h2 id="aarTitle" class="font-military font-bold text-2xl text-white uppercase">Mission Accomplished</h2>
+            <p id="aarDesc" class="text-xs text-stone-300 leading-relaxed"></p>
+            <div class="grid grid-cols-3 gap-2 bg-stone-950 p-3 rounded-lg border border-stone-800 font-mono-tech text-xs">
+                <div><span class="text-stone-400 block text-[10px]">SHOTS / HITS</span><strong id="aarShots" class="text-white">0 / 0</strong></div>
+                <div><span class="text-stone-400 block text-[10px]">PENETRATIONS</span><strong id="aarPens" class="text-emerald-400">0</strong></div>
+                <div><span class="text-stone-400 block text-[10px]">ARMOR BOUNCES</span><strong id="aarBounces" class="text-cyan-400">0</strong></div>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button id="btnAarRetry" class="flex-1 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-military font-bold uppercase">Replay Battle</button>
+                <button id="btnAarMenu" class="flex-1 py-2.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 font-military font-bold uppercase">HQ Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ============================================================================
+         * 1. COMPACT HISTORICAL VEHICLE TABLE (18 WWII TANKS & AT GUNS)
+         * Format: hull: [front, side, rear] mm, slope: [front, side, rear] deg
+         * shells: [ [apPen100, apPen1000, apDmg], [apcrPen100, apcrPen1000, apcrDmg], [hePen, heDmg] ]
+         * ============================================================================ */
+        const VEHICLES = {
+            // BRITISH
+            matilda_ii: {
+                id: 'matilda_ii', name: 'Matilda II', nation: 'UK', role: 'Infantry Tank', hp: 520,
+                w: 34, l: 54, tr: 13, bl: 30, cal: 40, gun: 'QF 2-Pounder (40mm)', reload: 2.8, spd: 58, turn: 1.3, tTurn: 1.9,
+                hull: [78, 65, 55], slope: [15, 0, 10], turret: [75, 75, 75], color: '#4d5d43',
+                shells: [[82, 54, 85], [108, 60, 65], [22, 70]]
+            },
+            crusader_iii: {
+                id: 'crusader_iii', name: 'Crusader Mk.III', nation: 'UK', role: 'Cruiser Tank', hp: 410,
+                w: 33, l: 54, tr: 13, bl: 34, cal: 57, gun: 'QF 6-Pounder (57mm)', reload: 3.1, spd: 105, turn: 1.9, tTurn: 2.2,
+                hull: [32, 27, 25], slope: [30, 10, 10], turret: [51, 32, 32], color: '#9c8456',
+                shells: [[112, 78, 115], [145, 85, 90], [28, 85]]
+            },
+            cromwell_iv: {
+                id: 'cromwell_iv', name: 'Cromwell Mk.IV', nation: 'UK', role: 'Cruiser Tank', hp: 460,
+                w: 34, l: 55, tr: 14, bl: 33, cal: 75, gun: 'QF 75mm Mk.V', reload: 3.4, spd: 112, turn: 1.9, tTurn: 2.1,
+                hull: [64, 32, 25], slope: [12, 0, 5], turret: [76, 63, 57], color: '#495838',
+                shells: [[98, 68, 135], [126, 75, 100], [38, 130]]
+            },
+            sherman_firefly: {
+                id: 'sherman_firefly', name: 'Sherman Firefly', nation: 'UK', role: 'Tank Destroyer', hp: 510,
+                w: 35, l: 58, tr: 14, bl: 45, cal: 76, gun: 'QF 17-Pounder (76.2mm)', reload: 4.3, spd: 82, turn: 1.5, tTurn: 1.7,
+                hull: [51, 38, 38], slope: [45, 0, 10], turret: [89, 51, 51], color: '#435234',
+                shells: [[172, 134, 165], [230, 158, 130], [38, 135]]
+            },
+            // GERMAN
+            panzer_iii_e: {
+                id: 'panzer_iii_e', name: 'Panzer III Ausf. E', nation: 'GER', role: 'Medium Tank', hp: 380,
+                w: 33, l: 52, tr: 13, bl: 29, cal: 37, gun: '3.7 cm KwK 36 L/45', reload: 2.7, spd: 88, turn: 1.7, tTurn: 2.0,
+                hull: [30, 30, 20], slope: [15, 0, 10], turret: [30, 30, 30], color: '#4b5258',
+                shells: [[56, 36, 75], [84, 42, 55], [20, 65]]
+            },
+            panzer_iv_f2: {
+                id: 'panzer_iv_f2', name: 'Panzer IV Ausf. F2', nation: 'GER', role: 'Medium Tank', hp: 470,
+                w: 35, l: 56, tr: 14, bl: 39, cal: 75, gun: '7.5 cm KwK 40 L/43', reload: 3.7, spd: 82, turn: 1.5, tTurn: 1.8,
+                hull: [50, 30, 20], slope: [14, 0, 10], turret: [50, 30, 30], color: '#8c764e',
+                shells: [[135, 96, 150], [172, 105, 115], [38, 135]]
+            },
+            tiger_i: {
+                id: 'tiger_i', name: 'Tiger I (Ausf. E)', nation: 'GER', role: 'Heavy Tank', hp: 660,
+                w: 40, l: 62, tr: 16, bl: 44, cal: 88, gun: '8.8 cm KwK 36 L/56', reload: 4.6, spd: 68, turn: 1.2, tTurn: 1.4,
+                hull: [100, 80, 80], slope: [12, 0, 8], turret: [110, 80, 80], color: '#6b6552',
+                shells: [[162, 122, 195], [205, 135, 145], [44, 175]]
+            },
+            panther_g: {
+                id: 'panther_g', name: 'Panther Ausf. G', nation: 'GER', role: 'Medium/Heavy Tank', hp: 590,
+                w: 38, l: 62, tr: 15, bl: 46, cal: 75, gun: '7.5 cm KwK 42 L/70', reload: 4.3, spd: 86, turn: 1.4, tTurn: 1.5,
+                hull: [80, 50, 40], slope: [52, 25, 15], turret: [110, 45, 45], color: '#68624d',
+                shells: [[170, 128, 160], [218, 140, 120], [38, 135]]
+            },
+            tiger_ii: {
+                id: 'tiger_ii', name: 'Tiger II King Tiger', nation: 'GER', role: 'Heavy Tank', hp: 780,
+                w: 42, l: 66, tr: 17, bl: 49, cal: 88, gun: '8.8 cm KwK 43 L/71', reload: 5.3, spd: 58, turn: 1.0, tTurn: 1.3,
+                hull: [150, 80, 80], slope: [46, 20, 15], turret: [180, 80, 80], color: '#5c6158',
+                shells: [[208, 160, 215], [252, 175, 155], [46, 180]]
+            },
+            jagdpanther: {
+                id: 'jagdpanther', name: 'Jagdpanther G1', nation: 'GER', role: 'Tank Destroyer', hp: 620,
+                w: 39, l: 63, tr: 15, bl: 49, cal: 88, gun: '8.8 cm Pak 43/3 L/71', reload: 4.7, spd: 86, turn: 1.4, tTurn: 1.3,
+                hull: [80, 50, 40], slope: [53, 25, 15], turret: [150, 55, 40], color: '#635e49',
+                shells: [[208, 160, 215], [252, 175, 155], [46, 180]]
+            },
+            pak_36: {
+                id: 'pak_36', name: '3.7cm Pak 36 AT Gun', nation: 'GER', role: 'Anti-Tank Gun', isAT: true, hp: 180,
+                w: 28, l: 32, tr: 11, bl: 26, cal: 37, gun: '3.7 cm Pak 36 L/45', reload: 2.5, spd: 0, turn: 1.0, tTurn: 1.6,
+                hull: [15, 8, 5], slope: [20, 0, 0], turret: [18, 8, 5], color: '#4b5258',
+                shells: [[54, 34, 70], [82, 40, 55], [18, 60]]
+            },
+            flak_36_88: {
+                id: 'flak_36_88', name: '8.8cm Flak 36 AT Gun', nation: 'GER', role: 'Heavy AT Gun', isAT: true, hp: 250,
+                w: 34, l: 38, tr: 14, bl: 43, cal: 88, gun: '8.8 cm Flak 36 L/56', reload: 3.9, spd: 0, turn: 0.9, tTurn: 1.4,
+                hull: [25, 12, 8], slope: [15, 0, 0], turret: [30, 14, 8], color: '#4b5258',
+                shells: [[160, 120, 195], [202, 132, 145], [44, 175]]
+            },
+            // SOVIET
+            t34_76: {
+                id: 't34_76', name: 'T-34/76 (Mod. 1942)', nation: 'USSR', role: 'Medium Tank', hp: 460,
+                w: 35, l: 55, tr: 14, bl: 33, cal: 76, gun: '76.2 mm F-34', reload: 3.6, spd: 96, turn: 1.7, tTurn: 1.8,
+                hull: [45, 45, 40], slope: [52, 30, 30], turret: [65, 52, 52], color: '#3f5232',
+                shells: [[98, 68, 140], [130, 74, 105], [38, 135]]
+            },
+            kv1: {
+                id: 'kv1', name: 'KV-1 (ZiS-5)', nation: 'USSR', role: 'Heavy Tank', hp: 600,
+                w: 39, l: 61, tr: 15, bl: 34, cal: 76, gun: '76.2 mm ZiS-5', reload: 3.9, spd: 56, turn: 1.1, tTurn: 1.3,
+                hull: [75, 75, 70], slope: [22, 0, 10], turret: [82, 75, 75], color: '#394a2d',
+                shells: [[98, 68, 140], [132, 76, 105], [38, 135]]
+            },
+            kv2: {
+                id: 'kv2', name: 'KV-2 (152mm M-10)', nation: 'USSR', role: 'Heavy Assault Tank', hp: 650,
+                w: 40, l: 62, tr: 18, bl: 30, cal: 152, gun: '152.4 mm M-10T Howitzer', reload: 7.2, spd: 48, turn: 0.9, tTurn: 0.95,
+                hull: [75, 75, 70], slope: [22, 0, 10], turret: [75, 75, 70], color: '#354529',
+                shells: [[118, 86, 330], [136, 95, 290], [78, 380]]
+            },
+            t34_85: {
+                id: 't34_85', name: 'T-34/85 (ZiS-S-53)', nation: 'USSR', role: 'Medium Tank', hp: 530,
+                w: 36, l: 57, tr: 15, bl: 39, cal: 85, gun: '85 mm ZiS-S-53', reload: 4.2, spd: 94, turn: 1.7, tTurn: 1.9,
+                hull: [45, 45, 45], slope: [52, 30, 30], turret: [90, 75, 52], color: '#425634',
+                shells: [[138, 98, 175], [185, 108, 130], [42, 160]]
+            },
+            is2: {
+                id: 'is2', name: 'IS-2 (122mm D-25T)', nation: 'USSR', role: 'Breakthrough Heavy', hp: 750,
+                w: 41, l: 65, tr: 17, bl: 47, cal: 122, gun: '122 mm D-25T L/43', reload: 6.2, spd: 66, turn: 1.2, tTurn: 1.4,
+                hull: [120, 90, 60], slope: [48, 15, 20], turret: [110, 95, 90], color: '#334427',
+                shells: [[202, 150, 295], [235, 165, 240], [65, 280]]
+            },
+            // USA
+            m3_grant: {
+                id: 'm3_grant', name: 'M3 Grant (75mm)', nation: 'USA', role: 'Medium Tank', hp: 480,
+                w: 36, l: 56, tr: 14, bl: 31, cal: 75, gun: '75mm Gun M2/M3', reload: 3.5, spd: 76, turn: 1.4, tTurn: 1.7,
+                hull: [51, 38, 38], slope: [22, 0, 10], turret: [57, 51, 51], color: '#82704b',
+                shells: [[96, 68, 135], [122, 74, 100], [38, 130]]
+            },
+            sherman_e8: {
+                id: 'sherman_e8', name: 'M4A3E8 Easy Eight', nation: 'USA', role: 'Medium Tank', hp: 560,
+                w: 36, l: 58, tr: 14, bl: 40, cal: 76, gun: '76mm Gun M1A2 (HVSS)', reload: 3.5, spd: 92, turn: 1.7, tTurn: 2.1,
+                hull: [64, 38, 38], slope: [44, 0, 10], turret: [89, 64, 64], color: '#455235',
+                shells: [[132, 98, 155], [218, 132, 125], [38, 135]]
+            }
+        };
+
+        /* ============================================================================
+         * 2. 8 HISTORICAL WWII CAMPAIGNS (1940 - 1945)
+         * ============================================================================ */
+        const CAMPAIGNS = [
+            {
+                year: '1940', date: 'MAY 21, 1940', title: 'Battle of Arras', theater: 'Pas-de-Calais, France', theme: 'steppe',
+                player: 'matilda_ii', allies: ['matilda_ii'], enemies: ['panzer_iii_e', 'panzer_iii_e', 'pak_36', 'pak_36', 'panzer_iii_e'],
+                history: 'British Matilda II infantry tanks counter-attacked Rommel\'s 7th Panzer Division at Arras. With 78mm frontal armor, the Matilda II shrugged off standard 37mm German anti-tank shells.',
+                tactics: 'Angle your Matilda II hull at ~30° to bounce 37mm AP and APCR effortlessly. Use [1] AP against Panzer IIIs and [3] HE against Pak 36 AT guns.'
+            },
+            {
+                year: '1941', date: 'JUNE 24, 1941', title: 'Battle of Raseiniai', theater: 'Dubysa River, Lithuania', theme: 'steppe',
+                player: 'kv2', allies: ['kv1'], enemies: ['panzer_iii_e', 'panzer_iii_e', 'flak_36_88', 'panzer_iii_e', 'pak_36'],
+                history: 'During Operation Barbarossa, Soviet KV-1 and KV-2 heavy giants held up an entire German Panzer division until 8.8 cm Flak 36 guns were deployed in a direct-fire anti-tank role.',
+                tactics: 'Your KV-2 bounces 37mm fire easily, but the 88mm Flak 36 can pierce you! Load [3] 152mm High-Explosive or [1] AP to obliterate the 88mm gun first.'
+            },
+            {
+                year: '1942', date: 'OCT 24, 1942', title: 'Second Battle of El Alamein', theater: 'Western Desert, Egypt', theme: 'desert',
+                player: 'panzer_iv_f2', allies: ['panzer_iii_e'], enemies: ['crusader_iii', 'crusader_iii', 'm3_grant', 'crusader_iii', 'm3_grant'],
+                history: 'Armed with the long-barreled 7.5 cm KwK 40 L/43, the Panzer IV Ausf. F2 out-ranged British Cruiser and M3 Grant tanks across the Egyptian dunes.',
+                tactics: 'Your 75mm gun penetrates both Crusaders and M3 Grants at long range, but your 50mm front hull needs hull-down ridge cover and angling against 57mm 6-pounders.'
+            },
+            {
+                year: '1943', date: 'JULY 12, 1943', title: 'Battle of Kursk — Prokhorovka', theater: 'Prokhorovka Steppe, USSR', theme: 'steppe',
+                player: 'tiger_i', allies: ['panzer_iv_f2'], enemies: ['t34_76', 't34_76', 'kv1', 't34_76', 'kv1'],
+                history: 'Soviet 5th Guards Tank Army T-34/76 and KV-1 tanks charged across the open steppes of Prokhorovka to close the distance against German Tiger I heavy tanks.',
+                tactics: 'Use the Tigerfibel "Diamond Angling" (35° hull angle toward the enemy) to push both your 100mm front and 80mm side armor over 130mm effective thickness!'
+            },
+            {
+                year: '1944', date: 'JUNE 13, 1944', title: 'Battle of Villers-Bocage', theater: 'Normandy Hedgerows, France', theme: 'steppe',
+                player: 'tiger_i', allies: ['panzer_iv_f2'], enemies: ['cromwell_iv', 'cromwell_iv', 'sherman_firefly', 'cromwell_iv', 'sherman_firefly'],
+                history: 'Along the sunken bocage lanes of Normandy, Tiger I tanks ambushed British Cromwells and 17-pounder Sherman Fireflies of the 7th Armoured Division.',
+                tactics: 'Eliminate the long-barreled Sherman Fireflies first—their 17-pounder APCR/APDS rounds can pierce your Tiger frontally if you fail to angle!'
+            },
+            {
+                year: '1944', date: 'DEC 19, 1944', title: 'Battle of the Bulge — Ardennes', theater: 'Ardennes Forest, Belgium', theme: 'snow',
+                player: 'sherman_e8', allies: ['sherman_e8'], enemies: ['panther_g', 'panther_g', 'tiger_ii', 'panther_g'],
+                history: 'In snow-covered Ardennes forests, M4A3E8 "Easy Eight" Shermans relied on high-velocity 76mm HVAP tungsten rounds and flanking maneuvers against Panthers and King Tigers.',
+                tactics: 'Press [2] for M93 HVAP (218mm pen) to pierce Panther turrets, or deploy smoke [G] and flank the thinner 50mm–80mm side armor of the German Big Cats!'
+            },
+            {
+                year: '1945', date: 'MARCH 10, 1945', title: 'Operation Spring Awakening', theater: 'Lake Balaton, Hungary', theme: 'steppe',
+                player: 'jagdpanther', allies: ['panther_g'], enemies: ['t34_85', 't34_85', 'is2', 't34_85', 'is2'],
+                history: 'Near Lake Balaton, German Jagdpanther tank destroyers mounting the lethal 8.8 cm Pak 43 L/71 fought advancing Soviet T-34/85 and IS-2 heavy formations.',
+                tactics: 'Keep hostile tanks in front of your sloped 80mm casemate (~145mm effective) and use your 208mm-penetration 88mm L/71 cannon to snipe IS-2 heavies.'
+            },
+            {
+                year: '1945', date: 'APRIL 26, 1945', title: 'Battle of Berlin', theater: 'Tiergarten Sector, Berlin', theme: 'urban',
+                player: 'is2', allies: ['t34_85', 't34_85'], enemies: ['panther_g', 'tiger_ii', 'flak_36_88', 'panther_g', 'flak_36_88'],
+                history: 'Soviet IS-2 heavy breakthrough tanks armed with 122mm D-25T cannons spearheaded the urban assault through Berlin\'s rubble-choked streets.',
+                tactics: 'Your 122mm AP shells deal massive 295 damage, and [3] HE shells can demolish brick ruins in one shot! Use stone buildings for cover during your 6.2s reload.'
+            }
+        ];
+
+        /* ============================================================================
+         * 3. BUILT-IN PRESET SHAREABLE SANDBOX SCENARIOS
+         * ============================================================================ */
+        const PRESET_SCENARIOS = [
+            {
+                t: "Wittmann's Bocage Ambush", m: 'steppe',
+                p: ['tiger_i', 350, 950, 315],
+                u: [
+                    ['a', 'panzer_iv_f2', 260, 1120, 315, 'sniper'],
+                    ['e', 'cromwell_iv', 1050, 620, 180, 'advance'],
+                    ['e', 'sherman_firefly', 1350, 620, 180, 'sniper'],
+                    ['e', 'cromwell_iv', 1620, 660, 180, 'flank'],
+                    ['e', 'sherman_firefly', 1850, 720, 180, 'sniper']
+                ],
+                o: [['tree', 650, 780], ['tree', 800, 780], ['tree', 950, 780], ['ridge', 480, 880], ['bunker', 1180, 440], ['ruin', 1480, 460]]
+            },
+            {
+                t: '88mm Flak Alley Gauntlet', m: 'urban',
+                p: ['is2', 260, 700, 0],
+                u: [
+                    ['a', 't34_85', 280, 420, 0, 'flank'],
+                    ['a', 't34_85', 280, 980, 0, 'flank'],
+                    ['e', 'flak_36_88', 1350, 460, 180, 'ambush'],
+                    ['e', 'flak_36_88', 1350, 940, 180, 'ambush'],
+                    ['e', 'panther_g', 1720, 700, 180, 'sniper'],
+                    ['e', 'flak_36_88', 1900, 700, 180, 'ambush']
+                ],
+                o: [['bunker', 720, 520], ['bunker', 720, 880], ['ruin', 1020, 700], ['ridge', 1240, 460], ['ridge', 1240, 940], ['trap', 1480, 700]]
+            },
+            {
+                t: 'Clash of Giants 1945', m: 'snow',
+                p: ['jagdpanther', 280, 700, 0],
+                u: [
+                    ['a', 'tiger_ii', 300, 450, 0, 'advance'],
+                    ['e', 'is2', 1650, 540, 180, 'advance'],
+                    ['e', 'is2', 1650, 860, 180, 'advance'],
+                    ['e', 't34_85', 1420, 320, 180, 'flank'],
+                    ['e', 't34_85', 1420, 1080, 180, 'flank']
+                ],
+                o: [['ridge', 480, 700], ['water', 980, 700], ['ruin', 1180, 460], ['ruin', 1180, 940], ['trap', 980, 420], ['trap', 980, 980]]
+            }
+        ];
+
+        /* ============================================================================
+         * 4. WEB AUDIO SYNTHESIZER (NO EXTERNAL ASSETS REQUIRED)
+         * ============================================================================ */
+        const sfx = {
+            ctx: null,
+            enabled: true,
+            init() {
+                if (!this.ctx) {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    if (AC) this.ctx = new AC();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            },
+            cannon(caliber) {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(Math.max(55, 165 - caliber * 0.7), now);
+                    osc.frequency.exponentialRampToValueAtTime(22, now + 0.32);
+                    gain.gain.setValueAtTime(0.28, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } catch (e) {}
+            },
+            ricochet() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(980, now);
+                    osc.frequency.exponentialRampToValueAtTime(2150, now + 0.12);
+                    osc.frequency.exponentialRampToValueAtTime(620, now + 0.28);
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.31);
+                } catch (e) {}
+            },
+            penetrate() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.exponentialRampToValueAtTime(36, now + 0.22);
+                    gain.gain.setValueAtTime(0.26, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } catch (e) {}
+            }
+        };
+
+        /* ============================================================================
+         * 5. GLOBAL SIMULATION STATE & GEOMETRY HELPERS
+         * ============================================================================ */
+        const WORLD_W = 2200;
+        const WORLD_H = 1400;
+        const battleCanvas = document.getElementById('battleCanvas');
+        const ctx = battleCanvas.getContext('2d');
+        const hitCamCanvas = document.getElementById('hitCamCanvas');
+        const hitCamCtx = hitCamCanvas.getContext('2d');
+        const compassCanvas = document.getElementById('compassCanvas');
+        const compassCtx = compassCanvas.getContext('2d');
+        const editorCanvas = document.getElementById('editorCanvas');
+        const edCtx = editorCanvas.getContext('2d');
+
+        let selectedCampaignIdx = 3; // Default: Battle of Kursk (1943)
+        let gameActive = false;
+        let isSandboxPlay = false;
+        let showArmorOverlay = false;
+        let perfMode = false;
+        let currentTheme = 'steppe';
+
+        let camera = { x: 0, y: 0 };
+        let mouse = { x: 0, y: 0, worldX: 800, worldY: 700, down: false };
+        let keys = {};
+
+        let player = null;
+        let tanks = [];
+        let obstacles = [];
+        let projectiles = [];
+        let particles = [];
+        let smokeClouds = [];
+        let trackMarks = [];
+        let floatingTexts = [];
+        let flyingTurrets = [];
+        let stats = { shots: 0, hits: 0, pens: 0, bounces: 0 };
+        let lastHitCam = null;
+
+        function wrapAngle(a) {
+            while (a > Math.PI) a -= Math.PI * 2;
+            while (a < -Math.PI) a += Math.PI * 2;
+            return a;
+        }
+        function rotateTowards(cur, target, maxStep) {
+            const diff = wrapAngle(target - cur);
+            if (Math.abs(diff) <= maxStep) return target;
+            return cur + Math.sign(diff) * maxStep;
+        }
+        function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+        /* ============================================================================
+         * 6. TANK & AT GUN CLASS
+         * ============================================================================ */
+        class Unit {
+            constructor(specId, x, y, angle, team, ai = 'advance') {
+                this.spec = VEHICLES[specId] || VEHICLES.tiger_i;
+                this.specId = this.spec.id;
+                this.x = x;
+                this.y = y;
+                this.hullAngle = angle;
+                this.turretAngle = angle;
+                this.team = team; // 'player' | 'ally' | 'enemy'
+                this.isPlayer = (team === 'player');
+                this.ai = ai;
+
+                this.maxHp = this.spec.hp;
+                this.hp = this.spec.hp;
+                this.alive = true;
+                this.shellIdx = 0;
+                this.reloadTimer = 0;
+                this.recoil = 0;
+                this.trackDist = 0;
+
+                this.modules = { engine: 'ok', tracks: 'ok', breech: 'ok', ammo: 'ok' };
+                this.trackRepairTimer = 0;
+                this.onFire = false;
+                this.fireTimer = 0;
+                this.extinguishers = 1;
+                this.smokes = 2;
+            }
+
+            getShell(idx = this.shellIdx) {
+                const s = this.spec.shells[idx];
+                if (idx === 0) return { type: 'AP', pen100: s[0], pen1000: s[1], dmg: s[2], speed: 700, norm: 5, ric: 70, color: '#fde047' };
+                if (idx === 1) return { type: 'APCR', pen100: s[0], pen1000: s[1], dmg: s[2], speed: 900, norm: 2, ric: 78, color: '#67e8f9' };
+                return { type: 'HE', pen100: s[0], pen1000: s[0], dmg: s[1], speed: 540, norm: 0, ric: 95, color: '#fb923c' };
+            }
+
+            getEffectiveReload() {
+                return this.spec.reload * (this.modules.breech === 'damaged' ? 1.5 : 1.0);
+            }
+
+            update(dt) {
+                if (!this.alive) return;
+                if (this.reloadTimer > 0) this.reloadTimer = Math.max(0, this.reloadTimer - dt);
+                if (this.recoil > 0) this.recoil = Math.max(0, this.recoil - dt * 22);
+
+                // Automatic track repair after 6 seconds immobilized
+                if (this.modules.tracks === 'destroyed') {
+                    this.trackRepairTimer -= dt;
+                    if (this.trackRepairTimer <= 0) {
+                        this.modules.tracks = 'damaged';
+                        addFloatingText(this.x, this.y - 25, 'TRACKS REPAIRED', '#34d399');
+                        if (this.isPlayer) updateBottomHud();
+                    }
+                }
+
+                // Engine Fire DoT
+                if (this.onFire) {
+                    this.fireTimer -= dt;
+                    this.hp -= 16 * dt;
+                    if (!perfMode && Math.random() < 0.35) {
+                        spawnParticle(this.x, this.y, '#f97316', 50);
+                    }
+                    if (this.fireTimer <= 0) this.onFire = false;
+                    if (this.hp <= 0) this.destroy(false);
+                }
+
+                if (this.isPlayer) this.updatePlayer(dt);
+                else this.updateAI(dt);
+            }
+
+            updatePlayer(dt) {
+                let spdMult = 1.0;
+                if (this.modules.tracks === 'destroyed' || this.modules.engine === 'destroyed') spdMult = 0;
+                else {
+                    if (this.modules.tracks === 'damaged') spdMult *= 0.7;
+                    if (this.modules.engine === 'damaged') spdMult *= 0.55;
+                }
+                if (inWater(this.x, this.y)) spdMult *= 0.48;
+
+                let turnIn = 0;
+                if (keys['KeyA'] || keys['ArrowLeft']) turnIn -= 1;
+                if (keys['KeyD'] || keys['ArrowRight']) turnIn += 1;
+                if (turnIn !== 0 && this.modules.tracks !== 'destroyed') {
+                    this.hullAngle = wrapAngle(this.hullAngle + turnIn * this.spec.turn * dt);
+                }
+
+                let moveIn = 0;
+                if (keys['KeyW'] || keys['ArrowUp']) moveIn += 1;
+                if (keys['KeyS'] || keys['ArrowDown']) moveIn -= 0.65;
+
+                if (!this.spec.isAT && moveIn !== 0 && spdMult > 0) {
+                    const dist = moveIn * this.spec.spd * spdMult * dt;
+                    this.moveStep(this.x + Math.cos(this.hullAngle) * dist, this.y + Math.sin(this.hullAngle) * dist, Math.abs(dist));
+                }
+
+                const targetAngle = Math.atan2(mouse.worldY - this.y, mouse.worldX - this.x);
+                this.turretAngle = rotateTowards(this.turretAngle, targetAngle, this.spec.tTurn * dt);
+
+                if ((mouse.down || keys['Space']) && this.reloadTimer <= 0) {
+                    this.fire();
+                }
+            }
+
+            updateAI(dt) {
+                // Find closest visible enemy
+                let bestTarget = null;
+                let bestDist = Infinity;
+                for (const other of tanks) {
+                    if (!other.alive) continue;
+                    const hostile = (this.team === 'enemy') ? (other.team !== 'enemy') : (other.team === 'enemy');
+                    if (!hostile) continue;
+                    if (isConcealedBySmoke(this.x, this.y, other.x, other.y)) continue;
+                    const d = Math.hypot(other.x - this.x, other.y - this.y);
+                    if (d < bestDist) { bestDist = d; bestTarget = other; }
+                }
+                if (!bestTarget) return;
+
+                const angleToTarget = Math.atan2(bestTarget.y - this.y, bestTarget.x - this.x);
+                this.turretAngle = rotateTowards(this.turretAngle, angleToTarget, this.spec.tTurn * dt);
+
+                if (!this.spec.isAT && this.ai !== 'ambush' && this.modules.tracks !== 'destroyed' && this.modules.engine !== 'destroyed') {
+                    let spdMult = (this.modules.engine === 'damaged' ? 0.55 : 1.0) * (inWater(this.x, this.y) ? 0.48 : 1.0);
+                    let idealRange = this.ai === 'sniper' ? 680 : (this.ai === 'flank' ? 260 : 420);
+                    let angleOffset = (bestDist < idealRange + 140) ? 0.48 : (this.ai === 'flank' ? 0.78 : 0);
+                    let desiredHull = angleToTarget + angleOffset;
+
+                    // Simple obstacle avoidance feeler
+                    const fx = this.x + Math.cos(this.hullAngle) * 70;
+                    const fy = this.y + Math.sin(this.hullAngle) * 70;
+                    if (hitHardObstacle(fx, fy, 22, true)) desiredHull += 1.05;
+
+                    this.hullAngle = rotateTowards(this.hullAngle, desiredHull, this.spec.turn * dt);
+                    let dir = 0;
+                    if (bestDist > idealRange + 45) dir = 0.85;
+                    else if (bestDist < idealRange - 90) dir = -0.45;
+
+                    if (dir !== 0) {
+                        const step = dir * this.spec.spd * spdMult * dt;
+                        this.moveStep(this.x + Math.cos(this.hullAngle) * step, this.y + Math.sin(this.hullAngle) * step, Math.abs(step));
+                    }
+                } else if (this.spec.isAT) {
+                    this.hullAngle = rotateTowards(this.hullAngle, angleToTarget, this.spec.turn * dt);
+                }
+
+                const aimDiff = Math.abs(wrapAngle(this.turretAngle - angleToTarget));
+                if (aimDiff < 0.14 && bestDist < 1050 && this.reloadTimer <= 0) {
+                    // AI chooses APCR if target has thick frontal armor
+                    this.shellIdx = (bestTarget.spec.hull[0] >= 110 && Math.random() < 0.45) ? 1 : 0;
+                    this.fire();
+                }
+            }
+
+            moveStep(nx, ny, movedDist) {
+                nx = clamp(nx, 45, WORLD_W - 45);
+                ny = clamp(ny, 45, WORLD_H - 45);
+                const r = this.spec.w * 0.48;
+                if (!hitHardObstacle(nx, ny, r, true) && !hitOtherTank(this, nx, ny, r)) {
+                    this.x = nx;
+                    this.y = ny;
+                    this.trackDist += movedDist;
+                    if (!perfMode && this.trackDist > 16) {
+                        this.trackDist = 0;
+                        trackMarks.push({ x: this.x, y: this.y, angle: this.hullAngle, w: this.spec.w, alpha: 0.35 });
+                        if (trackMarks.length > 260) trackMarks.shift();
+                    }
+                }
+            }
+
+            fire() {
+                const shell = this.getShell();
+                this.reloadTimer = this.getEffectiveReload();
+                this.recoil = 7;
+
+                const mx = this.x + Math.cos(this.turretAngle) * (this.spec.bl + 6);
+                const my = this.y + Math.sin(this.turretAngle) * (this.spec.bl + 6);
+                const spread = this.isPlayer ? (Math.random() - 0.5) * 0.012 : (Math.random() - 0.5) * 0.042;
+                const a = this.turretAngle + spread;
+
+                projectiles.push({
+                    x: mx, y: my, startX: mx, startY: my,
+                    vx: Math.cos(a) * shell.speed, vy: Math.sin(a) * shell.speed,
+                    angle: a, shooter: this, team: this.team, shell, cal: this.spec.cal, dist: 0, dead: false
+                });
+
+                sfx.cannon(this.spec.cal);
+                if (!perfMode) {
+                    for (let i = 0; i < 8; i++) spawnParticle(mx, my, '#fde047', 140);
+                }
+                if (this.isPlayer) stats.shots++;
+            }
+
+            destroy(ammoRackPop) {
+                if (!this.alive) return;
+                this.alive = false;
+                this.hp = 0;
+                this.onFire = false;
+                sfx.penetrate();
+                for (let i = 0; i < (perfMode ? 10 : 28); i++) {
+                    spawnParticle(this.x, this.y, i % 2 === 0 ? '#f97316' : '#fde047', 190);
+                }
+                if (ammoRackPop && !this.spec.isAT) {
+                    flyingTurrets.push({
+                        x: this.x, y: this.y, vx: (Math.random() - 0.5) * 85, vy: (Math.random() - 0.5) * 85,
+                        angle: this.turretAngle, vRot: (Math.random() - 0.5) * 5,
+                        tr: this.spec.tr, bl: this.spec.bl, color: this.spec.color, life: 1.5
+                    });
+                }
+                updateHudCounters();
+            }
+        }
+
+        /* ============================================================================
+         * 7. OBB RAYCAST & ARMOR OBLIQUITY / PENETRATION ENGINE
+         * ============================================================================ */
+        function isTankHullDown(tank) {
+            for (const ob of obstacles) {
+                if (ob.type === 'ridge' && Math.hypot(tank.x - ob.x, tank.y - ob.y) < 75) return true;
+            }
+            return false;
+        }
+
+        function raycastTankOBB(rx, ry, dx, dy, maxLen, tank, shell) {
+            // Transform ray into Tank's Local Hull Coordinate System
+            const cos = Math.cos(-tank.hullAngle);
+            const sin = Math.sin(-tank.hullAngle);
+            const ox = rx - tank.x, oy = ry - tank.y;
+            const lox = ox * cos - oy * sin;
+            const loy = ox * sin + oy * cos;
+            const ldx = dx * cos - dy * sin;
+            const ldy = dx * sin + dy * cos;
+
+            const hw = tank.spec.l / 2;
+            const hh = tank.spec.w / 2;
+
+            let tMin = 0, tMax = maxLen;
+            let hitNormalLocal = { x: 0, y: 0 };
+            let plateName = 'FRONT';
+
+            // X slab (Front = +hw, Rear = -hw)
+            if (Math.abs(ldx) < 1e-6) {
+                if (lox < -hw || lox > hw) return null;
+            } else {
+                let t1 = (-hw - lox) / ldx, t2 = (hw - lox) / ldx;
+                let n1 = { x: -1, y: 0, p: 'REAR' }, n2 = { x: 1, y: 0, p: 'FRONT' };
+                if (t1 > t2) { [t1, t2] = [t2, t1]; [n1, n2] = [n2, n1]; }
+                if (t1 > tMin) { tMin = t1; hitNormalLocal = n1; plateName = n1.p; }
+                tMax = Math.min(tMax, t2);
+                if (tMin > tMax) return null;
+            }
+
+            // Y slab (Sides = +/-hh)
+            if (Math.abs(ldy) < 1e-6) {
+                if (loy < -hh || loy > hh) return null;
+            } else {
+                let t1 = (-hh - loy) / ldy, t2 = (hh - loy) / ldy;
+                let n1 = { x: 0, y: -1, p: 'SIDE' }, n2 = { x: 0, y: 1, p: 'SIDE' };
+                if (t1 > t2) { [t1, t2] = [t2, t1]; [n1, n2] = [n2, n1]; }
+                if (t1 > tMin) { tMin = t1; hitNormalLocal = n1; plateName = n1.p; }
+                tMax = Math.min(tMax, t2);
+                if (tMin > tMax) return null;
+            }
+
+            if (tMin < 0 || tMin > maxLen) return null;
+
+            const hitX = rx + dx * tMin;
+            const hitY = ry + dy * tMin;
+
+            // Convert local normal back to world space
+            const wCos = Math.cos(tank.hullAngle), wSin = Math.sin(tank.hullAngle);
+            const wnx = hitNormalLocal.x * wCos - hitNormalLocal.y * wSin;
+            const wny = hitNormalLocal.x * wSin + hitNormalLocal.y * wCos;
+
+            // Horizontal impact angle theta (0 deg = dead-on perpendicular)
+            const dot = clamp(-(dx * wnx + dy * wny), 0.05, 1.0);
+            const horizAngleDeg = Math.acos(dot) * (180 / Math.PI);
+
+            // Check if Hull-Down Ridge protects the lower hull (forces Turret impact)
+            const hullDown = isTankHullDown(tank);
+            const hitTurret = hullDown || (Math.hypot(hitX - tank.x, hitY - tank.y) <= tank.spec.tr * 1.15);
+
+            const pIdx = plateName === 'FRONT' ? 0 : (plateName === 'SIDE' ? 1 : 2);
+            const nominal = hitTurret ? tank.spec.turret[pIdx] : tank.spec.hull[pIdx];
+            const slopeDeg = hitTurret ? (plateName === 'FRONT' ? 12 : 5) : tank.spec.slope[pIdx];
+
+            // Combine horizontal impact angle with vertical construction slope
+            const combinedAngle = Math.min(85, Math.hypot(horizAngleDeg, slopeDeg * 0.72));
+            const normAngle = Math.max(0, combinedAngle - shell.norm);
+            const effArmor = Math.round(nominal / Math.cos(normAngle * Math.PI / 180));
+
+            // Calculate gun penetration at impact distance (100m = 160px, 1000m = 1100px)
+            const totalDist = Math.hypot(hitX - rx, hitY - ry);
+            const tRange = clamp((totalDist - 160) / 940, 0, 1.25);
+            const gunPen = Math.round(Math.max(18, shell.pen100 - (shell.pen100 - shell.pen1000) * tRange));
+
+            const isRicochet = (shell.type !== 'HE') && (horizAngleDeg >= shell.ric);
+
+            return {
+                dist: tMin, hitX, hitY, wnx, wny,
+                plateName: (hitTurret ? 'TURRET ' : 'HULL ') + plateName,
+                nominal, impactAngle: Math.round(horizAngleDeg),
+                effArmor, gunPen, isRicochet, hullDown
+            };
+        }
+
+        function processImpact(proj, target, imp) {
+            if (proj.shooter === player) stats.hits++;
+
+            if (imp.isRicochet) {
+                sfx.ricochet();
+                if (target === player) stats.bounces++;
+                // Reflect projectile physically
+                const dot = (proj.vx * imp.wnx + proj.vy * imp.wny);
+                proj.vx = (proj.vx - 2 * dot * imp.wnx) * 0.55;
+                proj.vy = (proj.vy - 2 * dot * imp.wny) * 0.55;
+                proj.angle = Math.atan2(proj.vy, proj.vx);
+                proj.x = imp.hitX + imp.wnx * 5;
+                proj.y = imp.hitY + imp.wny * 5;
+                proj.team = 'neutral';
+                addFloatingText(imp.hitX, imp.hitY - 15, `RICOCHET (${imp.impactAngle}°)`, '#38bdf8');
+                logTelemetry(proj, target, imp, 'RICOCHET', 0, null);
+                return;
+            }
+
+            proj.dead = true;
+            const penRoll = imp.gunPen * (0.93 + Math.random() * 0.14);
+
+            if (proj.shell.type === 'HE') {
+                sfx.penetrate();
+                const dmg = (penRoll >= imp.effArmor)
+                    ? Math.round(proj.shell.dmg * (0.9 + Math.random() * 0.2))
+                    : Math.round(Math.max(15, (proj.shell.dmg * 0.42) - imp.nominal * 0.4));
+                target.hp -= dmg;
+                let modHit = null;
+                if (Math.random() < 0.45) {
+                    target.modules.tracks = 'destroyed';
+                    target.trackRepairTimer = 6.0;
+                    modHit = 'TRACKS IMMOBILIZED';
+                }
+                addFloatingText(imp.hitX, imp.hitY - 15, `-${dmg} HE BLAST`, '#fb923c');
+                logTelemetry(proj, target, imp, 'HE BLAST', dmg, modHit);
+                if (target.hp <= 0) target.destroy(false);
+            } else if (penRoll >= imp.effArmor) {
+                // Full Armor Penetration!
+                sfx.penetrate();
+                if (proj.shooter === player) stats.pens++;
+                const dmg = Math.round(proj.shell.dmg * (0.88 + Math.random() * 0.24));
+                target.hp -= dmg;
+
+                // Internal Module & Crew Check
+                let modHit = null;
+                let ammoBoom = false;
+                const r = Math.random();
+                if (imp.plateName.includes('REAR') || r < 0.2) {
+                    target.modules.engine = target.modules.engine === 'ok' ? 'damaged' : 'destroyed';
+                    modHit = 'ENGINE HIT';
+                    if (Math.random() < 0.35) { target.onFire = true; target.fireTimer = 6.0; modHit = 'ENGINE FIRE!'; }
+                } else if (imp.plateName.includes('SIDE') && r < 0.38) {
+                    if (Math.random() < 0.28) {
+                        ammoBoom = true;
+                        target.hp = 0;
+                        modHit = 'AMMO RACK DETONATED!';
+                    } else {
+                        target.modules.tracks = 'destroyed';
+                        target.trackRepairTimer = 6.0;
+                        modHit = 'TRACKS BROKEN';
+                    }
+                } else if (imp.plateName.includes('TURRET') && r < 0.5) {
+                    target.modules.breech = 'damaged';
+                    modHit = 'GUN BREECH DAMAGED';
+                }
+
+                addFloatingText(imp.hitX, imp.hitY - 15, ammoBoom ? 'AMMO RACK!' : `-${dmg} PEN!`, '#ef4444');
+                if (modHit) addFloatingText(imp.hitX, imp.hitY - 32, modHit, '#fde047');
+                logTelemetry(proj, target, imp, 'PENETRATED', dmg, modHit);
+                if (target.hp <= 0) target.destroy(ammoBoom);
+            } else {
+                // Non-Penetration Bounce
+                sfx.ricochet();
+                if (target === player) stats.bounces++;
+                addFloatingText(imp.hitX, imp.hitY - 15, `NO PEN (${imp.effArmor}mm > ${imp.gunPen}mm)`, '#cbd5e1');
+                logTelemetry(proj, target, imp, 'BOUNCED', 0, null);
+            }
+
+            if (target === player) updateBottomHud();
+        }
+
+        function logTelemetry(proj, target, imp, result, dmg, modHit) {
+            if (proj.shooter !== player && target !== player) return;
+            lastHitCam = { proj, target, imp, result, dmg, modHit, t: 0 };
+
+            const badge = document.getElementById('hitCamStatusBadge');
+            badge.textContent = result;
+            badge.className = 'text-[10px] font-mono-tech px-1.5 py-0.5 rounded font-bold ' +
+                (result === 'PENETRATED' ? 'bg-red-500/20 text-red-400 border border-red-500/40' :
+                 result === 'HE BLAST' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40' :
+                 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40');
+
+            const log = document.getElementById('telemetryLog');
+            const color = result === 'PENETRATED' ? 'text-emerald-400' : (result === 'HE BLAST' ? 'text-orange-400' : 'text-cyan-400');
+            const line = document.createElement('div');
+            line.innerHTML = `<span class="${color} font-bold">[${result}]</span> ${target.spec.name} ${imp.plateName}: ${imp.nominal}mm @ ${imp.impactAngle}° = <strong>${imp.effArmor}mm</strong> vs ${imp.gunPen}mm pen ${dmg > 0 ? '(-' + dmg + ' HP)' : ''}`;
+            log.prepend(line);
+        }
+
+        /* ============================================================================
+         * 8. TERRAIN, OBSTACLES & VISUAL EFFECTS HELPERS
+         * ============================================================================ */
+        function generateTerrain(theme) {
+            currentTheme = theme || 'steppe';
+            obstacles = [];
+            trackMarks = [];
+            particles = [];
+            projectiles = [];
+            smokeClouds = [];
+            flyingTurrets = [];
+            floatingTexts = [];
+
+            // 7 Hull-Down Ridges
+            for (let i = 0; i < 7; i++) {
+                obstacles.push({ type: 'ridge', x: 450 + Math.random() * 1300, y: 220 + Math.random() * 960, r: 65 });
+            }
+            // Stone Buildings & Destructible Brick Ruins
+            const count = theme === 'urban' ? 16 : 10;
+            for (let i = 0; i < count; i++) {
+                const isRuin = (i % 2 === 1);
+                obstacles.push({
+                    type: isRuin ? 'ruin' : 'bunker',
+                    x: 420 + Math.random() * 1360,
+                    y: 180 + Math.random() * 1040,
+                    r: isRuin ? 32 : 36,
+                    hp: isRuin ? 160 : 9999
+                });
+            }
+            // Rivers & Tank Traps
+            for (let i = 0; i < 3; i++) {
+                obstacles.push({ type: 'water', x: 650 + Math.random() * 900, y: 250 + Math.random() * 900, r: 80 });
+                obstacles.push({ type: 'trap', x: 800 + Math.random() * 600, y: 250 + Math.random() * 900, r: 24 });
+            }
+            // Forest / Bocage Trees
+            const trees = theme === 'desert' ? 8 : (theme === 'urban' ? 10 : 28);
+            for (let i = 0; i < trees; i++) {
+                obstacles.push({ type: 'tree', x: 220 + Math.random() * 1760, y: 140 + Math.random() * 1120, r: 22, fallen: false });
+            }
+        }
+
+        function hitHardObstacle(x, y, rad, isHull = false) {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const ob = obstacles[i];
+                if (ob.type === 'bunker' || ob.type === 'ruin') {
+                    if (Math.hypot(x - ob.x, y - ob.y) < rad + ob.r) return ob;
+                } else if (isHull && ob.type === 'trap') {
+                    if (Math.hypot(x - ob.x, y - ob.y) < rad + ob.r * 0.8) return ob;
+                } else if (isHull && ob.type === 'tree' && !ob.fallen) {
+                    if (Math.hypot(x - ob.x, y - ob.y) < rad + 10) ob.fallen = true;
+                }
+            }
+            return null;
+        }
+
+        function hitOtherTank(self, nx, ny, rad) {
+            for (const other of tanks) {
+                if (other === self) continue;
+                if (Math.hypot(nx - other.x, ny - other.y) < rad + other.spec.w * 0.48) return true;
+            }
+            return false;
+        }
+
+        function inWater(x, y) {
+            for (const ob of obstacles) {
+                if (ob.type === 'water' && Math.hypot(x - ob.x, y - ob.y) < ob.r) return true;
+            }
+            return false;
+        }
+
+        function isConcealedBySmoke(x1, y1, x2, y2) {
+            for (const sm of smokeClouds) {
+                const dx = x2 - x1, dy = y2 - y1;
+                const len2 = dx * dx + dy * dy;
+                if (len2 === 0) continue;
+                const t = clamp(((sm.x - x1) * dx + (sm.y - y1) * dy) / len2, 0, 1);
+                if (Math.hypot(x1 + t * dx - sm.x, y1 + t * dy - sm.y) < sm.r) return true;
+            }
+            return false;
+        }
+
+        function spawnParticle(x, y, color, speed) {
+            if (perfMode) return;
+            const a = Math.random() * Math.PI * 2;
+            const s = Math.random() * speed;
+            particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, size: 3 + Math.random() * 5, color, alpha: 1 });
+        }
+
+        function addFloatingText(x, y, text, color) {
+            floatingTexts.push({ x, y, text, color, life: 1.35 });
+        }
+
+        /* ============================================================================
+         * 9. MAIN GAME UPDATE & RENDER LOOP
+         * ============================================================================ */
+        function updateGame(dt) {
+            for (const t of tanks) t.update(dt);
+
+            // Projectiles
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const p = projectiles[i];
+                if (p.dead) { projectiles.splice(i, 1); continue; }
+                const step = Math.hypot(p.vx * dt, p.vy * dt);
+                const dx = p.vx / (step / dt || 1);
+                const dy = p.vy / (step / dt || 1);
+
+                let hitUnit = null, bestImp = null, minDist = step;
+                for (const t of tanks) {
+                    if (t === p.shooter) continue;
+                    if (Math.hypot(t.x - p.x, t.y - p.y) > step + 85) continue;
+                    const imp = raycastTankOBB(p.x, p.y, dx, dy, minDist, t, p.shell);
+                    if (imp && imp.dist < minDist) { minDist = imp.dist; hitUnit = t; bestImp = imp; }
+                }
+
+                if (hitUnit && bestImp) {
+                    if (hitUnit.alive) processImpact(p, hitUnit, bestImp);
+                    else { sfx.ricochet(); p.dead = true; }
+                } else {
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+                    p.dist += step;
+
+                    const ob = hitHardObstacle(p.x, p.y, 4, false);
+                    if (ob) {
+                        if (ob.type === 'ruin') {
+                            ob.hp -= p.shell.dmg;
+                            if (ob.hp <= 0) {
+                                obstacles.splice(obstacles.indexOf(ob), 1);
+                                addFloatingText(ob.x, ob.y, 'RUIN DEMOLISHED', '#fb923c');
+                            }
+                        }
+                        p.dead = true;
+                    }
+                    if (p.dist > 1450 || p.x < 0 || p.x > WORLD_W || p.y < 0 || p.y > WORLD_H) p.dead = true;
+                }
+            }
+
+            // Particles, Smoke, Flying Turrets, Floating Texts
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const pt = particles[i];
+                pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.alpha -= dt * 1.9;
+                if (pt.alpha <= 0) particles.splice(i, 1);
+            }
+            for (let i = smokeClouds.length - 1; i >= 0; i--) {
+                const sm = smokeClouds[i];
+                sm.life -= dt;
+                if (sm.r < 95) sm.r += dt * 28;
+                if (sm.life <= 0) smokeClouds.splice(i, 1);
+            }
+            for (let i = flyingTurrets.length - 1; i >= 0; i--) {
+                const ft = flyingTurrets[i];
+                ft.x += ft.vx * dt; ft.y += ft.vy * dt; ft.angle += ft.vRot * dt; ft.life -= dt;
+                if (ft.life <= 0) flyingTurrets.splice(i, 1);
+            }
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const fl = floatingTexts[i];
+                fl.y -= 24 * dt; fl.life -= dt;
+                if (fl.life <= 0) floatingTexts.splice(i, 1);
+            }
+
+            // Smooth Camera Tracking
+            if (player) {
+                const tx = player.x + (mouse.worldX - player.x) * 0.2 - battleCanvas.width / 2;
+                const ty = player.y + (mouse.worldY - player.y) * 0.2 - battleCanvas.height / 2;
+                camera.x += (clamp(tx, 0, Math.max(0, WORLD_W - battleCanvas.width)) - camera.x) * 0.1;
+                camera.y += (clamp(ty, 0, Math.max(0, WORLD_H - battleCanvas.height)) - camera.y) * 0.1;
+                mouse.worldX = mouse.x + camera.x;
+                mouse.worldY = mouse.y + camera.y;
+                updateBottomHud();
+            }
+
+            // Check Victory / Defeat
+            const enemiesAlive = tanks.filter(t => t.team === 'enemy' && t.alive).length;
+            if (enemiesAlive === 0) showAar(true);
+            else if (player && !player.alive) showAar(false);
+        }
+
+        function renderGame(dt) {
+            const w = battleCanvas.width, h = battleCanvas.height;
+            const bgMap = { steppe: '#333b22', desert: '#6b5739', snow: '#cbd5e1', urban: '#2a2b2e' };
+            ctx.fillStyle = bgMap[currentTheme] || '#333b22';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            // Grid
+            const isSnow = currentTheme === 'snow';
+            ctx.strokeStyle = isSnow ? 'rgba(71,85,105,0.16)' : 'rgba(255,255,255,0.05)';
+            ctx.lineWidth = 1;
+            for (let gx = 0; gx <= WORLD_W; gx += 160) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, WORLD_H); ctx.stroke(); }
+            for (let gy = 0; gy <= WORLD_H; gy += 160) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(WORLD_W, gy); ctx.stroke(); }
+            ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3; ctx.strokeRect(0, 0, WORLD_W, WORLD_H);
+
+            // Track Marks
+            if (!perfMode) {
+                for (const tm of trackMarks) {
+                    ctx.save();
+                    ctx.translate(tm.x, tm.y);
+                    ctx.rotate(tm.angle);
+                    ctx.fillStyle = isSnow ? 'rgba(100,116,139,0.28)' : 'rgba(0,0,0,0.28)';
+                    ctx.fillRect(-4, -tm.w / 2 + 2, 8, 4);
+                    ctx.fillRect(-4, tm.w / 2 - 6, 8, 4);
+                    ctx.restore();
+                }
+            }
+
+            // Ground Features: Ridges & Water
+            for (const ob of obstacles) {
+                if (ob.type === 'ridge') {
+                    ctx.save();
+                    ctx.translate(ob.x, ob.y);
+                    ctx.fillStyle = isSnow ? 'rgba(148,163,184,0.45)' : 'rgba(0,0,0,0.26)';
+                    ctx.strokeStyle = 'rgba(245,158,11,0.38)';
+                    ctx.beginPath(); ctx.ellipse(0, 0, 72, 34, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = isSnow ? '#334155' : 'rgba(255,255,255,0.4)';
+                    ctx.font = '9px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+                    ctx.fillText('HULL-DOWN RIDGE', 0, 3);
+                    ctx.restore();
+                } else if (ob.type === 'water') {
+                    ctx.save();
+                    ctx.translate(ob.x, ob.y);
+                    ctx.fillStyle = 'rgba(14,116,144,0.48)';
+                    ctx.beginPath(); ctx.ellipse(0, 0, ob.r, ob.r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            // Units (Wrecks first, then Alive)
+            const sorted = [...tanks].sort((a, b) => (a.alive === b.alive ? 0 : a.alive ? 1 : -1));
+            for (const t of sorted) drawUnit(t, isSnow);
+
+            // Solid Obstacles & Trees
+            for (const ob of obstacles) {
+                if (ob.type === 'bunker') {
+                    ctx.fillStyle = '#57534e'; ctx.strokeStyle = '#1c1917'; ctx.lineWidth = 2;
+                    ctx.fillRect(ob.x - ob.r, ob.y - ob.r * 0.7, ob.r * 2, ob.r * 1.4);
+                    ctx.strokeRect(ob.x - ob.r, ob.y - ob.r * 0.7, ob.r * 2, ob.r * 1.4);
+                } else if (ob.type === 'ruin') {
+                    ctx.fillStyle = '#7c2d12'; ctx.strokeStyle = '#431407'; ctx.lineWidth = 2;
+                    ctx.fillRect(ob.x - ob.r, ob.y - ob.r * 0.6, ob.r * 2, ob.r * 1.2);
+                    ctx.strokeRect(ob.x - ob.r, ob.y - ob.r * 0.6, ob.r * 2, ob.r * 1.2);
+                } else if (ob.type === 'trap') {
+                    ctx.fillStyle = '#9ca3af'; ctx.strokeStyle = '#374151';
+                    for (let dx = -12; dx <= 12; dx += 12) {
+                        ctx.beginPath();
+                        ctx.moveTo(ob.x + dx, ob.y - 8);
+                        ctx.lineTo(ob.x + dx + 6, ob.y + 7);
+                        ctx.lineTo(ob.x + dx - 6, ob.y + 7);
+                        ctx.closePath(); ctx.fill(); ctx.stroke();
+                    }
+                } else if (ob.type === 'tree') {
+                    ctx.save();
+                    ctx.translate(ob.x, ob.y);
+                    ctx.globalAlpha = ob.fallen ? 0.35 : 0.9;
+                    ctx.fillStyle = isSnow ? '#334e43' : (currentTheme === 'desert' ? '#4d5c33' : '#1e3a23');
+                    ctx.beginPath(); ctx.arc(0, 0, ob.r, 0, Math.PI * 2); ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            // Projectiles
+            for (const p of projectiles) {
+                ctx.save();
+                ctx.strokeStyle = p.shell.color;
+                ctx.lineWidth = Math.max(2.5, p.cal / 25);
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x - Math.cos(p.angle) * 20, p.y - Math.sin(p.angle) * 20);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Flying Turrets
+            for (const ft of flyingTurrets) {
+                ctx.save();
+                ctx.translate(ft.x, ft.y);
+                ctx.rotate(ft.angle);
+                ctx.fillStyle = '#292524';
+                ctx.beginPath(); ctx.arc(0, 0, ft.tr, 0, Math.PI * 2); ctx.fill();
+                ctx.fillRect(0, -3, ft.bl, 6);
+                ctx.restore();
+            }
+
+            // Particles & Smoke
+            if (!perfMode) {
+                for (const pt of particles) {
+                    ctx.globalAlpha = Math.max(0, pt.alpha);
+                    ctx.fillStyle = pt.color;
+                    ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
+            for (const sm of smokeClouds) {
+                ctx.fillStyle = `rgba(214,211,209,${clamp(sm.life / 4, 0, 0.65)})`;
+                ctx.beginPath(); ctx.arc(sm.x, sm.y, sm.r, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // Live Ballistic Aiming Reticle & Penetration Calculator
+            if (player && player.alive && gameActive) {
+                drawAimingTelemetry();
+            }
+
+            // Floating Combat Texts
+            for (const fl of floatingTexts) {
+                ctx.font = 'bold 12px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#000';
+                ctx.fillText(fl.text, fl.x + 1, fl.y + 1);
+                ctx.fillStyle = fl.color;
+                ctx.fillText(fl.text, fl.x, fl.y);
+            }
+
+            ctx.restore();
+            drawXRayHitCam(dt);
+            drawHullCompass();
+        }
+
+        function drawUnit(t, isSnow) {
+            ctx.save();
+            ctx.translate(t.x, t.y);
+            ctx.rotate(t.hullAngle);
+
+            const hw = t.spec.l / 2, hh = t.spec.w / 2;
+
+            if (!t.spec.isAT) {
+                // Tracks
+                ctx.fillStyle = t.alive ? '#1c1917' : '#0c0a09';
+                ctx.fillRect(-hw - 2, -hh - 3, t.spec.l + 4, 6);
+                ctx.fillRect(-hw - 2, hh - 3, t.spec.l + 4, 6);
+                // Hull Body
+                ctx.fillStyle = t.alive ? t.spec.color : '#292524';
+                ctx.strokeStyle = '#0c0a09';
+                ctx.lineWidth = 1.8;
+                ctx.fillRect(-hw, -hh, t.spec.l, t.spec.w);
+                ctx.strokeRect(-hw, -hh, t.spec.l, t.spec.w);
+                // Front Glacis Notch
+                ctx.fillStyle = 'rgba(255,255,255,0.14)';
+                ctx.fillRect(hw - 7, -hh + 2, 5, t.spec.w - 4);
+            } else {
+                // AT Gun Split Trail Legs
+                ctx.strokeStyle = '#1c1917'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-hw, -hh); ctx.moveTo(0, 0); ctx.lineTo(-hw, hh); ctx.stroke();
+            }
+
+            // Armor Overlay Mode [V]
+            if (showArmorOverlay && t.alive) {
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(hw, -hh); ctx.lineTo(hw, hh); ctx.stroke();
+                ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(-hw, -hh); ctx.lineTo(hw, -hh); ctx.moveTo(-hw, hh); ctx.lineTo(hw, hh); ctx.stroke();
+            }
+            ctx.restore();
+
+            // Turret & Barrel
+            if (t.alive) {
+                ctx.save();
+                ctx.translate(t.x, t.y);
+                ctx.rotate(t.turretAngle);
+                ctx.fillStyle = '#262626';
+                ctx.fillRect(0, -Math.max(2.5, t.spec.cal / 24), t.spec.bl - t.recoil, Math.max(5, t.spec.cal / 12));
+                ctx.fillStyle = t.spec.color;
+                ctx.strokeStyle = '#0c0a09'; ctx.lineWidth = 1.8;
+                ctx.beginPath(); ctx.arc(0, 0, t.spec.tr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.restore();
+
+                // Overhead Identification & HP Bar
+                const barW = 46;
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(t.x - barW / 2, t.y - hh - 19, barW, 5);
+                ctx.fillStyle = t.isPlayer ? '#fbbf24' : (t.team === 'ally' ? '#34d399' : '#f87171');
+                ctx.fillRect(t.x - barW / 2, t.y - hh - 19, barW * (t.hp / t.maxHp), 5);
+
+                ctx.font = 'bold 10px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = isSnow ? '#0f172a' : '#f5f5f4';
+                ctx.fillText(t.spec.name, t.x, t.y - hh - 23);
+            }
+        }
+
+        function drawAimingTelemetry() {
+            const shell = player.getShell();
+            const dx = Math.cos(player.turretAngle), dy = Math.sin(player.turretAngle);
+            const distToCursor = Math.hypot(mouse.worldX - player.x, mouse.worldY - player.y);
+
+            // Dashed Turret Line
+            ctx.save();
+            ctx.setLineDash([6, 6]);
+            ctx.strokeStyle = 'rgba(250,204,21,0.38)';
+            ctx.beginPath(); ctx.moveTo(player.x, player.y);
+            ctx.lineTo(player.x + dx * Math.min(distToCursor, 1100), player.y + dy * Math.min(distToCursor, 1100));
+            ctx.stroke();
+            ctx.restore();
+
+            // Check if hovering over an Enemy Tank
+            let hoverEnemy = null, hoverImp = null;
+            for (const t of tanks) {
+                if (!t.alive || t.team !== 'enemy') continue;
+                if (Math.hypot(mouse.worldX - t.x, mouse.worldY - t.y) < t.spec.l * 0.85) {
+                    hoverEnemy = t;
+                    const rdx = (t.x - player.x) / (Math.hypot(t.x - player.x, t.y - player.y) || 1);
+                    const rdy = (t.y - player.y) / (Math.hypot(t.x - player.x, t.y - player.y) || 1);
+                    hoverImp = raycastTankOBB(player.x, player.y, rdx, rdy, 1400, t, shell);
+                    break;
+                }
+            }
+
+            let retColor = '#f59e0b';
+            if (hoverImp) {
+                if (hoverImp.isRicochet || hoverImp.gunPen < hoverImp.effArmor * 0.9) retColor = '#ef4444'; // Red
+                else if (hoverImp.gunPen < hoverImp.effArmor * 1.12) retColor = '#eab308'; // Yellow
+                else retColor = '#22c55e'; // Green
+            }
+
+            ctx.strokeStyle = retColor; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(mouse.worldX, mouse.worldY, 15, 0, Math.PI * 2); ctx.stroke();
+
+            if (hoverImp) {
+                const bx = mouse.worldX + 22, by = mouse.worldY - 26;
+                ctx.fillStyle = 'rgba(12,13,14,0.92)';
+                ctx.strokeStyle = retColor; ctx.lineWidth = 1.5;
+                ctx.fillRect(bx, by, 195, 58); ctx.strokeRect(bx, by, 195, 58);
+
+                ctx.font = 'bold 10px "JetBrains Mono", monospace';
+                ctx.textAlign = 'left';
+                ctx.fillStyle = retColor;
+                const status = hoverImp.isRicochet ? 'RICOCHET LIKELY' : (retColor === '#22c55e' ? 'PENETRATION' : (retColor === '#eab308' ? 'MARGINAL PEN' : 'NO PENETRATION'));
+                ctx.fillText(`${status} (${hoverImp.plateName})`, bx + 7, by + 15);
+                ctx.fillStyle = '#e7e5e4';
+                ctx.font = '10px "JetBrains Mono", monospace';
+                ctx.fillText(`Impact Angle: ${hoverImp.impactAngle}° ${hoverImp.hullDown ? '[HULL-DOWN]' : ''}`, bx + 7, by + 32);
+                ctx.fillText(`Eff Armor: ${hoverImp.effArmor}mm | Pen: ${hoverImp.gunPen}mm`, bx + 7, by + 48);
+            }
+        }
+
+        function drawXRayHitCam(dt) {
+            const w = hitCamCanvas.width, h = hitCamCanvas.height;
+            hitCamCtx.fillStyle = '#090a0b';
+            hitCamCtx.fillRect(0, 0, w, h);
+
+            if (!lastHitCam) {
+                hitCamCtx.fillStyle = '#57534e';
+                hitCamCtx.font = '11px "JetBrains Mono", monospace';
+                hitCamCtx.textAlign = 'center';
+                hitCamCtx.fillText('AWAITING SHOT IMPACT TELEMETRY...', w / 2, h / 2 + 4);
+                return;
+            }
+            lastHitCam.t = Math.min(1, lastHitCam.t + dt * 3);
+            const { imp, result, modHit } = lastHitCam;
+
+            // Draw Sloped Armor Plate in Cut-Away View
+            const cx = w * 0.52, cy = h * 0.54;
+            const rad = (imp.impactAngle * Math.PI) / 180;
+            const plateThick = clamp(imp.nominal * 0.22, 10, 32);
+
+            hitCamCtx.save();
+            hitCamCtx.translate(cx, cy);
+            hitCamCtx.rotate(rad);
+            hitCamCtx.fillStyle = '#57534e';
+            hitCamCtx.strokeStyle = '#a8a29e';
+            hitCamCtx.fillRect(-plateThick / 2, -45, plateThick, 90);
+            hitCamCtx.strokeRect(-plateThick / 2, -45, plateThick, 90);
+            hitCamCtx.restore();
+
+            // Incoming Shell Vector from Left
+            const endX = cx - 4;
+            const curX = 20 + (endX - 20) * lastHitCam.t;
+            hitCamCtx.strokeStyle = '#fde047';
+            hitCamCtx.lineWidth = 3;
+            hitCamCtx.beginPath(); hitCamCtx.moveTo(20, cy); hitCamCtx.lineTo(curX, cy); hitCamCtx.stroke();
+
+            if (lastHitCam.t >= 0.95) {
+                if (result === 'PENETRATED' || result === 'HE BLAST') {
+                    // Internal Spalling Cone
+                    hitCamCtx.fillStyle = 'rgba(239,68,68,0.38)';
+                    hitCamCtx.beginPath();
+                    hitCamCtx.moveTo(cx + 6, cy);
+                    hitCamCtx.lineTo(w - 15, cy - 32);
+                    hitCamCtx.lineTo(w - 15, cy + 32);
+                    hitCamCtx.closePath();
+                    hitCamCtx.fill();
+                } else {
+                    // Ricochet Bounce Vector
+                    hitCamCtx.strokeStyle = '#38bdf8';
+                    hitCamCtx.beginPath();
+                    hitCamCtx.moveTo(cx - 4, cy);
+                    hitCamCtx.lineTo(cx - 48, cy - 38);
+                    hitCamCtx.stroke();
+                }
+            }
+
+            hitCamCtx.fillStyle = '#e7e5e4';
+            hitCamCtx.font = '10px "JetBrains Mono", monospace';
+            hitCamCtx.textAlign = 'left';
+            hitCamCtx.fillText(`${imp.plateName} (${imp.nominal}mm @ ${imp.impactAngle}° = ${imp.effArmor}mm)`, 8, 15);
+            if (modHit) {
+                hitCamCtx.fillStyle = '#fde047';
+                hitCamCtx.fillText(`CRITICAL: ${modHit}`, 8, h - 8);
+            }
+        }
+
+        function drawHullCompass() {
+            if (!player) return;
+            const w = compassCanvas.width, h = compassCanvas.height;
+            const cx = w / 2, cy = h / 2;
+            compassCtx.clearRect(0, 0, w, h);
+
+            // Relative Hull Angle vs Aim Line (Up = 0 deg)
+            const rel = wrapAngle(player.hullAngle - player.turretAngle);
+            const deg = Math.round(Math.abs(rel * 180 / Math.PI));
+            const effFront = Math.round(player.spec.hull[0] / Math.cos(clamp(deg, 0, 72) * Math.PI / 180));
+            const effSide = Math.round(player.spec.hull[1] / Math.cos(clamp(90 - deg, 0, 72) * Math.PI / 180));
+
+            document.getElementById('hudHullAngleText').textContent = `Angle: ${deg}°`;
+            document.getElementById('hudEffFront').textContent = `${effFront}mm`;
+            document.getElementById('hudEffSide').textContent = `${effSide}mm`;
+
+            // Aim Line (Up)
+            compassCtx.strokeStyle = 'rgba(250,204,21,0.5)';
+            compassCtx.beginPath(); compassCtx.moveTo(cx, cy); compassCtx.lineTo(cx, 6); compassCtx.stroke();
+
+            // Rotated Hull Icon
+            compassCtx.save();
+            compassCtx.translate(cx, cy);
+            compassCtx.rotate(rel - Math.PI / 2);
+            const optimal = deg >= 25 && deg <= 45;
+            compassCtx.fillStyle = optimal ? 'rgba(16,185,129,0.35)' : 'rgba(120,113,108,0.35)';
+            compassCtx.strokeStyle = optimal ? '#10b981' : '#a8a29e';
+            compassCtx.lineWidth = 2;
+            compassCtx.fillRect(-13, -20, 26, 40);
+            compassCtx.strokeRect(-13, -20, 26, 40);
+            compassCtx.restore();
+        }
+
+        /* ============================================================================
+         * 10. HUD & CONSUMABLE ACTIONS
+         * ============================================================================ */
+        function selectShell(idx) {
+            if (!player) return;
+            player.shellIdx = idx;
+            for (let i = 0; i < 3; i++) {
+                const btn = document.getElementById('btnShell' + i);
+                if (i === idx) {
+                    btn.className = 'p-2 rounded border border-amber-400 bg-amber-500/20 text-left transition';
+                } else {
+                    btn.className = 'p-2 rounded border border-stone-700 bg-stone-900/80 text-left transition';
+                }
+            }
+        }
+
+        function updateBottomHud() {
+            if (!player) return;
+            document.getElementById('hudPlayerName').textContent = player.spec.name;
+            document.getElementById('hudGunName').textContent = player.spec.gun;
+
+            const hpPct = Math.max(0, (player.hp / player.maxHp) * 100);
+            document.getElementById('hudHpBar').style.width = `${hpPct}%`;
+            document.getElementById('hudHpText').textContent = `${Math.max(0, Math.ceil(player.hp))} / ${player.maxHp} HP`;
+
+            const maxRel = player.getEffectiveReload();
+            if (player.reloadTimer <= 0) {
+                document.getElementById('hudReloadText').textContent = 'READY TO FIRE';
+                document.getElementById('hudReloadBar').style.width = '100%';
+            } else {
+                document.getElementById('hudReloadText').textContent = `RELOADING ${(player.reloadTimer).toFixed(1)}s`;
+                document.getElementById('hudReloadBar').style.width = `${((maxRel - player.reloadTimer) / maxRel) * 100}%`;
+            }
+
+            document.getElementById('shell0Pen').textContent = `${player.spec.shells[0][0]}mm`;
+            document.getElementById('shell1Pen').textContent = `${player.spec.shells[1][0]}mm`;
+            document.getElementById('shell2Pen').textContent = `${player.spec.shells[2][0]}mm`;
+
+            const setMod = (id, label, state) => {
+                const el = document.getElementById(id);
+                el.textContent = `${label} ${state.toUpperCase()}`;
+                el.className = 'px-1.5 py-0.5 rounded border text-[10px] font-mono-tech ' +
+                    (state === 'ok' ? 'bg-stone-900 border-stone-700 text-emerald-400' :
+                     state === 'damaged' ? 'bg-amber-950/60 border-amber-500/50 text-amber-300' :
+                     'bg-red-950/70 border-red-500/60 text-red-400');
+            };
+            setMod('modEngine', 'ENG', player.modules.engine);
+            setMod('modTracks', 'TRK', player.modules.tracks);
+            setMod('modBreech', 'GUN', player.modules.breech);
+            setMod('modAmmo', 'AMMO', player.modules.ammo);
+
+            document.getElementById('lblExtCount').textContent = player.extinguishers;
+            document.getElementById('lblSmokeCount').textContent = player.smokes;
+        }
+
+        function updateHudCounters() {
+            const allies = tanks.filter(t => (t.team === 'player' || t.team === 'ally') && t.alive).length;
+            const enemies = tanks.filter(t => t.team === 'enemy' && t.alive).length;
+            document.getElementById('hudAlliesAlive').textContent = allies;
+            document.getElementById('hudEnemiesAlive').textContent = enemies;
+        }
+
+        function useFieldRepair() {
+            if (!player || !player.alive) return;
+            player.modules.engine = 'ok';
+            player.modules.tracks = 'ok';
+            player.modules.breech = 'ok';
+            addFloatingText(player.x, player.y - 25, 'MODULES REPAIRED', '#34d399');
+            updateBottomHud();
+        }
+
+        function useExtinguisher() {
+            if (!player || !player.alive || !player.onFire || player.extinguishers <= 0) return;
+            player.extinguishers--;
+            player.onFire = false;
+            addFloatingText(player.x, player.y - 25, 'FIRE EXTINGUISHED', '#38bdf8');
+            updateBottomHud();
+        }
+
+        function useSmoke() {
+            if (!player || !player.alive || player.smokes <= 0) return;
+            player.smokes--;
+            const sx = player.x + Math.cos(player.turretAngle) * 110;
+            const sy = player.y + Math.sin(player.turretAngle) * 110;
+            smokeClouds.push({ x: sx, y: sy, r: 30, life: 10 });
+            addFloatingText(player.x, player.y - 25, 'SMOKE DEPLOYED', '#d6d3d1');
+            updateBottomHud();
+        }
+
+        /* ============================================================================
+         * 11. CAMPAIGN MENU & SANDBOX LEVEL EDITOR LOGIC
+         * ============================================================================ */
+        let editorState = {
+            title: 'Custom Armor Clash',
+            theme: 'steppe',
+            tool: 'enemy',
+            terrainType: 'bunker',
+            player: { specId: 'tiger_i', x: 280, y: 700, angle: 0 },
+            units: [
+                { team: 'ally', specId: 'panzer_iv_f2', x: 300, y: 440, angle: 0, ai: 'advance' },
+                { team: 'enemy', specId: 't34_85', x: 1500, y: 440, angle: 180, ai: 'flank' },
+                { team: 'enemy', specId: 'is2', x: 1700, y: 700, angle: 180, ai: 'advance' },
+                { team: 'enemy', specId: 't34_85', x: 1500, y: 960, angle: 180, ai: 'flank' },
+                { team: 'enemy', specId: 'flak_36_88', x: 1880, y: 700, angle: 180, ai: 'ambush' }
+            ],
+            obstacles: [
+                { type: 'ridge', x: 640, y: 700 },
+                { type: 'bunker', x: 1020, y: 520 },
+                { type: 'ruin', x: 1020, y: 880 },
+                { type: 'ridge', x: 1320, y: 700 },
+                { type: 'tree', x: 820, y: 340 },
+                { type: 'tree', x: 820, y: 1060 }
+            ]
+        };
+
+        function switchMainTab(tabName) {
+            const views = { campaigns: 'viewCampaigns', sandbox: 'viewSandbox', import: 'viewImport' };
+            const btns = { campaigns: 'tabBtnCampaigns', sandbox: 'tabBtnSandbox', import: 'tabBtnImport' };
+            Object.keys(views).forEach(k => {
+                document.getElementById(views[k]).classList.toggle('hidden', k !== tabName);
+                document.getElementById(btns[k]).className = (k === tabName)
+                    ? 'px-3.5 py-2 rounded-lg font-military font-bold text-sm uppercase bg-amber-500 text-stone-950 transition flex items-center gap-2'
+                    : 'px-3.5 py-2 rounded-lg font-military font-bold text-sm uppercase bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 transition flex items-center gap-2';
+            });
+            if (tabName === 'sandbox') drawEditorCanvas();
+        }
+
+        function renderCampaignGrid() {
+            const grid = document.getElementById('campaignCardsGrid');
+            grid.innerHTML = '';
+            CAMPAIGNS.forEach((c, idx) => {
+                const active = idx === selectedCampaignIdx;
+                const card = document.createElement('button');
+                card.className = `p-3 rounded-lg border text-left transition ${active ? 'bg-amber-500/20 border-amber-400 shadow' : 'bg-stone-900/80 border-stone-800 hover:border-stone-600'}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between text-[10px] font-mono-tech mb-1">
+                        <span class="px-1.5 py-0.5 rounded bg-black/50 text-amber-400 font-bold">${c.year}</span>
+                        <span class="text-stone-400">${VEHICLES[c.player].nation}</span>
+                    </div>
+                    <div class="font-military font-bold text-sm text-white uppercase truncate">${c.title}</div>
+                    <div class="text-[11px] font-mono-tech text-stone-400 truncate mt-0.5">Cmd: ${VEHICLES[c.player].name}</div>
+                `;
+                card.addEventListener('click', () => {
+                    selectedCampaignIdx = idx;
+                    renderCampaignGrid();
+                    updateCampaignBriefing();
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        function updateCampaignBriefing() {
+            const c = CAMPAIGNS[selectedCampaignIdx];
+            const pv = VEHICLES[c.player];
+            document.getElementById('briefDate').textContent = c.date;
+            document.getElementById('briefTheater').textContent = c.theater;
+            document.getElementById('briefTitle').textContent = `${c.title} (${c.year})`;
+            document.getElementById('briefHistory').textContent = c.history;
+            document.getElementById('briefTactics').textContent = c.tactics;
+
+            document.getElementById('briefPlayerBox').innerHTML = `
+                <div class="flex justify-between font-bold text-amber-300 mb-1"><span>${pv.name} (${pv.role})</span><span>${pv.hp} HP</span></div>
+                <div class="text-stone-300">Hull Armor (F/S/R): <strong>${pv.hull.join(' / ')} mm</strong></div>
+                <div class="text-stone-300">Main Armament: <strong>${pv.gun}</strong> (AP ${pv.shells[0][0]}mm / APCR ${pv.shells[1][0]}mm)</div>
+            `;
+
+            const counts = {};
+            c.enemies.forEach(id => counts[id] = (counts[id] || 0) + 1);
+            const enemyHtml = Object.entries(counts).map(([id, cnt]) => {
+                const ev = VEHICLES[id];
+                return `<div class="bg-black/40 p-2 rounded border border-stone-800 flex justify-between items-center">
+                    <div><strong class="text-red-300">${cnt}x ${ev.name}</strong> <span class="text-stone-400">(${ev.gun})</span></div>
+                    <span class="text-amber-300">${ev.hull.join('/')}mm</span>
+                </div>`;
+            }).join('');
+            document.getElementById('briefEnemyBox').innerHTML = enemyHtml;
+        }
+
+        function startCampaignBattle() {
+            sfx.init();
+            isSandboxPlay = false;
+            document.getElementById('btnReturnEditor').classList.add('hidden');
+            const c = CAMPAIGNS[selectedCampaignIdx];
+
+            document.getElementById('mainModal').classList.add('hidden');
+            document.getElementById('aarModal').classList.add('hidden');
+            document.getElementById('topHud').classList.remove('hidden');
+            document.getElementById('bottomHud').classList.remove('hidden');
+
+            document.getElementById('hudBattleTag').textContent = c.year;
+            document.getElementById('hudBattleTitle').textContent = c.title;
+            document.getElementById('hudObjective').textContent = c.tactics;
+
+            stats = { shots: 0, hits: 0, pens: 0, bounces: 0 };
+            lastHitCam = null;
+            generateTerrain(c.theme);
+            tanks = [];
+
+            player = new Unit(c.player, 260, WORLD_H / 2, 0, 'player');
+            tanks.push(player);
+
+            c.allies.forEach((id, i) => {
+                const ay = WORLD_H / 2 + (i % 2 === 0 ? -240 : 240);
+                tanks.push(new Unit(id, 280, ay, 0, 'ally', 'advance'));
+            });
+
+            c.enemies.forEach((id, i) => {
+                const ex = 1350 + (i % 2) * 280;
+                const ey = 240 + ((WORLD_H - 480) / Math.max(1, c.enemies.length - 1)) * i;
+                tanks.push(new Unit(id, ex, ey, Math.PI, 'enemy', i % 2 === 0 ? 'advance' : 'flank'));
+            });
+
+            gameActive = true;
+            selectShell(0);
+            updateBottomHud();
+            updateHudCounters();
+        }
+
+        function startSandboxBattle() {
+            sfx.init();
+            isSandboxPlay = true;
+            document.getElementById('btnReturnEditor').classList.remove('hidden');
+
+            editorState.title = document.getElementById('edTitle').value || 'Custom Sandbox';
+            editorState.theme = document.getElementById('edTheme').value || 'steppe';
+            currentTheme = editorState.theme;
+
+            document.getElementById('mainModal').classList.add('hidden');
+            document.getElementById('aarModal').classList.add('hidden');
+            document.getElementById('topHud').classList.remove('hidden');
+            document.getElementById('bottomHud').classList.remove('hidden');
+
+            document.getElementById('hudBattleTag').textContent = 'SANDBOX';
+            document.getElementById('hudBattleTitle').textContent = editorState.title;
+            document.getElementById('hudObjective').textContent = 'Custom Sandbox Level — Click RETURN TO EDITOR anytime to tweak.';
+
+            stats = { shots: 0, hits: 0, pens: 0, bounces: 0 };
+            lastHitCam = null;
+
+            obstacles = []; trackMarks = []; particles = []; projectiles = []; smokeClouds = []; flyingTurrets = []; floatingTexts = [];
+            editorState.obstacles.forEach(ob => {
+                obstacles.push({
+                    type: ob.type, x: ob.x, y: ob.y,
+                    r: ob.type === 'water' ? 80 : (ob.type === 'ridge' ? 65 : (ob.type === 'bunker' ? 36 : (ob.type === 'ruin' ? 32 : 22))),
+                    hp: ob.type === 'ruin' ? 160 : 9999, fallen: false
+                });
+            });
+
+            tanks = [];
+            player = new Unit(editorState.player.specId, editorState.player.x, editorState.player.y, (editorState.player.angle * Math.PI) / 180, 'player');
+            tanks.push(player);
+
+            if (editorState.units.filter(u => u.team === 'enemy').length === 0) {
+                editorState.units.push({ team: 'enemy', specId: 'panther_g', x: 1600, y: 700, angle: 180, ai: 'advance' });
+            }
+
+            editorState.units.forEach(u => {
+                tanks.push(new Unit(u.specId, u.x, u.y, (u.angle * Math.PI) / 180, u.team, u.ai || 'advance'));
+            });
+
+            gameActive = true;
+            selectShell(0);
+            updateBottomHud();
+            updateHudCounters();
+        }
+
+        function drawEditorCanvas() {
+            const w = editorCanvas.width, h = editorCanvas.height;
+            const sx = w / WORLD_W, sy = h / WORLD_H;
+            const bgMap = { steppe: '#333b22', desert: '#6b5739', snow: '#cbd5e1', urban: '#2a2b2e' };
+            edCtx.fillStyle = bgMap[editorState.theme] || '#333b22';
+            edCtx.fillRect(0, 0, w, h);
+
+            edCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+            for (let gx = 0; gx <= w; gx += 50) { edCtx.beginPath(); edCtx.moveTo(gx, 0); edCtx.lineTo(gx, h); edCtx.stroke(); }
+            for (let gy = 0; gy <= h; gy += 50) { edCtx.beginPath(); edCtx.moveTo(0, gy); edCtx.lineTo(w, gy); edCtx.stroke(); }
+
+            editorState.obstacles.forEach(ob => {
+                const ox = ob.x * sx, oy = ob.y * sy;
+                edCtx.save();
+                edCtx.translate(ox, oy);
+                if (ob.type === 'ridge') {
+                    edCtx.fillStyle = 'rgba(245,158,11,0.3)'; edCtx.strokeStyle = '#f59e0b';
+                    edCtx.beginPath(); edCtx.ellipse(0, 0, 24, 11, 0, 0, Math.PI * 2); edCtx.fill(); edCtx.stroke();
+                } else if (ob.type === 'water') {
+                    edCtx.fillStyle = 'rgba(14,116,144,0.55)';
+                    edCtx.beginPath(); edCtx.ellipse(0, 0, 28, 16, 0, 0, Math.PI * 2); edCtx.fill();
+                } else if (ob.type === 'bunker') {
+                    edCtx.fillStyle = '#57534e'; edCtx.fillRect(-13, -9, 26, 18);
+                } else if (ob.type === 'ruin') {
+                    edCtx.fillStyle = '#9a3412'; edCtx.fillRect(-12, -8, 24, 16);
+                } else if (ob.type === 'trap') {
+                    edCtx.fillStyle = '#9ca3af'; edCtx.fillRect(-9, -4, 18, 8);
+                } else if (ob.type === 'tree') {
+                    edCtx.fillStyle = '#15803d'; edCtx.beginPath(); edCtx.arc(0, 0, 8, 0, Math.PI * 2); edCtx.fill();
+                }
+                edCtx.restore();
+            });
+
+            const drawUnitMarker = (u, col, prefix) => {
+                const ux = u.x * sx, uy = u.y * sy;
+                const rad = ((u.angle || 0) * Math.PI) / 180;
+                const sp = VEHICLES[u.specId] || VEHICLES.tiger_i;
+                edCtx.save();
+                edCtx.translate(ux, uy);
+                edCtx.rotate(rad);
+                edCtx.fillStyle = col; edCtx.strokeStyle = '#000';
+                edCtx.fillRect(-10, -7, 20, 14); edCtx.strokeRect(-10, -7, 20, 14);
+                edCtx.strokeStyle = '#fff'; edCtx.lineWidth = 2;
+                edCtx.beginPath(); edCtx.moveTo(0, 0); edCtx.lineTo(16, 0); edCtx.stroke();
+                edCtx.restore();
+                edCtx.font = 'bold 9px "JetBrains Mono", monospace';
+                edCtx.textAlign = 'center';
+                edCtx.fillStyle = col;
+                edCtx.fillText(prefix + sp.name, ux, uy - 11);
+            };
+
+            drawUnitMarker(editorState.player, '#fbbf24', '[YOU] ');
+            editorState.units.forEach(u => drawUnitMarker(u, u.team === 'ally' ? '#34d399' : '#f87171', ''));
+
+            const eCnt = editorState.units.filter(u => u.team === 'enemy').length;
+            const aCnt = editorState.units.filter(u => u.team === 'ally').length;
+            document.getElementById('edCounts').textContent = `1 Player | ${aCnt} Allies | ${eCnt} Enemies | ${editorState.obstacles.length} Terrain`;
+        }
+
+        function generateShareCode() {
+            const data = {
+                t: (document.getElementById('edTitle').value || 'Custom Battle').slice(0, 30),
+                m: document.getElementById('edTheme').value || 'steppe',
+                p: [editorState.player.specId, Math.round(editorState.player.x), Math.round(editorState.player.y), Math.round(editorState.player.angle || 0)],
+                u: editorState.units.map(u => [u.team === 'ally' ? 'a' : 'e', u.specId, Math.round(u.x), Math.round(u.y), Math.round(u.angle || 0), u.ai || 'advance']),
+                o: editorState.obstacles.map(ob => [ob.type, Math.round(ob.x), Math.round(ob.y)])
+            };
+            return 'SA2D-' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        }
+
+        function applyDecodedScenario(data) {
+            editorState.title = data.t || 'Imported Battle';
+            editorState.theme = data.m || 'steppe';
+            document.getElementById('edTitle').value = editorState.title;
+            document.getElementById('edTheme').value = editorState.theme;
+
+            if (Array.isArray(data.p)) {
+                editorState.player = {
+                    specId: VEHICLES[data.p[0]] ? data.p[0] : 'tiger_i',
+                    x: Number(data.p[1]) || 280, y: Number(data.p[2]) || 700, angle: Number(data.p[3]) || 0
+                };
+            }
+            editorState.units = (data.u || []).map(item => ({
+                team: item[0] === 'a' ? 'ally' : 'enemy',
+                specId: VEHICLES[item[1]] ? item[1] : 't34_85',
+                x: Number(item[2]) || 1400, y: Number(item[3]) || 700, angle: Number(item[4]) || 180, ai: item[5] || 'advance'
+            }));
+            editorState.obstacles = (data.o || []).map(item => ({
+                type: item[0] || 'ridge', x: Number(item[1]) || 900, y: Number(item[2]) || 700
+            }));
+            drawEditorCanvas();
+        }
+
+        function showAar(victory) {
+            if (!gameActive) return;
+            gameActive = false;
+            const modal = document.getElementById('aarModal');
+            modal.classList.remove('hidden');
+
+            const badge = document.getElementById('aarBadge');
+            badge.textContent = victory ? 'MISSION ACCOMPLISHED' : 'VEHICLE KNOCKED OUT';
+            badge.className = victory
+                ? 'inline-block px-3 py-1 rounded text-xs font-mono-tech font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                : 'inline-block px-3 py-1 rounded text-xs font-mono-tech font-bold uppercase bg-red-500/20 text-red-400 border border-red-500/40';
+
+            document.getElementById('aarTitle').textContent = victory ? 'Tactical Victory' : 'Defeat in Detail';
+            document.getElementById('aarDesc').textContent = victory
+                ? 'All hostile armor formations have been neutralized through superior gunnery and angling.'
+                : 'Your tank was knocked out. Angle your hull at ~35° and utilize hull-down ridges to bounce enemy shells!';
+            document.getElementById('aarShots').textContent = `${stats.shots} / ${stats.hits}`;
+            document.getElementById('aarPens').textContent = stats.pens;
+            document.getElementById('aarBounces').textContent = stats.bounces;
+        }
+
+        function togglePerformanceMode() {
+            perfMode = !perfMode;
+            document.getElementById('lblPerfHud').textContent = perfMode ? '60FPS: Fast' : '60FPS: Full';
+            document.getElementById('lblPerfModal').textContent = perfMode ? 'Perf Mode: ON' : 'Perf Mode: OFF';
+        }
+
+        /* ============================================================================
+         * 12. DOMCONTENTLOADED INITIALIZATION & CLEAN EVENT BINDINGS
+         * ============================================================================ */
+        window.addEventListener('DOMContentLoaded', () => {
+            const resize = () => {
+                battleCanvas.width = window.innerWidth;
+                battleCanvas.height = window.innerHeight;
+            };
+            resize();
+            window.addEventListener('resize', resize);
+
+            // Populate 18 Historical Vehicles into Editor Dropdown
+            const vSelect = document.getElementById('edVehicleSelect');
+            Object.values(VEHICLES).forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = `[${v.nation}] ${v.name} (${v.hull[0]}mm / ${v.cal}mm)`;
+                vSelect.appendChild(opt);
+            });
+            vSelect.value = 't34_85';
+
+            // Main Menu Navigation Tabs
+            document.getElementById('tabBtnCampaigns').addEventListener('click', () => switchMainTab('campaigns'));
+            document.getElementById('tabBtnSandbox').addEventListener('click', () => switchMainTab('sandbox'));
+            document.getElementById('tabBtnImport').addEventListener('click', () => switchMainTab('import'));
+            document.getElementById('btnModalPerf').addEventListener('click', togglePerformanceMode);
+
+            // Campaign Launch & AAR Buttons
+            document.getElementById('btnLaunchCampaign').addEventListener('click', startCampaignBattle);
+            document.getElementById('btnTestPlayLevel').addEventListener('click', startSandboxBattle);
+            document.getElementById('btnReturnEditor').addEventListener('click', () => {
+                gameActive = false;
+                document.getElementById('mainModal').classList.remove('hidden');
+                switchMainTab('sandbox');
+            });
+            document.getElementById('btnOpenMenu').addEventListener('click', () => {
+                gameActive = false;
+                document.getElementById('mainModal').classList.remove('hidden');
+            });
+            document.getElementById('btnAarRetry').addEventListener('click', () => {
+                if (isSandboxPlay) startSandboxBattle();
+                else startCampaignBattle();
+            });
+            document.getElementById('btnAarMenu').addEventListener('click', () => {
+                document.getElementById('aarModal').classList.add('hidden');
+                document.getElementById('mainModal').classList.remove('hidden');
+            });
+
+            // Top & Bottom HUD Buttons
+            document.getElementById('btnToggleArmor').addEventListener('click', () => showArmorOverlay = !showArmorOverlay);
+            document.getElementById('btnTogglePerf').addEventListener('click', togglePerformanceMode);
+            document.getElementById('btnToggleAudio').addEventListener('click', () => {
+                sfx.enabled = !sfx.enabled;
+                document.getElementById('iconAudio').className = sfx.enabled ? 'fa-solid fa-volume-high text-amber-400' : 'fa-solid fa-volume-xmark text-stone-500';
+            });
+            document.getElementById('btnShell0').addEventListener('click', () => selectShell(0));
+            document.getElementById('btnShell1').addEventListener('click', () => selectShell(1));
+            document.getElementById('btnShell2').addEventListener('click', () => selectShell(2));
+            document.getElementById('btnActionRepair').addEventListener('click', useFieldRepair);
+            document.getElementById('btnActionExtinguish').addEventListener('click', useExtinguisher);
+            document.getElementById('btnActionSmoke').addEventListener('click', useSmoke);
+
+            // Editor Tool & Terrain Brush Selection
+            document.querySelectorAll('.ed-tool').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    editorState.tool = btn.dataset.tool;
+                    document.querySelectorAll('.ed-tool').forEach(b => {
+                        b.className = (b === btn)
+                            ? 'ed-tool px-2 py-1.5 rounded text-xs font-mono-tech border border-amber-500 bg-amber-500/20 text-amber-300 font-bold'
+                            : 'ed-tool px-2 py-1.5 rounded text-xs font-mono-tech border border-stone-700 bg-stone-900 text-stone-300';
+                    });
+                    document.getElementById('edUnitPanel').classList.toggle('hidden', editorState.tool === 'terrain');
+                    document.getElementById('edTerrainPanel').classList.toggle('hidden', editorState.tool !== 'terrain');
+                });
+            });
+
+            document.querySelectorAll('.ed-ter').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    editorState.terrainType = btn.dataset.ter;
+                    document.querySelectorAll('.ed-ter').forEach(b => {
+                        b.className = (b === btn)
+                            ? 'ed-ter p-1.5 rounded border border-amber-500 bg-amber-500/20 text-left text-amber-300'
+                            : 'ed-ter p-1.5 rounded border border-stone-700 bg-black/50 text-left text-stone-300';
+                    });
+                });
+            });
+
+            document.getElementById('edAngle').addEventListener('input', (e) => {
+                document.getElementById('lblEdAngle').textContent = `${e.target.value}°`;
+            });
+            document.getElementById('edTheme').addEventListener('change', (e) => {
+                editorState.theme = e.target.value;
+                drawEditorCanvas();
+            });
+            document.getElementById('btnEdClear').addEventListener('click', () => {
+                editorState.units = [];
+                editorState.obstacles = [];
+                drawEditorCanvas();
+            });
+
+            // Editor Canvas Placement
+            editorCanvas.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const rect = editorCanvas.getBoundingClientRect();
+                const wx = Math.round(((e.clientX - rect.left) / rect.width) * WORLD_W);
+                const wy = Math.round(((e.clientY - rect.top) / rect.height) * WORLD_H);
+
+                if (e.button === 2 || editorState.tool === 'erase') {
+                    const uIdx = editorState.units.findIndex(u => Math.hypot(u.x - wx, u.y - wy) < 95);
+                    if (uIdx !== -1) editorState.units.splice(uIdx, 1);
+                    else {
+                        const oIdx = editorState.obstacles.findIndex(o => Math.hypot(o.x - wx, o.y - wy) < 95);
+                        if (oIdx !== -1) editorState.obstacles.splice(oIdx, 1);
+                    }
+                    drawEditorCanvas();
+                    return;
+                }
+
+                const specId = document.getElementById('edVehicleSelect').value;
+                const angle = Number(document.getElementById('edAngle').value) || 0;
+                const ai = document.getElementById('edAiDoctrine').value;
+
+                if (editorState.tool === 'player') {
+                    editorState.player = { specId, x: wx, y: wy, angle };
+                } else if (editorState.tool === 'enemy' || editorState.tool === 'ally') {
+                    if (editorState.units.length < 24) {
+                        editorState.units.push({ team: editorState.tool, specId, x: wx, y: wy, angle, ai });
+                    }
+                } else if (editorState.tool === 'terrain') {
+                    if (editorState.obstacles.length < 60) {
+                        editorState.obstacles.push({ type: editorState.terrainType, x: wx, y: wy });
+                    }
+                }
+                drawEditorCanvas();
+            });
+            editorCanvas.addEventListener('contextmenu', e => e.preventDefault());
+
+            // Share Code Generation & Import
+            document.getElementById('btnGenCode').addEventListener('click', () => {
+                const code = generateShareCode();
+                const out = document.getElementById('edCodeOutput');
+                out.value = code;
+                out.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                const toast = document.getElementById('edCopyToast');
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 2500);
+            });
+
+            const handleCodeImport = (playNow) => {
+                const raw = (document.getElementById('importCodeInput').value || '').trim();
+                const msg = document.getElementById('importMsg');
+                if (!raw.startsWith('SA2D-')) {
+                    msg.textContent = 'Invalid format: Level code must begin with "SA2D-".';
+                    msg.className = 'text-xs font-mono-tech text-red-400';
+                    msg.classList.remove('hidden');
+                    return;
+                }
+                try {
+                    const data = JSON.parse(decodeURIComponent(escape(atob(raw.slice(5)))));
+                    applyDecodedScenario(data);
+                    msg.classList.add('hidden');
+                    if (playNow) startSandboxBattle();
+                    else switchMainTab('sandbox');
+                } catch (err) {
+                    msg.textContent = 'Error decoding SA2D code. Check that the entire code was copied.';
+                    msg.className = 'text-xs font-mono-tech text-red-400';
+                    msg.classList.remove('hidden');
+                }
+            };
+
+            document.getElementById('btnLoadAndPlay').addEventListener('click', () => handleCodeImport(true));
+            document.getElementById('btnLoadIntoEditor').addEventListener('click', () => handleCodeImport(false));
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = PRESET_SCENARIOS[Number(btn.dataset.preset)];
+                    if (!preset) return;
+                    const code = 'SA2D-' + btoa(unescape(encodeURIComponent(JSON.stringify(preset))));
+                    document.getElementById('importCodeInput').value = code;
+                    const msg = document.getElementById('importMsg');
+                    msg.textContent = `✓ Loaded "${preset.t}" code! Click LOAD & PLAY CODE or LOAD INTO EDITOR.`;
+                    msg.className = 'text-xs font-mono-tech text-emerald-400';
+                    msg.classList.remove('hidden');
+                });
+            });
+
+            // Mouse & Keyboard Listeners
+            battleCanvas.addEventListener('mousemove', e => {
+                mouse.x = e.clientX; mouse.y = e.clientY;
+                mouse.worldX = mouse.x + camera.x; mouse.worldY = mouse.y + camera.y;
+            });
+            battleCanvas.addEventListener('mousedown', e => { if (e.button === 0) mouse.down = true; });
+            window.addEventListener('mouseup', () => mouse.down = false);
+
+            window.addEventListener('keydown', e => {
+                keys[e.code] = true;
+                if (!gameActive && !document.getElementById('viewSandbox').classList.contains('hidden')) {
+                    if (e.code === 'KeyR' && document.activeElement.tagName !== 'INPUT') {
+                        const s = document.getElementById('edAngle');
+                        s.value = (Number(s.value) + 45) % 360;
+                        document.getElementById('lblEdAngle').textContent = `${s.value}°`;
+                    }
+                    return;
+                }
+                if (!gameActive) return;
+                if (e.code === 'Digit1') selectShell(0);
+                if (e.code === 'Digit2') selectShell(1);
+                if (e.code === 'Digit3') selectShell(2);
+                if (e.code === 'KeyR') useFieldRepair();
+                if (e.code === 'KeyF') useExtinguisher();
+                if (e.code === 'KeyG') useSmoke();
+                if (e.code === 'KeyV') showArmorOverlay = !showArmorOverlay;
+                if (e.code === 'KeyP') togglePerformanceMode();
+                if (e.code === 'Escape') {
+                    gameActive = false;
+                    document.getElementById('mainModal').classList.remove('hidden');
+                }
+            });
+            window.addEventListener('keyup', e => keys[e.code] = false);
+
+            // Initialize UI & Start Main Loop
+            renderCampaignGrid();
+            updateCampaignBriefing();
+            drawEditorCanvas();
+
+            let lastTime = performance.now();
+            function loop(now) {
+                const dt = Math.min(0.05, (now - lastTime) / 1000);
+                lastTime = now;
+                if (gameActive) updateGame(dt);
+                renderGame(dt);
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        });
+    </script>
+</body>
+</html>
