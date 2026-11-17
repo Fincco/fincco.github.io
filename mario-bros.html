@@ -1,0 +1,3209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MARIO BROS. (1983 Arcade Edition)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cabinet-bg: #090a0f;
+      --bezel-red: #d9281c;
+      --arcade-blue: #1e90ff;
+      --arcade-gold: #ffd700;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 50% 20%, #1c1f33 0%, #07080d 75%);
+      color: #ffffff;
+      font-family: 'Press Start 2P', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    .arcade-font {
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .ui-font {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Arcade Bezel & CRT Styling */
+    .cabinet-shell {
+      background: linear-gradient(180deg, #1b1e2b 0%, #0e1017 100%);
+      border: 4px solid #2e344d;
+      box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.85),
+        inset 0 2px 6px rgba(255, 255, 255, 0.12);
+    }
+
+    .marquee-banner {
+      background: linear-gradient(90deg, #b91c1c 0%, #ef4444 50%, #b91c1c 100%);
+      border-bottom: 3px solid #fde047;
+      text-shadow: 3px 3px 0px #000000;
+      box-shadow: inset 0 0 18px rgba(0,0,0,0.45);
+    }
+
+    .crt-container {
+      position: relative;
+      background: #000000;
+      border: 6px solid #18181b;
+      border-radius: 12px;
+      box-shadow:
+        inset 0 0 24px rgba(0, 0, 0, 0.9),
+        0 0 20px rgba(0, 195, 255, 0.14);
+      overflow: hidden;
+      aspect-ratio: 256 / 240;
+      width: 100%;
+      max-width: 720px;
+    }
+
+    canvas#gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background-color: #000000;
+    }
+
+    /* Optional CRT Scanlines Overlay */
+    .crt-scanlines::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.32) 50%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.03),
+        rgba(0, 255, 0, 0.01),
+        rgba(0, 0, 255, 0.03)
+      );
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Arcade Push Buttons */
+    .arcade-btn {
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
+      box-shadow: 0 4px 0 #000000, inset 0 2px 2px rgba(255, 255, 255, 0.35);
+    }
+    .arcade-btn:active, .arcade-btn.pressed {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #000000, inset 0 1px 2px rgba(0, 0, 0, 0.4);
+      filter: brightness(1.15);
+    }
+
+    .touch-dpad-btn {
+      background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+      border: 2px solid #64748b;
+      box-shadow: 0 4px 0 #0f172a;
+      touch-action: manipulation;
+    }
+    .touch-dpad-btn:active, .touch-dpad-btn.active-touch {
+      transform: translateY(3px);
+      background: #475569;
+      box-shadow: 0 1px 0 #0f172a;
+    }
+
+    .touch-jump-btn {
+      background: radial-gradient(circle at 35% 30%, #ef4444, #991b1b);
+      border: 3px solid #fca5a5;
+      box-shadow: 0 5px 0 #450a0a;
+      touch-action: manipulation;
+    }
+    .touch-jump-btn:active, .touch-jump-btn.active-touch {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #450a0a;
+    }
+
+    /* In-Page Fullscreen (Whole Page Window Mode) */
+    body.page-fullscreen {
+      padding: 0 !important;
+      overflow: hidden !important;
+      background: #000000;
+    }
+
+    body.page-fullscreen .cabinet-shell {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      max-width: none;
+      border-radius: 0;
+      border: none;
+      padding: 8px 12px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #05060a;
+    }
+
+    body.page-fullscreen .crt-container {
+      flex: 1 1 auto;
+      width: auto;
+      height: 100%;
+      max-width: 100%;
+      max-height: calc(100vh - 105px);
+      margin: 0 auto;
+      aspect-ratio: 256 / 240;
+    }
+
+    body.page-fullscreen .footer-legend {
+      display: none;
+    }
+  </style>
+</head>
+<body class="p-2 sm:p-4">
+
+  <!-- Main Arcade Cabinet Wrapper -->
+  <div class="cabinet-shell rounded-2xl w-full max-w-[780px] p-2.5 sm:p-4 flex flex-col items-center">
+
+    <!-- Arcade Header Marquee -->
+    <div class="marquee-banner w-full rounded-xl px-3 py-2.5 mb-2.5 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <span class="inline-block w-3 h-3 rounded-full bg-yellow-300 animate-pulse"></span>
+        <h1 class="text-xs sm:text-base md:text-lg tracking-wider text-yellow-300">
+          MARIO BROS. <span class="text-white text-[10px] sm:text-xs">1983</span>
+        </h1>
+      </div>
+
+      <!-- Quick Cabinet Toolbar -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <button id="btnMode1P" class="arcade-btn bg-red-600 hover:bg-red-500 text-white text-[9px] sm:text-[10px] px-2.5 py-1.5 rounded-lg">
+          1P MARIO
+        </button>
+        <button id="btnMode2P" class="arcade-btn bg-emerald-600 hover:bg-emerald-500 text-white text-[9px] sm:text-[10px] px-2.5 py-1.5 rounded-lg">
+          2P CO-OP
+        </button>
+
+        <!-- Hidden Cheat Toolbar (Unlocked by typing C-H-E-A-T) -->
+        <div id="cheatToolbar" class="hidden flex-wrap items-center gap-1.5 bg-black/45 px-2 py-1 rounded-lg border border-yellow-300/60">
+          <span class="text-[8px] text-yellow-300 font-bold tracking-tighter">CHEATS:</span>
+          <select id="arenaSelect" aria-label="Select Arena" class="arcade-btn bg-amber-400 hover:bg-amber-300 text-black font-bold text-[9px] sm:text-[10px] px-2 py-1 rounded-md cursor-pointer outline-none">
+            <option value="1">ARENA 1: BLUE SEWER (P1)</option>
+            <option value="3">ARENA 2: BONUS COINS (P3)</option>
+            <option value="4">ARENA 3: MAGENTA FACTORY (P4)</option>
+            <option value="6">ARENA 4: GLACIER SLIPICE (P6)</option>
+            <option value="9">ARENA 5: ICICLE HAZARD (P9)</option>
+          </select>
+          <button id="btnNextPhase" class="arcade-btn bg-sky-600 hover:bg-sky-500 text-white text-[9px] sm:text-[10px] px-2 py-1 rounded-md" title="Skip to Next Phase">
+            PHASE+
+          </button>
+          <button id="btnCheatBoost" class="arcade-btn bg-pink-600 hover:bg-pink-500 text-white text-[9px] sm:text-[10px] px-2 py-1 rounded-md" title="Refill POW & +1 Life">
+            +POW/1UP
+          </button>
+          <button id="btnCheatPacman" class="arcade-btn bg-yellow-400 hover:bg-yellow-300 text-black font-bold text-[9px] sm:text-[10px] px-2 py-1 rounded-md" title="Toggle Secret Pac-Mario Game">
+            PAC-MARIO
+          </button>
+        </div>
+
+        <button id="btnPause" class="arcade-btn bg-slate-700 hover:bg-slate-600 text-white text-[9px] sm:text-[10px] px-2 py-1.5 rounded-lg">
+          PAUSE
+        </button>
+        <button id="btnAudio" class="arcade-btn bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] sm:text-[10px] px-2 py-1.5 rounded-lg">
+          SFX:ON
+        </button>
+        <button id="btnCRT" class="arcade-btn bg-zinc-700 hover:bg-zinc-600 text-white text-[9px] sm:text-[10px] px-2 py-1.5 rounded-lg" title="Toggle CRT Scanlines">
+          CRT
+        </button>
+        <button id="btnFullPage" class="arcade-btn bg-purple-600 hover:bg-purple-500 text-white text-[9px] sm:text-[10px] px-2.5 py-1.5 rounded-lg" title="Expand game to fill page (Esc to exit)">
+          FULL PAGE
+        </button>
+      </div>
+    </div>
+
+    <!-- CRT Screen Container -->
+    <div id="crtScreen" class="crt-container crt-scanlines">
+      <canvas id="gameCanvas" width="256" height="240"></canvas>
+    </div>
+
+    <!-- Touch Controls (Mobile / Tablet / Clickable Arcade Deck) -->
+    <div class="w-full mt-3 grid grid-cols-2 gap-3 sm:hidden">
+      <!-- Left D-Pad -->
+      <div class="flex items-center justify-start gap-2">
+        <button id="touchLeft" class="touch-dpad-btn w-16 h-14 rounded-xl flex items-center justify-center text-lg font-bold text-white" aria-label="Move Left">
+          &#9664;
+        </button>
+        <button id="touchRight" class="touch-dpad-btn w-16 h-14 rounded-xl flex items-center justify-center text-lg font-bold text-white" aria-label="Move Right">
+          &#9654;
+        </button>
+      </div>
+      <!-- Right Jump & Start -->
+      <div class="flex items-center justify-end gap-2">
+        <button id="touchStart" class="touch-dpad-btn px-3 h-14 rounded-xl flex items-center justify-center text-[10px] text-yellow-300">
+          START
+        </button>
+        <button id="touchJump" class="touch-jump-btn w-20 h-14 rounded-2xl flex items-center justify-center text-xs text-white font-bold">
+          JUMP
+        </button>
+      </div>
+    </div>
+
+    <!-- Controls & Legend Footer -->
+    <div class="footer-legend ui-font w-full mt-2.5 bg-slate-900/90 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span><strong class="text-red-400">MARIO (1P):</strong> A/D or Arrows + W/Space/Up (Jump)</span>
+        <span><strong class="text-emerald-400">LUIGI (2P):</strong> J/L or Left/Right + I/Up/Enter (Jump)</span>
+      </div>
+      <div class="text-slate-400 text-[11px]">
+        <span>Bump platforms from below to flip enemies, then kick them! Crab takes 2 bumps.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /**************************************************************************
+     * MARIO BROS. (1983 ARCADE) - COMPLETE SINGLE-SCREEN RECREATION
+     * Logical Resolution: 256 x 240 pixels (32 x 30 tiles of 8x8)
+     **************************************************************************/
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    const LOGICAL_WIDTH = 256;
+    const LOGICAL_HEIGHT = 240;
+    const TILE_SIZE = 8;
+    const GRID_COLS = 32;
+
+    /**************************************************************************
+     * WEB AUDIO API RETRO SYNTHESIZER
+     **************************************************************************/
+    class ArcadeSoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            this.ctx = new AudioCtx();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggle() {
+        this.enabled = !this.enabled;
+        return this.enabled;
+      }
+
+      playTone(freq, duration, type = 'square', vol = 0.12, delay = 0, slideTo = null) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        try {
+          const now = this.ctx.currentTime + delay;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, now);
+          if (slideTo !== null) {
+            osc.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), now + duration);
+          }
+          gain.gain.setValueAtTime(vol, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + duration + 0.01);
+        } catch (e) {
+          // Ignore audio context state errors
+        }
+      }
+
+      jump() {
+        this.playTone(180, 0.16, 'square', 0.11, 0, 540);
+      }
+
+      skid() {
+        this.playTone(950, 0.04, 'triangle', 0.08, 0, 420);
+      }
+
+      bump() {
+        this.playTone(150, 0.09, 'square', 0.16, 0, 65);
+        this.playTone(260, 0.07, 'triangle', 0.12, 0.03, 120);
+      }
+
+      pow() {
+        this.playTone(110, 0.35, 'sawtooth', 0.22, 0, 35);
+        this.playTone(220, 0.28, 'square', 0.16, 0.04, 55);
+        this.playTone(440, 0.22, 'triangle', 0.14, 0.08, 90);
+      }
+
+      flipEnemy() {
+        const notes = [330, 440, 587, 784];
+        notes.forEach((n, i) => this.playTone(n, 0.055, 'square', 0.11, i * 0.04));
+      }
+
+      kickEnemy(combo = 1) {
+        const base = 300 + (combo - 1) * 90;
+        this.playTone(base, 0.06, 'square', 0.14, 0);
+        this.playTone(base * 1.25, 0.06, 'square', 0.14, 0.05);
+        this.playTone(base * 1.5, 0.14, 'square', 0.16, 0.10);
+      }
+
+      coin() {
+        this.playTone(987.77, 0.07, 'square', 0.12, 0);     // B5
+        this.playTone(1318.51, 0.24, 'square', 0.12, 0.07); // E6
+      }
+
+      waka(step = 0) {
+        const f1 = step % 2 === 0 ? 280 : 420;
+        const f2 = step % 2 === 0 ? 420 : 280;
+        this.playTone(f1, 0.05, 'triangle', 0.10, 0, f2);
+      }
+
+      freeze() {
+        const notes = [1046, 1318, 1567, 2093];
+        notes.forEach((n, i) => this.playTone(n, 0.06, 'triangle', 0.11, i * 0.045));
+      }
+
+      icicleWarning() {
+        this.playTone(1760, 0.04, 'triangle', 0.08, 0);
+        this.playTone(2093, 0.04, 'triangle', 0.08, 0.05);
+      }
+
+      icicleShatter() {
+        this.playTone(1480, 0.05, 'sawtooth', 0.10, 0, 420);
+        this.playTone(980, 0.07, 'triangle', 0.10, 0.04, 240);
+      }
+
+      lastEnemySpeedup() {
+        const notes = [440, 554, 659, 880];
+        notes.forEach((n, i) => this.playTone(n, 0.07, 'square', 0.13, i * 0.055));
+      }
+
+      playerDie() {
+        const notes = [523, 493, 440, 392, 349, 329, 293, 261];
+        notes.forEach((n, i) => this.playTone(n, 0.09, 'sawtooth', 0.14, i * 0.075));
+      }
+
+      phaseStart() {
+        const melody = [
+          [330, 0.09, 0.00],
+          [330, 0.09, 0.11],
+          [330, 0.09, 0.22],
+          [261, 0.08, 0.34],
+          [330, 0.11, 0.44],
+          [392, 0.18, 0.58],
+          [196, 0.20, 0.80]
+        ];
+        melody.forEach(([f, d, t]) => this.playTone(f, d, 'square', 0.12, t));
+      }
+
+      phaseClear() {
+        const melody = [
+          [261, 0.08, 0.00],
+          [329, 0.08, 0.09],
+          [392, 0.08, 0.18],
+          [523, 0.14, 0.27],
+          [392, 0.08, 0.43],
+          [523, 0.26, 0.53]
+        ];
+        melody.forEach(([f, d, t]) => this.playTone(f, d, 'square', 0.13, t));
+      }
+
+      gameOver() {
+        const melody = [
+          [392, 0.16, 0.00],
+          [330, 0.16, 0.18],
+          [261, 0.22, 0.36],
+          [220, 0.18, 0.60],
+          [246, 0.18, 0.78],
+          [196, 0.38, 0.96]
+        ];
+        melody.forEach(([f, d, t]) => this.playTone(f, d, 'triangle', 0.15, t));
+      }
+    }
+
+    const sfx = new ArcadeSoundEngine();
+
+    /**************************************************************************
+     * PIXEL ART SPRITE PALETTES & BITMAP MATRICES
+     **************************************************************************/
+    const PALETTES = {
+      mario: {
+        'R': '#ff2a18', // Cap & Shirt (1983 Arcade Mario)
+        'B': '#2858ff', // Overalls
+        'S': '#ffb850', // Skin / Face
+        'W': '#ffffff'
+      },
+      luigi: {
+        'R': '#00d848', // Cap & Shirt (1983 Arcade Luigi)
+        'B': '#107828', // Overalls
+        'S': '#ffb850', // Skin / Face
+        'W': '#ffffff'
+      },
+      turtleNormal: {
+        'G': '#00d848',
+        'Y': '#ffe040',
+        'W': '#ffffff',
+        'R': '#ff3818'
+      },
+      turtleFast: {
+        'G': '#ff3820',
+        'Y': '#ffe040',
+        'W': '#ffffff',
+        'R': '#ffff00'
+      },
+      crabNormal: {
+        'C': '#ff4848',
+        'Y': '#ffe058',
+        'W': '#ffffff',
+        'K': '#880000'
+      },
+      crabAngry: {
+        'C': '#ff30b8',
+        'Y': '#48ffff',
+        'W': '#ffffff',
+        'K': '#ffe600'
+      },
+      flyNormal: {
+        'M': '#ff50c8',
+        'W': '#88ffff',
+        'Y': '#ffe840'
+      },
+      freezie: {
+        'I': '#40e8ff',
+        'W': '#ffffff',
+        'B': '#1068d8'
+      }
+    };
+
+    const SPRITES = {
+      playerStand: [
+        "....RRRRR.......",
+        "...RRRRRRRR.....",
+        "...BBBSSBS......",
+        "..BSBSSSBSB.....",
+        "..BSBBSSSBB.....",
+        "..BBBBSSSBB.....",
+        "....SSSSSSS.....",
+        "...RRBRRBRR.....",
+        "..RRRBRRBRRR....",
+        "..RRRRBBBBBR....",
+        "..SSBRBBBBBS....",
+        "..SSBBBBBBSS....",
+        "..SSBBBBBBSS....",
+        "....BB..BB......",
+        "...BBB..BBB.....",
+        "..BBBB..BBBB...."
+      ],
+      playerRun1: [
+        "....RRRRR.......",
+        "...RRRRRRRR.....",
+        "...BBBSSBS......",
+        "..BSBSSSBSB.....",
+        "..BSBBSSSBB.....",
+        "..BBBBSSSBB.....",
+        "....SSSSSSS.....",
+        "..RRRRBBRR......",
+        ".SSRRRBBBBSS....",
+        ".SSRRBBBBBBSS...",
+        "...BBBBBBBB.....",
+        "...BBBBBBBB.....",
+        "..BBBB..BBBB....",
+        ".BBBB....BBB....",
+        "................",
+        "................"
+      ],
+      playerRun2: [
+        "....RRRRR.......",
+        "...RRRRRRRR.....",
+        "...BBBSSBS......",
+        "..BSBSSSBSB.....",
+        "..BSBBSSSBB.....",
+        "..BBBBSSSBB.....",
+        "....SSSSSSS.....",
+        "...RRRBRRR......",
+        "...RRRBBBB......",
+        "...SSBBBBBS.....",
+        "....BBBBBB......",
+        "....BBBBBB......",
+        "...BBB..BBB.....",
+        "....BB...BBB....",
+        "................",
+        "................"
+      ],
+      playerJump: [
+        "....RRRRR...SS..",
+        "...RRRRRRRR.SS..",
+        "...BBBSSBS..RR..",
+        "..BSBSSSBSBRRR..",
+        "..BSBBSSSBBBR...",
+        "..BBBBSSSBBBR...",
+        "....SSSSSSSR....",
+        "..RRRRBBRRR.....",
+        ".SSRRRBBBB......",
+        ".SSBBBBBBBB.....",
+        "...BBBBBBBBBB...",
+        "...BBBB..BBBB...",
+        "..BBBB....BBB...",
+        "................",
+        "................",
+        "................"
+      ],
+      turtle1: [
+        "......GGGG......",
+        "....GGGGGGGG....",
+        "...GGGGGGGGGG...",
+        "..GGYYYYYYYYGG..",
+        "..GYYGGGGGGYYG..WW",
+        "..GYGGGGGGGGYGWWRW",
+        "..GYYYYYYYYYYGWWWW",
+        "..GGGGGGGGGGGGYYY.",
+        "...YYYYYYYYYYYY...",
+        "....YY....YY......",
+        "...YYY....YYY.....",
+        "..YYYY....YYYY...."
+      ],
+      turtle2: [
+        "......GGGG......",
+        "....GGGGGGGG....",
+        "...GGGGGGGGGG...",
+        "..GGYYYYYYYYGG..",
+        "..GYYGGGGGGYYG..WW",
+        "..GYGGGGGGGGYGWWRW",
+        "..GYYYYYYYYYYGWWWW",
+        "..GGGGGGGGGGGGYYY.",
+        "...YYYYYYYYYYYY...",
+        ".....YY..YY.......",
+        "....YYY..YYY......",
+        "....YY....YY......"
+      ],
+      crab1: [
+        ".CC..........CC.",
+        "CCCC..WWWW..CCCC",
+        "CC..CCWKKWCC..CC",
+        "..CCCCCCCCCCCC..",
+        ".CCCCCCCCCCCCCC.",
+        ".CCYYYYYYYYYYCC.",
+        "..CCCCCCCCCCCC..",
+        "..CC..CCCC..CC..",
+        ".CC...CC.CC..CC.",
+        "CC...CC...CC..CC"
+      ],
+      crab2: [
+        "..CC........CC..",
+        ".CCCC.WWWW.CCCC.",
+        ".CC.CCWKKWCC.CC.",
+        "..CCCCCCCCCCCC..",
+        ".CCCCCCCCCCCCCC.",
+        ".CCYYYYYYYYYYCC.",
+        "..CCCCCCCCCCCC..",
+        "...CC.CCCC.CC...",
+        "..CC...CC...CC..",
+        "...CC......CC..."
+      ],
+      fly1: [
+        ".WWWW......WWWW.",
+        "WWWWWW....WWWWWW",
+        ".WWWWMMMMMMWWWW.",
+        "...MMMMMMMMMM...",
+        "..MMWWMMMMWWMM..",
+        "..MMMMMMMMMMMM..",
+        "...YYYYYYYYYY...",
+        "....YY....YY....",
+        "...YY......YY...",
+        "..YY........YY.."
+      ],
+      fly2: [
+        "................",
+        "....MMMMMMMM....",
+        "..WWWWMMMMWWWW..",
+        ".WWWWWWMMWWWWWW.",
+        "..MMWWMMMMWWMM..",
+        "..MMMMMMMMMMMM..",
+        "...YYYYYYYYYY...",
+        ".....YY..YY.....",
+        "....YY....YY....",
+        "................"
+      ],
+      freezie: [
+        "......WWWW......",
+        "....WWIIIIWW....",
+        "...WIIIIIIIIW...",
+        "..WIIWWIIWWIIW..",
+        "..WIIBBIIBBIIW..",
+        ".WIIIIIIIIIIIIW.",
+        ".WIIIWWWWWWIIIW.",
+        "WIIIIIIIIIIIIIIW",
+        "WWWWWWWWWWWWWWWW",
+        ".WW..WW..WW..WW."
+      ]
+    };
+
+    function drawPixelMatrix(matrix, x, y, palette, flipX = false, flipY = false) {
+      const h = matrix.length;
+      const w = matrix[0].length;
+      const px = Math.round(x);
+      const py = Math.round(y);
+
+      for (let r = 0; r < h; r++) {
+        const rowStr = matrix[r];
+        for (let c = 0; c < w; c++) {
+          const ch = rowStr[c];
+          if (ch === '.' || !palette[ch]) continue;
+          ctx.fillStyle = palette[ch];
+          const drawC = flipX ? (w - 1 - c) : c;
+          const drawR = flipY ? (h - 1 - r) : r;
+          ctx.fillRect(px + drawC, py + drawR, 1, 1);
+        }
+      }
+    }
+
+    /**************************************************************************
+     * ARENA & PLATFORMS CLASS (All 5 Authentic 1983 Arenas)
+     **************************************************************************/
+    class Arena {
+      constructor() {
+        this.powHitsLeft = 3;
+        this.reset(1, false, true);
+      }
+
+      getArenaMeta(phaseNum, isBonus) {
+        if (isBonus) {
+          return {
+            key: 'bonus',
+            name: 'BONUS COIN ARENA',
+            subtitle: 'TEST YOUR SKILL! (20 SEC)',
+            floorTop: '#ffd700',
+            floorBrick: '#312e81',
+            floorMortar: '#818cf8',
+            waterDeep: '#1e1b4b',
+            waterCrest: '#fde047'
+          };
+        }
+        const cycle = ((phaseNum - 1) % 10) + 1;
+        if (cycle <= 2) {
+          return {
+            key: 'sewer',
+            name: 'BLUE SEWER ARENA',
+            subtitle: phaseNum === 1 ? 'SHELLCREEPERS APPEAR!' : 'WATCH OUT: SIDESTEPPERS!',
+            floorTop: '#ff55aa',
+            floorBrick: '#c83818',
+            floorMortar: '#ffc088',
+            waterDeep: '#0038a8',
+            waterCrest: '#38b8ff'
+          };
+        }
+        if (cycle === 4 || cycle === 5) {
+          return {
+            key: 'magenta',
+            name: 'MAGENTA FACTORY ARENA',
+            subtitle: 'HOPPING FIGHTERFLIES!',
+            floorTop: '#ff9040',
+            floorBrick: '#881337',
+            floorMortar: '#fda4af',
+            waterDeep: '#4c0519',
+            waterCrest: '#fb7185'
+          };
+        }
+        if (cycle === 6 || cycle === 7) {
+          return {
+            key: 'glacier',
+            name: 'GLACIER SLIPICE ARENA',
+            subtitle: 'BEWARE OF SLIPPERY ICE!',
+            floorTop: '#b8f8ff',
+            floorBrick: '#0c4a6e',
+            floorMortar: '#7dd3fc',
+            waterDeep: '#082f49',
+            waterCrest: '#67e8f9'
+          };
+        }
+        return {
+          key: 'icicle',
+          name: 'ICICLE HAZARD ARENA',
+          subtitle: 'WATCH FOR FALLING ICICLES!',
+          floorTop: '#fde047',
+          floorBrick: '#064e3b',
+          floorMortar: '#6ee7b7',
+          waterDeep: '#022c22',
+          waterCrest: '#34d399'
+        };
+      }
+
+      reset(phaseNum = 1, isBonus = false, restorePow = false) {
+        this.platforms = [];
+        if (restorePow || isBonus) {
+          this.powHitsLeft = 3;
+        }
+        this.powBumpTimer = 0;
+        this.meta = this.getArenaMeta(phaseNum, isBonus);
+
+        const defs = [
+          // Top Tier (Tier 4): two long outer platforms with central gap
+          { id: 'T4_L', y: 64, startCol: 0, endCol: 13, tier: 4 },
+          { id: 'T4_R', y: 64, startCol: 18, endCol: 31, tier: 4 },
+
+          // Upper-Middle Tier (Tier 3): two small side ledges + large center platform
+          { id: 'T3_L', y: 104, startCol: 0, endCol: 2, tier: 3 },
+          { id: 'T3_C', y: 104, startCol: 6, endCol: 25, tier: 3 },
+          { id: 'T3_R', y: 104, startCol: 29, endCol: 31, tier: 3 },
+
+          // Lower-Middle Tier (Tier 2): two side platforms with central gap
+          { id: 'T2_L', y: 144, startCol: 0, endCol: 11, tier: 2 },
+          { id: 'T2_R', y: 144, startCol: 20, endCol: 31, tier: 2 },
+
+          // Bottom Tier (Tier 1): two side platforms above the main floor
+          { id: 'T1_L', y: 180, startCol: 0, endCol: 8, tier: 1 },
+          { id: 'T1_R', y: 180, startCol: 23, endCol: 31, tier: 1 }
+        ];
+
+        for (const d of defs) {
+          const tiles = [];
+          for (let col = d.startCol; col <= d.endCol; col++) {
+            tiles.push({
+              col,
+              x: col * TILE_SIZE,
+              y: d.y,
+              bumpTimer: 0,
+              bumpMax: 14,
+              revealed: !isBonus
+            });
+          }
+
+          let startFrozen = false;
+          if (this.meta.key === 'glacier' && d.id === 'T3_C') {
+            startFrozen = true;
+          } else if (this.meta.key === 'icicle' && (d.id === 'T2_L' || d.id === 'T2_R')) {
+            startFrozen = true;
+          }
+
+          this.platforms.push({
+            ...d,
+            x: d.startCol * TILE_SIZE,
+            width: (d.endCol - d.startCol + 1) * TILE_SIZE,
+            height: 8,
+            frozen: startFrozen,
+            tiles
+          });
+        }
+      }
+
+      getPowRect() {
+        const hits = Math.max(1, this.powHitsLeft);
+        const h = hits * 5 + 1;
+        const yOff = this.powBumpTimer > 0 ? -4 : 0;
+        return {
+          x: 120,
+          y: 174 + (16 - h) + yOff,
+          width: 16,
+          height: h
+        };
+      }
+
+      update() {
+        if (this.powBumpTimer > 0) this.powBumpTimer--;
+        for (const p of this.platforms) {
+          for (const t of p.tiles) {
+            if (t.bumpTimer > 0) t.bumpTimer--;
+          }
+        }
+      }
+
+      bumpPlatformAt(plat, centerX) {
+        const hitCol = Math.floor(centerX / TILE_SIZE);
+        for (const t of plat.tiles) {
+          const dist = Math.abs(t.col - hitCol);
+          if (dist <= 1) {
+            t.bumpTimer = t.bumpMax - dist * 2;
+            t.revealed = true;
+          }
+        }
+      }
+
+      draw(frameCount) {
+        const meta = this.meta;
+
+        // 1. Draw Main Brick Floor (y = 216..234) and Water at bottom (y = 234..240)
+        for (let col = 0; col < GRID_COLS; col++) {
+          const bx = col * 8;
+          ctx.fillStyle = meta.floorTop;
+          ctx.fillRect(bx, 216, 8, 2);
+          ctx.fillStyle = meta.floorBrick;
+          ctx.fillRect(bx, 218, 8, 16);
+          ctx.fillStyle = meta.floorMortar;
+          ctx.fillRect(bx, 224, 8, 1);
+          ctx.fillRect(bx + ((col % 2) * 4), 218, 1, 6);
+          ctx.fillRect(bx + (((col + 1) % 2) * 4), 225, 1, 9);
+        }
+
+        // Animated sewer/hazard water at bottom (y = 234..240)
+        ctx.fillStyle = meta.waterDeep;
+        ctx.fillRect(0, 234, LOGICAL_WIDTH, 6);
+        ctx.fillStyle = meta.waterCrest;
+        for (let x = 0; x < LOGICAL_WIDTH; x += 8) {
+          const wave = Math.sin((x + frameCount * 1.5) * 0.2) > 0 ? 0 : 1;
+          ctx.fillRect(x, 234 + wave, 5, 2);
+        }
+
+        // 2. Draw Platforms and Ripple Bumps
+        for (const p of this.platforms) {
+          for (const t of p.tiles) {
+            let yOff = 0;
+            if (t.bumpTimer > 0) {
+              const progress = 1 - (t.bumpTimer / t.bumpMax);
+              yOff = -Math.round(Math.sin(progress * Math.PI) * 6);
+            }
+            const tx = t.x;
+            const ty = t.y + yOff;
+
+            if (!t.revealed) {
+              ctx.fillStyle = (frameCount % 6 < 3) ? '#475569' : '#1e293b';
+              ctx.fillRect(tx + 1, ty, 6, 1);
+              ctx.fillRect(tx + 1, ty + 7, 6, 1);
+              continue;
+            }
+
+            if (p.frozen) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(tx, ty, 8, 2);
+              ctx.fillStyle = '#40d8ff';
+              ctx.fillRect(tx, ty + 2, 8, 4);
+              ctx.fillStyle = '#0078d8';
+              ctx.fillRect(tx, ty + 6, 8, 2);
+              ctx.fillStyle = '#b8f8ff';
+              ctx.fillRect(tx + 2, ty + 3, 2, 2);
+            } else if (meta.key === 'bonus') {
+              ctx.fillStyle = '#fde047';
+              ctx.fillRect(tx, ty, 8, 2);
+              ctx.fillStyle = '#ca8a04';
+              ctx.fillRect(tx + 1, ty + 2, 6, 4);
+              ctx.fillStyle = '#38bdf8';
+              ctx.fillRect(tx + 2, ty + 3, 4, 2);
+              ctx.fillStyle = '#fde047';
+              ctx.fillRect(tx, ty + 6, 8, 2);
+            } else if (meta.key === 'magenta') {
+              const evenTier = p.tier % 2 === 0;
+              ctx.fillStyle = evenTier ? '#ff48b0' : '#fb923c';
+              ctx.fillRect(tx, ty, 8, 2);
+              ctx.fillStyle = evenTier ? '#9d174d' : '#9a3412';
+              ctx.fillRect(tx + 1, ty + 2, 6, 4);
+              ctx.fillStyle = '#fef08a';
+              ctx.fillRect(tx + 2, ty + 3, 4, 2);
+              ctx.fillStyle = evenTier ? '#ff48b0' : '#fb923c';
+              ctx.fillRect(tx, ty + 6, 8, 2);
+            } else if (meta.key === 'glacier') {
+              const evenTier = p.tier % 2 === 0;
+              ctx.fillStyle = evenTier ? '#7dd3fc' : '#a5b4fc';
+              ctx.fillRect(tx, ty, 8, 2);
+              ctx.fillStyle = evenTier ? '#0369a1' : '#3730a3';
+              ctx.fillRect(tx + 1, ty + 2, 6, 4);
+              ctx.fillStyle = '#e0f2fe';
+              ctx.fillRect(tx + 2, ty + 3, 4, 2);
+              ctx.fillStyle = evenTier ? '#7dd3fc' : '#a5b4fc';
+              ctx.fillRect(tx, ty + 6, 8, 2);
+            } else if (meta.key === 'icicle') {
+              const evenTier = p.tier % 2 === 0;
+              ctx.fillStyle = evenTier ? '#34d399' : '#fbbf24';
+              ctx.fillRect(tx, ty, 8, 2);
+              ctx.fillStyle = evenTier ? '#065f46' : '#92400e';
+              ctx.fillRect(tx + 1, ty + 2, 6, 4);
+              ctx.fillStyle = evenTier ? '#fde047' : '#38bdf8';
+              ctx.fillRect(tx + 2, ty + 3, 4, 2);
+              ctx.fillStyle = evenTier ? '#34d399' : '#fbbf24';
+              ctx.fillRect(tx, ty + 6, 8, 2);
+            } else {
+              const evenTier = p.tier % 2 === 0;
+              ctx.fillStyle = evenTier ? '#48d8ff' : '#ff6848';
+              ctx.fillRect(tx, ty, 8, 2);
+              ctx.fillStyle = evenTier ? '#1868d8' : '#b82010';
+              ctx.fillRect(tx + 1, ty + 2, 6, 4);
+              ctx.fillStyle = evenTier ? '#ff4040' : '#ffd838';
+              ctx.fillRect(tx + 2, ty + 3, 4, 2);
+              ctx.fillStyle = evenTier ? '#48d8ff' : '#ff6848';
+              ctx.fillRect(tx, ty + 6, 8, 2);
+            }
+          }
+        }
+
+        // 3. Draw POW Block
+        const pow = this.getPowRect();
+        if (pow) {
+          const depleted = this.powHitsLeft <= 0;
+          ctx.fillStyle = depleted ? '#64748b' : '#ffe030';
+          ctx.fillRect(pow.x, pow.y, pow.width, pow.height);
+          ctx.fillStyle = depleted ? '#334155' : '#2048d8';
+          ctx.fillRect(pow.x + 1, pow.y + 1, pow.width - 2, pow.height - 2);
+          if (pow.height >= 8 && !depleted) {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '5px "Press Start 2P", monospace';
+            ctx.fillText('POW', pow.x + 1, pow.y + Math.floor(pow.height / 2) + 2);
+          }
+        }
+      }
+
+      drawPipes() {
+        // Top Left & Top Right Spawn Pipes
+        this.drawPipeUnit(0, 32, 32, 22, 'right');
+        this.drawPipeUnit(224, 32, 32, 22, 'left');
+
+        // Bottom Left & Bottom Right Return Pipes
+        this.drawPipeUnit(0, 192, 28, 22, 'right');
+        this.drawPipeUnit(228, 192, 28, 22, 'left');
+      }
+
+      drawPipeUnit(x, y, w, h, openingDir) {
+        ctx.fillStyle = '#00a800';
+        ctx.fillRect(x, y, w, h);
+
+        ctx.fillStyle = '#68f848';
+        ctx.fillRect(x, y + 3, w, 4);
+        ctx.fillStyle = '#005800';
+        ctx.fillRect(x, y + h - 4, w, 3);
+
+        const lipX = openingDir === 'right' ? (x + w - 6) : x;
+        ctx.fillStyle = '#00c800';
+        ctx.fillRect(lipX, y - 2, 6, h + 4);
+        ctx.fillStyle = '#88ff68';
+        ctx.fillRect(lipX + 1, y, 2, h);
+        ctx.fillStyle = '#005000';
+        ctx.fillRect(lipX + 4, y - 2, 2, h + 4);
+      }
+    }
+
+    /**************************************************************************
+     * PLAYER CLASS (MARIO & LUIGI)
+     **************************************************************************/
+    class Player {
+      constructor(id, name, palette) {
+        this.id = id;
+        this.name = name;
+        this.palette = palette;
+        this.width = 14;
+        this.height = 16;
+        this.score = 0;
+        this.lives = 3;
+        this.active = false;
+        this.resetForPhase();
+      }
+
+      resetForPhase() {
+        this.x = this.id === 1 ? 84 : 158;
+        this.y = 200;
+        this.vx = 0;
+        this.vy = 0;
+        this.dir = this.id === 1 ? 1 : -1;
+        this.grounded = true;
+        this.onIce = false;
+        this.state = 'alive'; // 'alive' | 'dying' | 'respawn_platform' | 'dead_out'
+        this.stateTimer = 0;
+        this.invulnTimer = 60;
+        this.animTimer = 0;
+        this.jumpHeld = false;
+      }
+
+      spawnOnRespawnCradle() {
+        this.state = 'respawn_platform';
+        this.stateTimer = 180;
+        this.x = this.id === 1 ? 112 : 130;
+        this.y = 28;
+        this.vx = 0;
+        this.vy = 0;
+        this.invulnTimer = 90;
+      }
+
+      addScore(pts) {
+        const prev = this.score;
+        this.score += pts;
+        if (Math.floor(prev / 20000) < Math.floor(this.score / 20000)) {
+          this.lives = Math.min(9, this.lives + 1);
+          sfx.phaseClear();
+        }
+        if (this.score > game.topScore) {
+          game.topScore = this.score;
+        }
+      }
+
+      die() {
+        if (this.state !== 'alive' || this.invulnTimer > 0) return;
+        this.state = 'dying';
+        this.stateTimer = 85;
+        this.vy = -3.8;
+        this.vx = 0;
+        sfx.playerDie();
+      }
+
+      update(input, arena) {
+        if (!this.active || this.state === 'dead_out') return;
+
+        if (this.invulnTimer > 0) this.invulnTimer--;
+
+        if (this.state === 'dying') {
+          this.stateTimer--;
+          this.y += this.vy;
+          this.vy += 0.18;
+          if (this.y > 234 && this.vy > 0) {
+            game.spawnSplash(this.x + 7, 234);
+            this.vy = 0;
+          }
+          if (this.stateTimer <= 0) {
+            if (!game.infiniteLives) {
+              this.lives--;
+            }
+            if (this.lives > 0 || game.infiniteLives) {
+              this.spawnOnRespawnCradle();
+            } else {
+              this.state = 'dead_out';
+            }
+          }
+          return;
+        }
+
+        if (this.state === 'respawn_platform') {
+          this.stateTimer--;
+          if (input.left || input.right || input.jump || this.stateTimer <= 0) {
+            this.state = 'alive';
+            this.invulnTimer = 90;
+            if (input.jump) {
+              this.vy = -3.6;
+              sfx.jump();
+            }
+          }
+          return;
+        }
+
+        // --- ALIVE MOVEMENT & PHYSICS ---
+        const maxSpeed = 1.65;
+        const accel = this.onIce ? 0.045 : 0.13;
+        const friction = this.onIce ? 0.985 : 0.82;
+
+        if (input.left) {
+          if (this.grounded && this.vx > 0.5 && !this.onIce && (game.frameCount % 6 === 0)) {
+            sfx.skid();
+          }
+          this.vx = Math.max(-maxSpeed, this.vx - accel);
+          this.dir = -1;
+          this.animTimer++;
+        } else if (input.right) {
+          if (this.grounded && this.vx < -0.5 && !this.onIce && (game.frameCount % 6 === 0)) {
+            sfx.skid();
+          }
+          this.vx = Math.min(maxSpeed, this.vx + accel);
+          this.dir = 1;
+          this.animTimer++;
+        } else {
+          this.vx *= friction;
+          if (Math.abs(this.vx) < 0.05) this.vx = 0;
+        }
+
+        // Jump initiation
+        if (input.jump && !this.jumpHeld && this.grounded) {
+          this.vy = -4.25;
+          this.grounded = false;
+          this.jumpHeld = true;
+          sfx.jump();
+        }
+        if (!input.jump) {
+          this.jumpHeld = false;
+        }
+
+        // Gravity
+        this.vy = Math.min(4.2, this.vy + 0.19);
+
+        const prevY = this.y;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Horizontal Screen Wrap
+        if (this.x + this.width < 0) {
+          this.x = LOGICAL_WIDTH - 2;
+        } else if (this.x > LOGICAL_WIDTH) {
+          this.x = -this.width + 2;
+        }
+
+        const centerX = (this.x + this.width / 2 + LOGICAL_WIDTH) % LOGICAL_WIDTH;
+
+        // 1. Check upward head bump against POW Block
+        if (this.vy < 0) {
+          const pow = arena.getPowRect();
+          if (
+            pow &&
+            this.x + this.width - 3 > pow.x &&
+            this.x + 3 < pow.x + pow.width &&
+            this.y <= pow.y + pow.height &&
+            prevY >= pow.y + pow.height - 5
+          ) {
+            this.y = pow.y + pow.height;
+            this.vy = 1.2;
+            game.triggerPowBlock(this);
+          }
+        }
+
+        // 2. Check upward head bump against Platforms
+        if (this.vy < 0) {
+          for (const plat of arena.platforms) {
+            const pBottom = plat.y + plat.height;
+            if (
+              centerX >= plat.x &&
+              centerX <= plat.x + plat.width &&
+              this.y <= pBottom &&
+              prevY >= pBottom - 5
+            ) {
+              this.y = pBottom;
+              this.vy = 1.1;
+              arena.bumpPlatformAt(plat, centerX);
+              game.onPlatformBumped(plat, centerX, this);
+              sfx.bump();
+              break;
+            }
+          }
+        }
+
+        // 3. Check downward landing on Platforms & Main Floor
+        this.grounded = false;
+        this.onIce = false;
+
+        if (this.vy >= 0) {
+          // Check POW top surface landing
+          const pow = arena.getPowRect();
+          if (
+            pow &&
+            this.x + this.width - 2 > pow.x &&
+            this.x + 2 < pow.x + pow.width &&
+            prevY + this.height <= pow.y + 4 &&
+            this.y + this.height >= pow.y
+          ) {
+            this.y = pow.y - this.height;
+            this.vy = 0;
+            this.grounded = true;
+          }
+
+          // Check platforms
+          for (const plat of arena.platforms) {
+            if (
+              centerX >= plat.x - 2 &&
+              centerX <= plat.x + plat.width + 2 &&
+              prevY + this.height <= plat.y + 5 &&
+              this.y + this.height >= plat.y
+            ) {
+              this.y = plat.y - this.height;
+              this.vy = 0;
+              this.grounded = true;
+              this.onIce = plat.frozen;
+
+              const footCol = Math.floor(centerX / TILE_SIZE);
+              for (const t of plat.tiles) {
+                if (Math.abs(t.col - footCol) <= 1) t.revealed = true;
+              }
+              break;
+            }
+          }
+
+          // Check Main Floor (y = 216)
+          if (this.y + this.height >= 216) {
+            this.y = 216 - this.height;
+            this.vy = 0;
+            this.grounded = true;
+            this.onIce = false;
+          }
+        }
+      }
+
+      draw(frameCount) {
+        if (!this.active || this.state === 'dead_out') return;
+
+        if (this.state === 'respawn_platform') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(Math.round(this.x) - 1, Math.round(this.y + this.height), 16, 3);
+          ctx.fillStyle = '#38b8ff';
+          ctx.fillRect(Math.round(this.x) + 1, Math.round(this.y + this.height) + 3, 12, 2);
+        }
+
+        if (this.invulnTimer > 0 && this.state === 'alive' && (frameCount % 4 < 2)) {
+          return;
+        }
+
+        let sprite = SPRITES.playerStand;
+        if (this.state === 'dying') {
+          sprite = SPRITES.playerJump;
+        } else if (!this.grounded) {
+          sprite = SPRITES.playerJump;
+        } else if (Math.abs(this.vx) > 0.15) {
+          sprite = (Math.floor(this.animTimer / 4) % 2 === 0) ? SPRITES.playerRun1 : SPRITES.playerRun2;
+        }
+
+        const flipX = this.dir < 0;
+        const flipY = this.state === 'dying' && this.vy > 0;
+        drawPixelMatrix(sprite, this.x - 1, this.y, this.palette, flipX, flipY);
+      }
+    }
+
+    /**************************************************************************
+     * ENEMY CLASS (Shellcreeper, Sidestepper, Fighterfly, Slipice/Freezie)
+     **************************************************************************/
+    class Enemy {
+      constructor(type, spawnSide = 'left') {
+        this.type = type; // 'turtle' | 'crab' | 'fly' | 'freezie'
+        this.width = 14;
+        this.height = 12;
+        this.spawnSide = spawnSide;
+        this.fromPipe(spawnSide);
+        this.speedTier = 0;
+        this.angry = false;
+        this.state = 'emerging'; // 'emerging' | 'walking' | 'flipped' | 'entering_pipe' | 'kicked'
+        this.stateTimer = 28;
+        this.flipTimer = 0;
+        this.animTimer = 0;
+        this.freezeCooldown = 90;
+        this.hopCooldown = 24;
+      }
+
+      fromPipe(side) {
+        if (side === 'left') {
+          this.x = 18;
+          this.y = 40;
+          this.dir = 1;
+        } else {
+          this.x = 224;
+          this.y = 40;
+          this.dir = -1;
+        }
+        this.vx = 0;
+        this.vy = 0;
+        this.grounded = false;
+      }
+
+      getBaseSpeed() {
+        let base = 0.58;
+        if (this.type === 'crab') base = this.angry ? 0.92 : 0.65;
+        if (this.type === 'fly') base = 0.52;
+        if (this.type === 'freezie') base = 0.68;
+
+        const mult = 1 + this.speedTier * 0.35 + Math.min(0.45, (game.phase - 1) * 0.05);
+        return base * mult;
+      }
+
+      onBumpedFromBelow(bumpX, player) {
+        if (this.state === 'kicked' || this.state === 'emerging' || this.state === 'entering_pipe') return;
+
+        const eCenter = this.x + this.width / 2;
+        const bounceDir = eCenter >= bumpX ? 1 : -1;
+
+        // If already flipped, bumping again flips it back upright!
+        if (this.state === 'flipped') {
+          this.state = 'walking';
+          this.flipTimer = 0;
+          this.vy = -2.6;
+          this.vx = bounceDir * this.getBaseSpeed();
+          sfx.bump();
+          return;
+        }
+
+        // Slipice / Freezie shatters immediately when bumped from below
+        if (this.type === 'freezie') {
+          this.state = 'kicked';
+          this.vy = -3.0;
+          this.vx = bounceDir * 1.2;
+          player.addScore(500);
+          game.addPopup(this.x, this.y, '500', '#40e8ff');
+          sfx.kickEnemy(1);
+          return;
+        }
+
+        // Crab (Sidestepper) takes 2 bumps: first bump makes it angry!
+        if (this.type === 'crab' && !this.angry) {
+          this.angry = true;
+          this.vy = -2.5;
+          this.dir = bounceDir;
+          sfx.bump();
+          return;
+        }
+
+        // Standard flip onto back
+        this.state = 'flipped';
+        this.flipTimer = 380;
+        this.vy = -2.9;
+        this.vx = bounceDir * 0.85;
+        player.addScore(10);
+        sfx.flipEnemy();
+      }
+
+      kick(player, comboCount) {
+        this.state = 'kicked';
+        this.vy = -3.4;
+        this.vx = (this.x + 7 >= player.x + 7 ? 1 : -1) * 1.8;
+
+        const ptsTable = [800, 1600, 2400, 3200];
+        const pts = ptsTable[Math.min(ptsTable.length - 1, comboCount - 1)];
+        player.addScore(pts);
+        game.addPopup(this.x, this.y, String(pts), '#ffe600');
+        sfx.kickEnemy(comboCount);
+
+        game.spawnBonusCoin();
+        game.checkLastEnemySpeedup();
+      }
+
+      update(arena) {
+        this.animTimer++;
+
+        // 1. Emerging from top pipe
+        if (this.state === 'emerging') {
+          this.stateTimer--;
+          this.x += this.dir * 0.55;
+          if (this.stateTimer <= 0) {
+            this.state = 'walking';
+            this.vy = 0;
+          }
+          return;
+        }
+
+        // 2. Entering bottom pipe to loop back to top pipe
+        if (this.state === 'entering_pipe') {
+          this.stateTimer--;
+          this.x += this.dir * 0.5;
+          if (this.stateTimer <= 0) {
+            this.fromPipe(Math.random() < 0.5 ? 'left' : 'right');
+            this.state = 'emerging';
+            this.stateTimer = 28;
+            if (this.type !== 'freezie') {
+              this.speedTier = Math.min(2, this.speedTier + 1);
+            }
+          }
+          return;
+        }
+
+        // 3. Kicked off screen
+        if (this.state === 'kicked') {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.vy += 0.22;
+          if (this.y > 234 && !this.splashed) {
+            this.splashed = true;
+            game.spawnSplash(this.x + 7, 234);
+          }
+          return;
+        }
+
+        // 4. Flipped on back
+        if (this.state === 'flipped') {
+          this.flipTimer--;
+          if (this.grounded) {
+            this.vx *= 0.85;
+          }
+          if (this.flipTimer <= 0) {
+            this.state = 'walking';
+            this.speedTier = Math.min(2, this.speedTier + 1);
+            if (this.type === 'crab') this.angry = true;
+          }
+        }
+
+        // 5. Walking / Hopping AI
+        if (this.state === 'walking') {
+          const spd = this.getBaseSpeed();
+          if (this.type === 'fly') {
+            if (this.grounded) {
+              if (this.hopCooldown > 0) {
+                this.hopCooldown--;
+                this.vx = 0;
+              } else {
+                this.vy = -2.45;
+                this.grounded = false;
+                this.hopCooldown = Math.max(16, 28 - this.speedTier * 5);
+                this.vx = this.dir * spd;
+              }
+            } else {
+              this.vx = this.dir * spd;
+            }
+          } else {
+            this.vx = this.dir * spd;
+          }
+        }
+
+        // Gravity
+        this.vy = Math.min(3.6, this.vy + 0.17);
+
+        const prevY = this.y;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Horizontal Screen Wrap
+        if (this.x + this.width < 0) {
+          this.x = LOGICAL_WIDTH - 2;
+        } else if (this.x > LOGICAL_WIDTH) {
+          this.x = -this.width + 2;
+        }
+
+        // Platform & Floor Landing
+        this.grounded = false;
+        const centerX = (this.x + this.width / 2 + LOGICAL_WIDTH) % LOGICAL_WIDTH;
+        let currentPlat = null;
+
+        if (this.vy >= 0) {
+          for (const plat of arena.platforms) {
+            if (
+              centerX >= plat.x &&
+              centerX <= plat.x + plat.width &&
+              prevY + this.height <= plat.y + 5 &&
+              this.y + this.height >= plat.y
+            ) {
+              this.y = plat.y - this.height;
+              this.vy = 0;
+              this.grounded = true;
+              currentPlat = plat;
+              break;
+            }
+          }
+
+          // Main Floor (y = 216)
+          if (this.y + this.height >= 216) {
+            this.y = 216 - this.height;
+            this.vy = 0;
+            this.grounded = true;
+
+            // Check if walking into Bottom Left or Bottom Right Pipe
+            if (this.state === 'walking') {
+              if (this.dir < 0 && this.x <= 24) {
+                this.state = 'entering_pipe';
+                this.stateTimer = 26;
+                return;
+              }
+              if (this.dir > 0 && this.x + this.width >= 232) {
+                this.state = 'entering_pipe';
+                this.stateTimer = 26;
+                return;
+              }
+            }
+          }
+        }
+
+        // Freezie freezes un-frozen platforms
+        if (this.type === 'freezie' && this.state === 'walking' && currentPlat && !currentPlat.frozen) {
+          this.freezeCooldown--;
+          if (this.freezeCooldown <= 0) {
+            currentPlat.frozen = true;
+            sfx.freeze();
+            this.state = 'kicked';
+            this.vy = 50;
+          }
+        }
+      }
+
+      draw(frameCount) {
+        if (this.y > 242) return;
+
+        let shakeX = 0;
+        if (this.state === 'flipped' && this.flipTimer < 90) {
+          shakeX = (frameCount % 4 < 2) ? -1 : 1;
+        }
+
+        const step = Math.floor(this.animTimer / 6) % 2 === 0;
+        const flipX = this.dir < 0;
+        const flipY = this.state === 'flipped' || this.state === 'kicked';
+
+        if (this.type === 'turtle') {
+          const pal = this.speedTier > 0 ? PALETTES.turtleFast : PALETTES.turtleNormal;
+          const spr = step ? SPRITES.turtle1 : SPRITES.turtle2;
+          drawPixelMatrix(spr, this.x + shakeX, this.y, pal, flipX, flipY);
+        } else if (this.type === 'crab') {
+          const pal = (this.angry || this.speedTier > 0) ? PALETTES.crabAngry : PALETTES.crabNormal;
+          const spr = step ? SPRITES.crab1 : SPRITES.crab2;
+          drawPixelMatrix(spr, this.x + shakeX, this.y + 2, pal, flipX, flipY);
+        } else if (this.type === 'fly') {
+          const spr = (this.grounded && this.state === 'walking')
+            ? SPRITES.fly2
+            : (step ? SPRITES.fly1 : SPRITES.fly2);
+          drawPixelMatrix(spr, this.x + shakeX, this.y + 2, PALETTES.flyNormal, flipX, flipY);
+        } else if (this.type === 'freezie') {
+          drawPixelMatrix(SPRITES.freezie, this.x + shakeX, this.y + 2, PALETTES.freezie, flipX, flipY);
+        }
+      }
+    }
+
+    /**************************************************************************
+     * COIN, FIREBALL, ICICLE, POPUP & SPLASH PARTICLES
+     **************************************************************************/
+    class Coin {
+      constructor(x, y, moving = true, dir = 1) {
+        this.x = x;
+        this.y = y;
+        this.width = 8;
+        this.height = 10;
+        this.moving = moving;
+        this.dir = dir;
+        this.vx = moving ? dir * 0.85 : 0;
+        this.vy = 0;
+        this.collected = false;
+        this.animTimer = 0;
+      }
+
+      collect(player) {
+        if (this.collected) return;
+        this.collected = true;
+        player.addScore(800);
+        game.addPopup(this.x, this.y, '800', '#ffd700');
+        sfx.coin();
+        if (game.isBonusPhase) {
+          game.bonusCoinsCollected++;
+        }
+      }
+
+      update(arena) {
+        this.animTimer++;
+        if (!this.moving) return;
+
+        this.vy = Math.min(3.2, this.vy + 0.16);
+        const prevY = this.y;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x + this.width < 0) this.x = LOGICAL_WIDTH - 2;
+        else if (this.x > LOGICAL_WIDTH) this.x = -this.width + 2;
+
+        const centerX = (this.x + 4 + LOGICAL_WIDTH) % LOGICAL_WIDTH;
+        if (this.vy >= 0) {
+          for (const plat of arena.platforms) {
+            if (
+              centerX >= plat.x &&
+              centerX <= plat.x + plat.width &&
+              prevY + this.height <= plat.y + 5 &&
+              this.y + this.height >= plat.y
+            ) {
+              this.y = plat.y - this.height;
+              this.vy = 0;
+              break;
+            }
+          }
+          if (this.y + this.height >= 216) {
+            this.y = 216 - this.height;
+            this.vy = 0;
+            if ((this.dir < 0 && this.x <= 24) || (this.dir > 0 && this.x >= 226)) {
+              this.collected = true;
+            }
+          }
+        }
+      }
+
+      draw(frameCount) {
+        const px = Math.round(this.x);
+        const py = Math.round(this.y);
+        const phase = Math.floor(frameCount / 5) % 4;
+        const w = (phase === 0 || phase === 2) ? 6 : (phase === 1 ? 4 : 2);
+        const xOff = Math.floor((8 - w) / 2);
+
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(px + xOff, py, w, 10);
+        if (w >= 4) {
+          ctx.fillStyle = '#fff8b0';
+          ctx.fillRect(px + xOff + 1, py + 2, 1, 6);
+        }
+      }
+    }
+
+    class Fireball {
+      constructor(kind = 'red') {
+        this.kind = kind; // 'red' (bouncing) | 'green' (fast horizontal wave)
+        this.dir = Math.random() < 0.5 ? 1 : -1;
+        this.x = this.dir > 0 ? 4 : 244;
+        this.y = 76 + Math.floor(Math.random() * 90);
+        this.baseY = this.y;
+        this.vx = this.dir * (kind === 'green' ? 1.15 : 0.85);
+        this.vy = 1.1;
+        this.width = 8;
+        this.height = 8;
+        this.life = 520;
+        this.dead = false;
+      }
+
+      update(arena) {
+        this.life--;
+        if (this.life <= 0) {
+          this.dead = true;
+          return;
+        }
+
+        if (this.kind === 'green') {
+          this.x += this.vx;
+          this.y = this.baseY + Math.sin(this.life * 0.16) * 10;
+          if (this.x < -12 || this.x > LOGICAL_WIDTH + 12) {
+            this.dead = true;
+          }
+        } else {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.vy += 0.08;
+
+          if (this.y + 8 >= 214) {
+            this.y = 206;
+            this.vy = -2.2;
+          }
+          for (const plat of arena.platforms) {
+            if (
+              this.x + 4 >= plat.x &&
+              this.x + 4 <= plat.x + plat.width &&
+              Math.abs((this.y + 8) - plat.y) <= 4 &&
+              this.vy > 0
+            ) {
+              this.vy = -2.0;
+              break;
+            }
+          }
+          if (this.x < -12 || this.x > LOGICAL_WIDTH + 12) {
+            this.vx = -this.vx;
+          }
+        }
+      }
+
+      draw(frameCount) {
+        const px = Math.round(this.x);
+        const py = Math.round(this.y);
+        const c1 = this.kind === 'green' ? '#00ff58' : '#ff3818';
+        const c2 = this.kind === 'green' ? '#b8ff78' : '#ffe030';
+
+        ctx.fillStyle = c1;
+        ctx.fillRect(px + 1, py + 1, 6, 6);
+        ctx.fillStyle = c2;
+        const inner = (frameCount % 4 < 2) ? 2 : 3;
+        ctx.fillRect(px + inner, py + inner, 3, 3);
+      }
+    }
+
+    /**************************************************************************
+     * FALLING ICICLE HAZARD CLASS (Phase 9+ / High-Tier Arcade Arena)
+     **************************************************************************/
+    class Icicle {
+      constructor(slotX, attachY) {
+        this.slotX = slotX;
+        this.attachY = attachY;
+        this.reset(Math.floor(Math.random() * 90));
+      }
+
+      reset(delay = 80) {
+        this.x = this.slotX;
+        this.y = this.attachY;
+        this.vy = 0;
+        this.state = 'cooldown'; // 'cooldown' | 'growing' | 'shaking' | 'falling'
+        this.timer = delay;
+        this.growStage = 0;
+      }
+
+      onBumpedAbove() {
+        if (this.state === 'growing' || this.state === 'shaking') {
+          sfx.icicleShatter();
+          game.spawnSplash(this.x + 4, this.y + 4);
+          this.reset(120);
+        }
+      }
+
+      update(arena) {
+        if (this.state === 'cooldown') {
+          this.timer--;
+          if (this.timer <= 0) {
+            this.state = 'growing';
+            this.timer = 120;
+            this.growStage = 1;
+          }
+          return;
+        }
+
+        if (this.state === 'growing') {
+          this.timer--;
+          if (this.timer === 80) this.growStage = 2;
+          if (this.timer === 40) this.growStage = 3;
+          if (this.timer <= 0) {
+            this.state = 'shaking';
+            this.timer = 45;
+            sfx.icicleWarning();
+          }
+          return;
+        }
+
+        if (this.state === 'shaking') {
+          this.timer--;
+          if (this.timer <= 0) {
+            this.state = 'falling';
+            this.vy = 0.8;
+          }
+          return;
+        }
+
+        if (this.state === 'falling') {
+          this.y += this.vy;
+          this.vy = Math.min(3.8, this.vy + 0.16);
+
+          if (this.y + 10 >= 216) {
+            sfx.icicleShatter();
+            game.spawnSplash(this.x + 4, 216);
+            this.reset(110 + Math.floor(Math.random() * 80));
+          }
+        }
+      }
+
+      draw(frameCount) {
+        if (this.state === 'cooldown') return;
+
+        const shakeOffset = (this.state === 'shaking') ? ((frameCount % 2 === 0) ? -1 : 1) : 0;
+        const px = Math.round(this.x) + shakeOffset;
+        const py = Math.round(this.y);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(px + 1, py, 6, 2);
+
+        if (this.growStage >= 1) {
+          ctx.fillStyle = '#67e8f9';
+          ctx.fillRect(px + 2, py + 2, 4, 3);
+        }
+        if (this.growStage >= 2) {
+          ctx.fillStyle = '#22d3ee';
+          ctx.fillRect(px + 2, py + 5, 4, 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(px + 3, py + 2, 1, 5);
+        }
+        if (this.growStage >= 3 || this.state === 'falling') {
+          ctx.fillStyle = '#06b6d4';
+          ctx.fillRect(px + 3, py + 7, 2, 3);
+          ctx.fillStyle = '#cffafe';
+          ctx.fillRect(px + 3, py + 9, 1, 2);
+        }
+      }
+    }
+
+    /**************************************************************************
+     * SECRET PAC-MARIO MINIGAME (Triggered by typing P-A-C-M-A-N)
+     **************************************************************************/
+    const PAC_MAZE_TEMPLATE = [
+      "############################",
+      "#............##............#",
+      "#.####.#####.##.#####.####.#",
+      "#P####.#####.##.#####.####P#",
+      "#..........................#",
+      "#.####.##.########.##.####.#",
+      "#......##....##....##......#",
+      "######.##### ## #####.######",
+      "     #.##          ##.#     ",
+      "######.## ###--### ##.######",
+      "      .   #      #   .      ",
+      "######.## ######## ##.######",
+      "     #.##          ##.#     ",
+      "######.## ######## ##.######",
+      "#............##............#",
+      "#.####.#####.##.#####.####.#",
+      "#P..##.......  .......##..P#",
+      "###.##.##.########.##.##.###",
+      "#......##....##....##......#",
+      "#.##########.##.##########.#",
+      "#..........................#",
+      "############################"
+    ];
+
+    class PacMarioGame {
+      constructor(host) {
+        this.host = host;
+        this.cols = 28;
+        this.rows = 22;
+        this.offsetX = 16;
+        this.offsetY = 34;
+        this.level = 1;
+        this.wakaStep = 0;
+        this.resetFull();
+      }
+
+      resetFull() {
+        this.level = 1;
+        this.score = this.host.mario.score;
+        this.lives = this.host.mario.lives;
+        this.setupMaze();
+      }
+
+      setupMaze() {
+        this.grid = PAC_MAZE_TEMPLATE.map(r => r.split(''));
+        this.dotsRemaining = 0;
+        for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.cols; c++) {
+            if (this.grid[r][c] === '.' || this.grid[r][c] === 'P') {
+              this.dotsRemaining++;
+            }
+          }
+        }
+        this.frightTimer = 0;
+        this.eatCombo = 0;
+        this.state = 'ready'; // 'ready' | 'playing' | 'dying' | 'clear' | 'gameover'
+        this.stateTimer = 75;
+        this.resetPositions();
+      }
+
+      resetPositions() {
+        // Mario starts at row 16, col 13
+        this.player = {
+          c: 13,
+          r: 16,
+          dirX: -1,
+          dirY: 0,
+          nextDirX: -1,
+          nextDirY: 0,
+          speed: 0.11,
+          animTimer: 0
+        };
+
+        // The 4 Mario Bros. Enemies replacing the 4 Ghosts
+        this.enemies = [
+          { type: 'turtle', name: 'SHELLCREEPER', c: 13,   r: 8,  dirX: -1, dirY: 0,  inHouse: false, releaseDelay: 0,   flipped: false },
+          { type: 'crab',   name: 'SIDESTEPPER',  c: 12.0, r: 10, dirX: 0,  dirY: -1, inHouse: true,  releaseDelay: 50,  flipped: false },
+          { type: 'fly',    name: 'FIGHTERFLY',   c: 13.5, r: 10, dirX: 0,  dirY: -1, inHouse: true,  releaseDelay: 110, flipped: false },
+          { type: 'freezie',name: 'SLIPICE',      c: 15.0, r: 10, dirX: 0,  dirY: -1, inHouse: true,  releaseDelay: 170, flipped: false }
+        ];
+      }
+
+      isWall(c, r, allowDoor = false) {
+        if (r < 0 || r >= this.rows) return true;
+        const wrappedC = ((c % this.cols) + this.cols) % this.cols;
+        const tile = this.grid[r][wrappedC];
+        if (tile === '#') return true;
+        if (tile === '-' && !allowDoor) return true;
+        return false;
+      }
+
+      readInput() {
+        const k = this.host.keys;
+        const t = this.host.touchInput;
+        if (k['ArrowLeft'] || k['KeyA'] || t.left) {
+          this.player.nextDirX = -1;
+          this.player.nextDirY = 0;
+        } else if (k['ArrowRight'] || k['KeyD'] || t.right) {
+          this.player.nextDirX = 1;
+          this.player.nextDirY = 0;
+        } else if (k['ArrowUp'] || k['KeyW'] || k['Space'] || t.jump) {
+          this.player.nextDirX = 0;
+          this.player.nextDirY = -1;
+        } else if (k['ArrowDown'] || k['KeyS']) {
+          this.player.nextDirX = 0;
+          this.player.nextDirY = 1;
+        }
+      }
+
+      update() {
+        if (this.state === 'ready') {
+          this.stateTimer--;
+          if (this.stateTimer <= 0) this.state = 'playing';
+          return;
+        }
+
+        if (this.state === 'dying') {
+          this.stateTimer--;
+          if (this.stateTimer <= 0) {
+            if (!this.host.infiniteLives) {
+              this.lives--;
+              this.host.mario.lives = Math.max(0, this.lives);
+            }
+            if (this.lives > 0 || this.host.infiniteLives) {
+              this.state = 'ready';
+              this.stateTimer = 65;
+              this.resetPositions();
+            } else {
+              this.state = 'gameover';
+              sfx.gameOver();
+            }
+          }
+          return;
+        }
+
+        if (this.state === 'clear') {
+          this.stateTimer--;
+          if (this.stateTimer <= 0) {
+            this.level++;
+            this.setupMaze();
+            sfx.phaseStart();
+          }
+          return;
+        }
+
+        if (this.state === 'gameover') {
+          if (this.host.keys['Enter'] || this.host.keys['Space']) {
+            this.lives = 3;
+            this.host.mario.lives = 3;
+            this.setupMaze();
+            sfx.phaseStart();
+          }
+          return;
+        }
+
+        // --- PLAYING ---
+        this.readInput();
+
+        if (this.frightTimer > 0) {
+          this.frightTimer--;
+          if (this.frightTimer === 0) {
+            for (const e of this.enemies) e.flipped = false;
+          }
+        }
+
+        this.updatePlayer();
+        this.updateEnemies();
+      }
+
+      updatePlayer() {
+        const p = this.player;
+        let curC = ((Math.round(p.c) % this.cols) + this.cols) % this.cols;
+        let curR = Math.round(p.r);
+
+        // Safety recovery if ever inside a wall tile
+        if (this.isWall(curC, curR, false)) {
+          const rescueDirs = [
+            { x: -1, y: 0 }, { x: 1, y: 0 },
+            { x: 0, y: -1 }, { x: 0, y: 1 }
+          ];
+          for (const d of rescueDirs) {
+            if (!this.isWall(curC + d.x, curR + d.y, false)) {
+              p.c = curC + d.x;
+              p.r = curR + d.y;
+              curC = ((Math.round(p.c) % this.cols) + this.cols) % this.cols;
+              curR = Math.round(p.r);
+              break;
+            }
+          }
+        }
+
+        // Allow instant 180-degree reversal
+        if (p.nextDirX === -p.dirX && p.nextDirY === -p.dirY && (p.dirX !== 0 || p.dirY !== 0)) {
+          p.dirX = p.nextDirX;
+          p.dirY = p.nextDirY;
+        }
+
+        // Check buffered turn at tile centers
+        const turnWindow = p.speed + 0.08;
+        if (Math.abs(p.c - Math.round(p.c)) <= turnWindow && Math.abs(p.r - curR) <= turnWindow) {
+          if (
+            (p.nextDirX !== p.dirX || p.nextDirY !== p.dirY) &&
+            !this.isWall(curC + p.nextDirX, curR + p.nextDirY, false)
+          ) {
+            p.c = Math.round(p.c);
+            p.r = curR;
+            p.dirX = p.nextDirX;
+            p.dirY = p.nextDirY;
+          }
+        }
+
+        // Keep perpendicular axis aligned to corridor center
+        if (p.dirX !== 0) p.r = curR;
+        if (p.dirY !== 0) p.c = Math.round(p.c);
+
+        // Advance and clamp at tile center if the next tile in movement direction is a wall
+        const centerC = Math.round(p.c);
+        const centerR = Math.round(p.r);
+        let nextC = p.c + p.dirX * p.speed;
+        let nextR = p.r + p.dirY * p.speed;
+        let blocked = false;
+
+        if (p.dirX > 0 && nextC > centerC && this.isWall(curC + 1, curR, false)) {
+          nextC = centerC;
+          blocked = true;
+        } else if (p.dirX < 0 && nextC < centerC && this.isWall(curC - 1, curR, false)) {
+          nextC = centerC;
+          blocked = true;
+        }
+
+        if (p.dirY > 0 && nextR > centerR && this.isWall(curC, curR + 1, false)) {
+          nextR = centerR;
+          blocked = true;
+        } else if (p.dirY < 0 && nextR < centerR && this.isWall(curC, curR - 1, false)) {
+          nextR = centerR;
+          blocked = true;
+        }
+
+        p.c = nextC;
+        p.r = nextR;
+        if (!blocked && (p.dirX !== 0 || p.dirY !== 0)) {
+          p.animTimer++;
+        }
+
+        // Horizontal Tunnel Wrap
+        if (p.c < -0.45) p.c += this.cols;
+        if (p.c >= this.cols - 0.55) p.c -= this.cols;
+
+        // Eat Dots & POW Pellets
+        curC = ((Math.round(p.c) % this.cols) + this.cols) % this.cols;
+        curR = Math.round(p.r);
+        const tile = this.grid[curR]?.[curC];
+
+        if (tile === '.') {
+          this.grid[curR][curC] = ' ';
+          this.dotsRemaining--;
+          this.host.mario.addScore(10);
+          sfx.waka(this.wakaStep++);
+        } else if (tile === 'P') {
+          this.grid[curR][curC] = ' ';
+          this.dotsRemaining--;
+          this.host.mario.addScore(50);
+          this.frightTimer = Math.max(180, 390 - (this.level - 1) * 45);
+          this.eatCombo = 0;
+          for (const e of this.enemies) {
+            e.flipped = true;
+            if (!e.inHouse) {
+              e.dirX = -e.dirX;
+              e.dirY = -e.dirY;
+            }
+          }
+          sfx.pow();
+          this.host.addPopup(this.offsetX + curC * 8, this.offsetY + curR * 8, 'POW!', '#ffe600');
+        }
+
+        if (this.dotsRemaining <= 0) {
+          this.state = 'clear';
+          this.stateTimer = 95;
+          this.host.mario.addScore(1000);
+          sfx.phaseClear();
+        }
+      }
+
+      updateEnemies() {
+        const p = this.player;
+        for (const e of this.enemies) {
+          if (e.inHouse) {
+            if (e.releaseDelay > 0) {
+              e.releaseDelay--;
+              continue;
+            }
+            // Move to center and exit through "--" door at row 8
+            if (Math.abs(e.c - 13.5) > 0.1) {
+              e.c += (13.5 > e.c ? 0.08 : -0.08);
+            } else {
+              e.c = 13.5;
+              e.r -= 0.08;
+              if (e.r <= 8) {
+                e.r = 8;
+                e.c = 13;
+                e.inHouse = false;
+                e.dirX = Math.random() < 0.5 ? -1 : 1;
+                e.dirY = 0;
+              }
+            }
+            continue;
+          }
+
+          const baseSpd = Math.min(0.115, 0.085 + (this.level - 1) * 0.006);
+          const spd = e.flipped ? 0.055 : baseSpd;
+
+          const nearC = Math.round(e.c);
+          const nearR = Math.round(e.r);
+          const wrappedC = ((nearC % this.cols) + this.cols) % this.cols;
+          const distToCenter = (nearC - e.c) * e.dirX + (nearR - e.r) * e.dirY;
+          const blockedAhead = this.isWall(wrappedC + e.dirX, nearR + e.dirY, false);
+
+          if ((distToCenter >= 0 && distToCenter <= spd) || blockedAhead) {
+            e.c = nearC;
+            e.r = nearR;
+
+            const dirs = [
+              { x: 1, y: 0 },
+              { x: -1, y: 0 },
+              { x: 0, y: 1 },
+              { x: 0, y: -1 }
+            ];
+            let valid = dirs.filter(d =>
+              !(d.x === -e.dirX && d.y === -e.dirY) &&
+              !this.isWall(wrappedC + d.x, nearR + d.y, false)
+            );
+            if (valid.length === 0) {
+              valid = dirs.filter(d => !this.isWall(wrappedC + d.x, nearR + d.y, false));
+            }
+
+            if (valid.length > 0) {
+              let chosen = valid[0];
+              if (e.flipped || e.type === 'freezie') {
+                chosen = valid[Math.floor(Math.random() * valid.length)];
+              } else {
+                let tx = p.c;
+                let ty = p.r;
+                if (e.type === 'crab') {
+                  tx = p.c + p.dirX * 4;
+                  ty = p.r + p.dirY * 4;
+                } else if (e.type === 'fly') {
+                  tx = p.c - p.dirX * 3;
+                  ty = p.r + (this.host.frameCount % 120 < 60 ? -3 : 3);
+                }
+                let bestDist = Infinity;
+                for (const d of valid) {
+                  const dist = Math.hypot((wrappedC + d.x) - tx, (nearR + d.y) - ty);
+                  if (dist < bestDist) {
+                    bestDist = dist;
+                    chosen = d;
+                  }
+                }
+              }
+              e.dirX = chosen.x;
+              e.dirY = chosen.y;
+            }
+
+            const rem = Math.max(0, spd - Math.max(0, distToCenter));
+            if (!this.isWall(wrappedC + e.dirX, nearR + e.dirY, false)) {
+              e.c += e.dirX * rem;
+              e.r += e.dirY * rem;
+            }
+          } else {
+            if (e.dirX !== 0) e.r = nearR;
+            if (e.dirY !== 0) e.c = nearC;
+            e.c += e.dirX * spd;
+            e.r += e.dirY * spd;
+          }
+
+          // Wrap tunnel
+          if (e.c < -0.45) e.c += this.cols;
+          if (e.c >= this.cols - 0.55) e.c -= this.cols;
+
+          // Check collision with Mario
+          if (Math.hypot(e.c - p.c, e.r - p.r) < 0.85) {
+            if (e.flipped) {
+              this.eatCombo++;
+              const pts = 200 * Math.pow(2, Math.min(3, this.eatCombo - 1));
+              this.host.mario.addScore(pts);
+              const px = this.offsetX + e.c * 8;
+              const py = this.offsetY + e.r * 8;
+              this.host.addPopup(px, py, String(pts), '#ffe600');
+              sfx.kickEnemy(this.eatCombo);
+
+              // Send back to Ghost/Pipe House
+              e.inHouse = true;
+              e.flipped = false;
+              e.c = 13.5;
+              e.r = 10;
+              e.releaseDelay = 55;
+            } else {
+              this.state = 'dying';
+              this.stateTimer = 75;
+              sfx.playerDie();
+              break;
+            }
+          }
+        }
+      }
+
+      draw(frameCount) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+        // Top HUD
+        this.host.drawHUD();
+        ctx.font = '6px "Press Start 2P", monospace';
+        ctx.fillStyle = '#ffe600';
+        ctx.fillText(`PAC-MARIO L${this.level}`, 88, 17);
+
+        // Draw Maze Walls, Coin Dots & Mini POW Pellets
+        for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.cols; c++) {
+            const ch = this.grid[r][c];
+            const tx = this.offsetX + c * 8;
+            const ty = this.offsetY + r * 8;
+
+            if (ch === '#') {
+              ctx.fillStyle = '#1d4ed8';
+              ctx.fillRect(tx, ty, 8, 8);
+              ctx.fillStyle = '#38bdf8';
+              ctx.fillRect(tx + 1, ty + 1, 6, 6);
+              ctx.fillStyle = '#090d16';
+              ctx.fillRect(tx + 2, ty + 2, 4, 4);
+            } else if (ch === '-') {
+              ctx.fillStyle = '#00d848';
+              ctx.fillRect(tx, ty + 3, 8, 2);
+            } else if (ch === '.') {
+              ctx.fillStyle = '#ffd700';
+              ctx.fillRect(tx + 3, ty + 3, 2, 2);
+            } else if (ch === 'P') {
+              if (frameCount % 16 < 12) {
+                ctx.fillStyle = '#ffe030';
+                ctx.fillRect(tx, ty + 1, 8, 6);
+                ctx.fillStyle = '#2048d8';
+                ctx.fillRect(tx + 1, ty + 2, 6, 4);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(tx + 2, ty + 3, 4, 2);
+              }
+            }
+          }
+        }
+
+        // Draw Mario (Pac-Mario)
+        const mx = this.offsetX + this.player.c * 8 - 4;
+        const my = this.offsetY + this.player.r * 8 - 5;
+        const step = Math.floor(this.player.animTimer / 3) % 2 === 0;
+        const spr = this.state === 'dying'
+          ? SPRITES.playerJump
+          : (step ? SPRITES.playerRun1 : SPRITES.playerStand);
+        drawPixelMatrix(spr, mx, my, PALETTES.mario, this.player.dirX < 0, this.state === 'dying');
+
+        // Draw the 4 Mario Bros Enemies
+        const eStep = Math.floor(frameCount / 6) % 2 === 0;
+        for (const e of this.enemies) {
+          const ex = this.offsetX + e.c * 8 - 4;
+          const ey = this.offsetY + e.r * 8 - 3;
+          const flipX = e.dirX < 0;
+          const flash = e.flipped && this.frightTimer < 90 && (frameCount % 6 < 3);
+          const flipY = e.flipped;
+
+          if (e.type === 'turtle') {
+            const pal = flash ? PALETTES.turtleFast : PALETTES.turtleNormal;
+            drawPixelMatrix(eStep ? SPRITES.turtle1 : SPRITES.turtle2, ex, ey, pal, flipX, flipY);
+          } else if (e.type === 'crab') {
+            const pal = (e.flipped && !flash) ? PALETTES.crabNormal : PALETTES.crabAngry;
+            drawPixelMatrix(eStep ? SPRITES.crab1 : SPRITES.crab2, ex, ey + 1, pal, flipX, flipY);
+          } else if (e.type === 'fly') {
+            drawPixelMatrix(eStep ? SPRITES.fly1 : SPRITES.fly2, ex, ey + 1, PALETTES.flyNormal, flipX, flipY);
+          } else if (e.type === 'freezie') {
+            drawPixelMatrix(SPRITES.freezie, ex, ey + 1, PALETTES.freezie, flipX, flipY);
+          }
+        }
+
+        // Draw Popups
+        ctx.font = '6px "Press Start 2P", monospace';
+        for (const pop of this.host.popups) {
+          ctx.fillStyle = pop.color;
+          ctx.fillText(pop.text, Math.round(pop.x), Math.round(pop.y));
+        }
+
+        // Overlays
+        if (this.state === 'ready') {
+          ctx.fillStyle = 'rgba(0,0,0,0.82)';
+          ctx.fillRect(64, 104, 128, 24);
+          ctx.fillStyle = '#ffe600';
+          ctx.font = '7px "Press Start 2P", monospace';
+          ctx.fillText('PAC-MARIO READY!', 72, 113);
+        } else if (this.state === 'clear') {
+          ctx.fillStyle = 'rgba(0,0,0,0.82)';
+          ctx.fillRect(68, 104, 120, 24);
+          ctx.fillStyle = '#00ff68';
+          ctx.font = '7px "Press Start 2P", monospace';
+          ctx.fillText('MAZE CLEARED!', 82, 113);
+        } else if (this.state === 'gameover') {
+          ctx.fillStyle = 'rgba(0,0,0,0.88)';
+          ctx.fillRect(44, 94, 168, 44);
+          ctx.fillStyle = '#ff3820';
+          ctx.font = '8px "Press Start 2P", monospace';
+          ctx.fillText('PAC-MARIO OVER', 72, 104);
+          ctx.fillStyle = '#ffe600';
+          ctx.font = '6px "Press Start 2P", monospace';
+          ctx.fillText('PRESS [ENTER] TO RETRY', 62, 120);
+        }
+
+        // Bottom Legend Bar
+        ctx.font = '5px "Press Start 2P", monospace';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('WASD/ARROWS: MOVE • POW FLIPS ENEMIES • TYPE PACMAN TO EXIT', 6, 226);
+      }
+    }
+
+    /**************************************************************************
+     * MAIN GAME CONTROLLER
+     **************************************************************************/
+    class MarioBrosArcade {
+      constructor() {
+        this.arena = new Arena();
+        this.mario = new Player(1, 'MARIO', PALETTES.mario);
+        this.luigi = new Player(2, 'LUIGI', PALETTES.luigi);
+        this.players = [this.mario, this.luigi];
+
+        this.twoPlayerMode = false;
+        this.topScore = 20000;
+        this.phase = 1;
+        this.state = 'title'; // 'title' | 'phase_intro' | 'playing' | 'phase_clear' | 'gameover'
+        this.paused = false;
+        this.stateTimer = 0;
+        this.frameCount = 0;
+
+        this.enemies = [];
+        this.spawnQueue = [];
+        this.spawnTimer = 0;
+        this.coins = [];
+        this.fireballs = [];
+        this.icicles = [];
+        this.popups = [];
+        this.splashes = [];
+
+        this.kickComboCount = 0;
+        this.kickComboTimer = 0;
+
+        this.isBonusPhase = false;
+        this.bonusTimer = 0;
+        this.bonusCoinsTotal = 10;
+        this.bonusCoinsCollected = 0;
+
+        this.keys = {};
+        this.cheatBuffer = '';
+        this.cheatsUnlocked = false;
+        this.infiniteLives = false;
+        this.pacmanMode = false;
+        this.pacGame = new PacMarioGame(this);
+        this.touchInput = { left: false, right: false, jump: false };
+        this.bindInputs();
+      }
+
+      bindInputs() {
+        window.addEventListener('keydown', (e) => {
+          this.keys[e.code] = true;
+          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+            e.preventDefault();
+          }
+
+          // Allow ESC to exit In-Page Fullscreen mode
+          if (e.code === 'Escape' && document.body.classList.contains('page-fullscreen')) {
+            toggleFullPageMode(false);
+            return;
+          }
+
+          // Secret keyboard code detector: type C-H-E-A-T, I-N-F, or P-A-C-M-A-N
+          if (e.key && e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+            this.cheatBuffer = (this.cheatBuffer + e.key.toUpperCase()).slice(-6);
+            if (this.cheatBuffer.endsWith('CHEAT')) {
+              this.cheatBuffer = '';
+              this.toggleCheats();
+            } else if (this.cheatBuffer.endsWith('INF')) {
+              this.cheatBuffer = '';
+              this.toggleInfiniteLives();
+            } else if (this.cheatBuffer.endsWith('PACMAN')) {
+              this.cheatBuffer = '';
+              this.togglePacmanMode();
+            }
+          }
+
+          if (this.pacmanMode) {
+            if (e.code === 'KeyP') this.paused = !this.paused;
+            return;
+          }
+
+          if (this.state === 'title' || this.state === 'gameover') {
+            if (e.code === 'Enter' || e.code === 'Space' || e.code === 'Digit1') {
+              this.startNewGame(false);
+            } else if (e.code === 'Digit2') {
+              this.startNewGame(true);
+            }
+          } else if (e.code === 'KeyP') {
+            this.paused = !this.paused;
+          }
+        });
+
+        window.addEventListener('keyup', (e) => {
+          this.keys[e.code] = false;
+        });
+      }
+
+      togglePacmanMode() {
+        this.pacmanMode = !this.pacmanMode;
+        this.paused = false;
+        sfx.init();
+        if (this.pacmanMode) {
+          this.mario.active = true;
+          if (this.mario.lives <= 0) this.mario.lives = 3;
+          this.pacGame.resetFull();
+          sfx.phaseStart();
+        } else {
+          sfx.coin();
+          this.addPopup(68, 56, 'MARIO BROS. MODE', '#ffe600');
+        }
+      }
+
+      toggleCheats() {
+        this.cheatsUnlocked = !this.cheatsUnlocked;
+        const toolbar = document.getElementById('cheatToolbar');
+        if (toolbar) {
+          toolbar.classList.toggle('hidden', !this.cheatsUnlocked);
+          toolbar.classList.toggle('flex', this.cheatsUnlocked);
+        }
+        sfx.init();
+        if (this.cheatsUnlocked) {
+          sfx.phaseClear();
+          this.addPopup(76, 48, 'CHEATS UNLOCKED!', '#ffe600');
+        } else {
+          sfx.bump();
+          this.addPopup(84, 48, 'CHEATS HIDDEN', '#94a3b8');
+        }
+      }
+
+      toggleInfiniteLives() {
+        this.infiniteLives = !this.infiniteLives;
+        sfx.init();
+        if (this.infiniteLives) {
+          if (this.mario.lives <= 0) this.mario.lives = 3;
+          if (this.luigi.active && this.luigi.lives <= 0) this.luigi.lives = 3;
+          sfx.phaseClear();
+          this.addPopup(82, 58, 'INF LIVES: ON!', '#00ff68');
+        } else {
+          sfx.bump();
+          this.addPopup(82, 58, 'INF LIVES: OFF', '#94a3b8');
+        }
+      }
+
+      getPlayerInput(playerId) {
+        if (playerId === 1) {
+          const arrowFallback = !this.twoPlayerMode;
+          return {
+            left: !!(this.keys['KeyA'] || (arrowFallback && this.keys['ArrowLeft']) || this.touchInput.left),
+            right: !!(this.keys['KeyD'] || (arrowFallback && this.keys['ArrowRight']) || this.touchInput.right),
+            jump: !!(this.keys['KeyW'] || this.keys['Space'] || (arrowFallback && this.keys['ArrowUp']) || this.touchInput.jump)
+          };
+        } else {
+          return {
+            left: !!(this.keys['ArrowLeft'] || this.keys['KeyJ']),
+            right: !!(this.keys['ArrowRight'] || this.keys['KeyL']),
+            jump: !!(this.keys['ArrowUp'] || this.keys['KeyI'] || this.keys['Enter'])
+          };
+        }
+      }
+
+      startNewGame(twoPlayer = false, startPhase = 1) {
+        sfx.init();
+        this.pacmanMode = false;
+        this.twoPlayerMode = twoPlayer;
+        this.mario.score = 0;
+        this.mario.lives = 3;
+        this.mario.active = true;
+
+        this.luigi.score = 0;
+        this.luigi.lives = 3;
+        this.luigi.active = twoPlayer;
+
+        this.phase = startPhase;
+        this.setupPhase(this.phase, false, true);
+      }
+
+      syncArenaSelectDropdown() {
+        const selectEl = document.getElementById('arenaSelect');
+        if (!selectEl) return;
+        const key = this.arena.meta.key;
+        if (key === 'sewer') selectEl.value = '1';
+        else if (key === 'bonus') selectEl.value = '3';
+        else if (key === 'magenta') selectEl.value = '4';
+        else if (key === 'glacier') selectEl.value = '6';
+        else if (key === 'icicle') selectEl.value = '9';
+      }
+
+      setupPhase(phaseNum, forceBonus = false, restorePow = false) {
+        this.phase = phaseNum;
+        const cycle = ((phaseNum - 1) % 10) + 1;
+        this.isBonusPhase = forceBonus || (cycle === 3 || cycle === 8);
+        this.arena.reset(phaseNum, this.isBonusPhase, restorePow);
+        this.syncArenaSelectDropdown();
+
+        this.enemies = [];
+        this.spawnQueue = [];
+        this.coins = [];
+        this.fireballs = [];
+        this.icicles = [];
+        this.popups = [];
+        this.splashes = [];
+        this.kickComboCount = 0;
+        this.kickComboTimer = 0;
+
+        this.mario.resetForPhase();
+        if (this.luigi.active && this.luigi.lives > 0) {
+          this.luigi.resetForPhase();
+        }
+
+        const arenaKey = this.arena.meta.key;
+
+        if (this.isBonusPhase) {
+          this.bonusTimer = 20 * 60;
+          this.bonusCoinsTotal = 10;
+          this.bonusCoinsCollected = 0;
+          const coinPositions = [
+            [28, 48], [220, 48],
+            [84, 48], [164, 48],
+            [64, 88], [124, 88], [184, 88],
+            [40, 128], [208, 128],
+            [124, 152]
+          ];
+          for (const [cx, cy] of coinPositions) {
+            this.coins.push(new Coin(cx, cy, false));
+          }
+        } else {
+          if (phaseNum === 1) {
+            this.spawnQueue = ['turtle', 'turtle', 'turtle', 'turtle'];
+          } else if (phaseNum === 2) {
+            this.spawnQueue = ['turtle', 'crab', 'turtle', 'crab', 'crab'];
+          } else if (arenaKey === 'magenta') {
+            this.spawnQueue = ['fly', 'crab', 'fly', 'turtle', 'crab', 'fly'];
+          } else if (arenaKey === 'glacier') {
+            this.spawnQueue = ['freezie', 'crab', 'turtle', 'freezie', 'crab', 'fly', 'freezie'];
+          } else if (arenaKey === 'icicle') {
+            this.spawnQueue = ['crab', 'fly', 'freezie', 'crab', 'fly', 'turtle', 'freezie'];
+            this.icicles = [
+              new Icicle(36, 72),
+              new Icicle(88, 72),
+              new Icicle(160, 72),
+              new Icicle(212, 72)
+            ];
+          } else {
+            const count = Math.min(8, 4 + Math.floor(phaseNum * 0.7));
+            const pool = ['turtle', 'crab', 'crab', 'fly'];
+            for (let i = 0; i < count; i++) {
+              this.spawnQueue.push(pool[i % pool.length]);
+            }
+          }
+          this.spawnTimer = 35;
+        }
+
+        this.state = 'phase_intro';
+        this.stateTimer = 105;
+        sfx.phaseStart();
+      }
+
+      spawnBonusCoin() {
+        const side = Math.random() < 0.5 ? 'left' : 'right';
+        const cx = side === 'left' ? 24 : 224;
+        const dir = side === 'left' ? 1 : -1;
+        this.coins.push(new Coin(cx, 42, true, dir));
+      }
+
+      addPopup(x, y, text, color = '#ffffff') {
+        this.popups.push({ x, y, text, color, life: 42 });
+      }
+
+      spawnSplash(x, y) {
+        for (let i = 0; i < 6; i++) {
+          this.splashes.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 2.2,
+            vy: -1.5 - Math.random() * 1.8,
+            life: 18
+          });
+        }
+      }
+
+      triggerPowBlock(player) {
+        if (this.arena.powHitsLeft <= 0) {
+          sfx.bump();
+          return;
+        }
+        this.arena.powHitsLeft--;
+        this.arena.powBumpTimer = 12;
+        sfx.pow();
+
+        for (const e of this.enemies) {
+          if (e.grounded && e.state !== 'kicked') {
+            e.onBumpedFromBelow(e.x + 7, player);
+          }
+        }
+      }
+
+      onPlatformBumped(plat, bumpX, player) {
+        // 1. Check enemies standing on this platform within bump radius
+        for (const e of this.enemies) {
+          const eCenter = (e.x + e.width / 2 + LOGICAL_WIDTH) % LOGICAL_WIDTH;
+          const onPlatY = Math.abs((e.y + e.height) - plat.y) <= 6;
+          if (onPlatY && Math.abs(eCenter - bumpX) <= 15) {
+            e.onBumpedFromBelow(bumpX, player);
+          }
+        }
+
+        // 2. Check coins on this platform within bump radius
+        for (const c of this.coins) {
+          const cCenter = (c.x + 4 + LOGICAL_WIDTH) % LOGICAL_WIDTH;
+          const onPlatY = Math.abs((c.y + c.height) - plat.y) <= 8;
+          if (!c.collected && onPlatY && Math.abs(cCenter - bumpX) <= 15) {
+            c.collect(player);
+          }
+        }
+
+        // 3. Check growing/shaking icicles attached underneath this platform
+        for (const ic of this.icicles) {
+          if (Math.abs(ic.attachY - (plat.y + plat.height)) <= 4 && Math.abs((ic.x + 4) - bumpX) <= 14) {
+            ic.onBumpedAbove();
+          }
+        }
+      }
+
+      checkLastEnemySpeedup() {
+        const remaining = this.enemies.filter(e => e.state !== 'kicked' && e.type !== 'freezie');
+        if (this.spawnQueue.length === 0 && remaining.length === 1) {
+          const last = remaining[0];
+          if (last.speedTier < 2) {
+            last.speedTier = 2;
+            if (last.type === 'crab') last.angry = true;
+            sfx.lastEnemySpeedup();
+          }
+        }
+      }
+
+      update() {
+        this.frameCount++;
+        if (this.paused) return;
+
+        if (this.pacmanMode) {
+          this.pacGame.update();
+          for (const pop of this.popups) {
+            pop.y -= 0.45;
+            pop.life--;
+          }
+          this.popups = this.popups.filter(p => p.life > 0);
+          return;
+        }
+
+        if (this.state === 'title' || this.state === 'gameover') {
+          return;
+        }
+
+        if (this.state === 'phase_intro') {
+          this.stateTimer--;
+          if (this.stateTimer <= 0) {
+            this.state = 'playing';
+          }
+          return;
+        }
+
+        if (this.state === 'phase_clear') {
+          this.stateTimer--;
+          if (this.stateTimer <= 0) {
+            this.setupPhase(this.phase + 1);
+          }
+          return;
+        }
+
+        // --- PLAYING STATE ---
+        this.arena.update();
+
+        if (this.kickComboTimer > 0) {
+          this.kickComboTimer--;
+          if (this.kickComboTimer === 0) this.kickComboCount = 0;
+        }
+
+        // 1. Spawn Enemies from Queue
+        if (!this.isBonusPhase && this.spawnQueue.length > 0) {
+          this.spawnTimer--;
+          if (this.spawnTimer <= 0) {
+            const nextType = this.spawnQueue.shift();
+            const side = (this.enemies.length % 2 === 0) ? 'left' : 'right';
+            this.enemies.push(new Enemy(nextType, side));
+            this.spawnTimer = Math.max(95, 175 - this.phase * 8);
+          }
+        }
+
+        // 2. Periodic Fireball Hazard
+        if (!this.isBonusPhase && (this.frameCount % 520 === 0) && this.fireballs.length < 2) {
+          const kind = Math.random() < 0.45 ? 'green' : 'red';
+          this.fireballs.push(new Fireball(kind));
+        }
+
+        // 3. Update Players
+        for (const p of this.players) {
+          if (p.active) {
+            p.update(this.getPlayerInput(p.id), this.arena);
+          }
+        }
+
+        // 2P Friendly Bump Interaction
+        if (
+          this.mario.active && this.luigi.active &&
+          this.mario.state === 'alive' && this.luigi.state === 'alive'
+        ) {
+          const dx = (this.mario.x + 7) - (this.luigi.x + 7);
+          const dy = Math.abs(this.mario.y - this.luigi.y);
+          if (Math.abs(dx) < 11 && dy < 12) {
+            const push = dx >= 0 ? 0.65 : -0.65;
+            this.mario.vx += push;
+            this.luigi.vx -= push;
+          }
+        }
+
+        // 4. Update Enemies & Check Player Collisions
+        for (const e of this.enemies) {
+          e.update(this.arena);
+          if (e.state === 'kicked' || e.state === 'emerging' || e.state === 'entering_pipe') continue;
+
+          for (const p of this.players) {
+            if (!p.active || p.state !== 'alive') continue;
+            const overlap = (
+              p.x + p.width - 2 > e.x + 2 &&
+              p.x + 2 < e.x + e.width - 2 &&
+              p.y + p.height - 2 > e.y + 2 &&
+              p.y + 2 < e.y + e.height - 2
+            );
+            if (overlap) {
+              if (e.state === 'flipped') {
+                this.kickComboCount++;
+                this.kickComboTimer = 95;
+                e.kick(p, this.kickComboCount);
+              } else {
+                p.die();
+              }
+            }
+          }
+        }
+        this.enemies = this.enemies.filter(e => !(e.state === 'kicked' && e.y > 250));
+
+        // 5. Update Coins
+        for (const c of this.coins) {
+          c.update(this.arena);
+          for (const p of this.players) {
+            if (!p.active || p.state !== 'alive') continue;
+            if (
+              p.x + p.width > c.x &&
+              p.x < c.x + c.width &&
+              p.y + p.height > c.y &&
+              p.y < c.y + c.height
+            ) {
+              c.collect(p);
+            }
+          }
+        }
+        this.coins = this.coins.filter(c => !c.collected);
+
+        // 6. Update Fireballs
+        for (const fb of this.fireballs) {
+          fb.update(this.arena);
+          for (const p of this.players) {
+            if (!p.active || p.state !== 'alive') continue;
+            if (
+              p.x + p.width - 3 > fb.x &&
+              p.x + 3 < fb.x + 8 &&
+              p.y + p.height - 3 > fb.y &&
+              p.y + 3 < fb.y + 8
+            ) {
+              p.die();
+            }
+          }
+        }
+        this.fireballs = this.fireballs.filter(fb => !fb.dead);
+
+        // 6b. Update Falling Icicles (Arena 5 / Phase 9+)
+        for (const ic of this.icicles) {
+          ic.update(this.arena);
+          if (ic.state === 'falling' || ic.state === 'shaking') {
+            for (const p of this.players) {
+              if (!p.active || p.state !== 'alive') continue;
+              if (
+                p.x + p.width - 3 > ic.x + 1 &&
+                p.x + 3 < ic.x + 7 &&
+                p.y + p.height - 2 > ic.y &&
+                p.y + 2 < ic.y + 10
+              ) {
+                p.die();
+              }
+            }
+          }
+        }
+
+        // 7. Update Floating Popups & Water Splashes
+        for (const pop of this.popups) {
+          pop.y -= 0.45;
+          pop.life--;
+        }
+        this.popups = this.popups.filter(p => p.life > 0);
+
+        for (const sp of this.splashes) {
+          sp.x += sp.vx;
+          sp.y += sp.vy;
+          sp.vy += 0.2;
+          sp.life--;
+        }
+        this.splashes = this.splashes.filter(s => s.life > 0);
+
+        // 8. Check Bonus Phase or Standard Phase Completion
+        if (this.isBonusPhase) {
+          this.bonusTimer--;
+          if (this.coins.length === 0 || this.bonusTimer <= 0) {
+            if (this.coins.length === 0) {
+              this.mario.addScore(3000);
+              if (this.luigi.active) this.luigi.addScore(3000);
+              this.addPopup(96, 112, 'PERFECT 3000!', '#ffe600');
+            }
+            this.state = 'phase_clear';
+            this.stateTimer = 110;
+            sfx.phaseClear();
+          }
+        } else {
+          const activeHostiles = this.enemies.filter(e => e.type !== 'freezie');
+          if (this.spawnQueue.length === 0 && activeHostiles.length === 0) {
+            this.state = 'phase_clear';
+            this.stateTimer = 95;
+            sfx.phaseClear();
+          }
+        }
+
+        // 9. Check Game Over Condition
+        const marioOut = !this.mario.active || this.mario.state === 'dead_out';
+        const luigiOut = !this.luigi.active || this.luigi.state === 'dead_out';
+        if (marioOut && luigiOut) {
+          this.state = 'gameover';
+          sfx.gameOver();
+        }
+      }
+
+      /************************************************************************
+       * RENDERING HUD, ARENA, ENTITIES & ARCADE OVERLAYS
+       ************************************************************************/
+      drawHUD() {
+        ctx.font = '7px "Press Start 2P", monospace';
+        ctx.textBaseline = 'top';
+
+        // 1P Score (Mario)
+        ctx.fillStyle = '#ff3820';
+        ctx.fillText('I-', 8, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(String(this.mario.score).padStart(6, '0'), 23, 6);
+
+        // Mario Lives Icons
+        if (this.infiniteLives) {
+          ctx.fillStyle = '#ff3820';
+          ctx.fillRect(8, 16, 5, 5);
+          ctx.fillStyle = '#ffb850';
+          ctx.fillRect(9, 18, 3, 2);
+          ctx.fillStyle = '#ffe600';
+          ctx.fillText('INF', 16, 15);
+        } else {
+          for (let i = 0; i < Math.min(5, this.mario.lives); i++) {
+            ctx.fillStyle = '#ff3820';
+            ctx.fillRect(8 + i * 7, 16, 5, 5);
+            ctx.fillStyle = '#ffb850';
+            ctx.fillRect(9 + i * 7, 18, 3, 2);
+          }
+        }
+
+        // TOP Score
+        ctx.fillStyle = '#ff9838';
+        ctx.fillText('TOP-', 86, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(String(this.topScore).padStart(6, '0'), 115, 6);
+
+        // 2P Score (Luigi)
+        if (this.twoPlayerMode) {
+          ctx.fillStyle = '#00d848';
+          ctx.fillText('II-', 176, 6);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(String(this.luigi.score).padStart(6, '0'), 197, 6);
+
+          if (this.infiniteLives) {
+            ctx.fillStyle = '#00d848';
+            ctx.fillRect(197, 16, 5, 5);
+            ctx.fillStyle = '#ffb850';
+            ctx.fillRect(198, 18, 3, 2);
+            ctx.fillStyle = '#ffe600';
+            ctx.fillText('INF', 205, 15);
+          } else {
+            for (let i = 0; i < Math.min(5, this.luigi.lives); i++) {
+              ctx.fillStyle = '#00d848';
+              ctx.fillRect(197 + i * 7, 16, 5, 5);
+              ctx.fillStyle = '#ffb850';
+              ctx.fillRect(198 + i * 7, 18, 3, 2);
+            }
+          }
+        }
+
+        // Phase Counter at Bottom Left
+        ctx.fillStyle = '#40d8ff';
+        ctx.fillText(`P=${String(this.phase).padStart(2, '0')}`, 8, 224);
+
+        // Bonus Stage Countdown Timer
+        if (this.isBonusPhase && this.state === 'playing') {
+          const secs = (this.bonusTimer / 60).toFixed(1);
+          ctx.fillStyle = '#ffe030';
+          ctx.fillText(`TIME ${secs}`, 92, 20);
+        }
+      }
+
+      drawTitleScreen() {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+        this.drawHUD();
+
+        // Classic 1983 Brick Frame Marquee
+        ctx.fillStyle = '#d82800';
+        ctx.fillRect(28, 34, 200, 54);
+        ctx.fillStyle = '#ff9838';
+        ctx.fillRect(31, 37, 194, 48);
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(34, 40, 188, 42);
+
+        ctx.font = '14px "Press Start 2P", monospace';
+        ctx.fillStyle = '#ff3820';
+        ctx.fillText('MARIO BROS.', 51, 50);
+        ctx.fillStyle = '#ffe030';
+        ctx.fillText('MARIO BROS.', 49, 48);
+
+        ctx.font = '6px "Press Start 2P", monospace';
+        ctx.fillStyle = '#48d8ff';
+        ctx.fillText('1983 NINTENDO ARCADE EDITION', 44, 69);
+
+        // Animated Cast Showcase
+        const step = Math.floor(this.frameCount / 12) % 2 === 0;
+        drawPixelMatrix(step ? SPRITES.playerRun1 : SPRITES.playerStand, 42, 98, PALETTES.mario, false, false);
+        drawPixelMatrix(step ? SPRITES.playerRun2 : SPRITES.playerStand, 198, 98, PALETTES.luigi, true, false);
+
+        // Enemy Cast Legend
+        drawPixelMatrix(step ? SPRITES.turtle1 : SPRITES.turtle2, 52, 124, PALETTES.turtleNormal, false, false);
+        ctx.fillStyle = '#00d848';
+        ctx.fillText('SHELLCREEPER (1 BUMP)', 76, 128);
+
+        drawPixelMatrix(step ? SPRITES.crab1 : SPRITES.crab2, 52, 142, PALETTES.crabNormal, false, false);
+        ctx.fillStyle = '#ff6868';
+        ctx.fillText('SIDESTEPPER  (2 BUMPS)', 76, 145);
+
+        drawPixelMatrix(step ? SPRITES.fly1 : SPRITES.fly2, 52, 160, PALETTES.flyNormal, false, false);
+        ctx.fillStyle = '#ff68d8';
+        ctx.fillText('FIGHTERFLY   (HOPPER)', 76, 163);
+
+        drawPixelMatrix(SPRITES.freezie, 52, 178, PALETTES.freezie, false, false);
+        ctx.fillStyle = '#48e8ff';
+        ctx.fillText('SLIPICE      (FREEZER)', 76, 181);
+
+        // Flashing Start Prompt
+        if (Math.floor(this.frameCount / 25) % 2 === 0) {
+          ctx.font = '7px "Press Start 2P", monospace';
+          ctx.fillStyle = '#ffe600';
+          ctx.fillText('PRESS [ENTER] OR [1P/2P]', 44, 204);
+        }
+
+        ctx.font = '6px "Press Start 2P", monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('1: 1-PLAYER MARIO   2: 2-PLAYER CO-OP', 18, 222);
+      }
+
+      draw() {
+        if (this.pacmanMode) {
+          this.pacGame.draw(this.frameCount);
+          if (this.paused) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.fillRect(76, 102, 104, 28);
+            ctx.font = '8px "Press Start 2P", monospace';
+            ctx.fillStyle = '#ffe600';
+            ctx.fillText('PAUSED', 104, 112);
+          }
+          return;
+        }
+
+        if (this.state === 'title') {
+          this.drawTitleScreen();
+          return;
+        }
+
+        // Clear Background
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+        // 1. Arena Platforms, POW Block, Floor & Water
+        this.arena.draw(this.frameCount);
+
+        // 2. HUD
+        this.drawHUD();
+
+        // 3. Coins
+        for (const c of this.coins) c.draw(this.frameCount);
+
+        // 4. Enemies
+        for (const e of this.enemies) e.draw(this.frameCount);
+
+        // 5. Fireballs & Icicles
+        for (const fb of this.fireballs) fb.draw(this.frameCount);
+        for (const ic of this.icicles) ic.draw(this.frameCount);
+
+        // 6. Players
+        for (const p of this.players) p.draw(this.frameCount);
+
+        // 7. Foreground Pipes (drawn over emerging/entering enemies for authentic occlusion)
+        this.arena.drawPipes();
+
+        // 8. Water Splashes & Score Popups
+        ctx.fillStyle = '#ffffff';
+        for (const sp of this.splashes) {
+          ctx.fillRect(Math.round(sp.x), Math.round(sp.y), 2, 2);
+        }
+
+        ctx.font = '6px "Press Start 2P", monospace';
+        for (const pop of this.popups) {
+          ctx.fillStyle = pop.color;
+          ctx.fillText(pop.text, Math.round(pop.x), Math.round(pop.y));
+        }
+
+        // 9. Phase Banner Overlays
+        if (this.state === 'phase_intro') {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.84)';
+          ctx.fillRect(34, 88, 188, 48);
+          ctx.strokeStyle = '#38d8ff';
+          ctx.strokeRect(34, 88, 188, 48);
+
+          ctx.font = '8px "Press Start 2P", monospace';
+          ctx.fillStyle = '#ffe600';
+          ctx.fillText(`PHASE ${String(this.phase).padStart(2, '0')}`, 94, 96);
+
+          ctx.font = '6px "Press Start 2P", monospace';
+          ctx.fillStyle = '#48d8ff';
+          ctx.fillText(this.arena.meta.name, 52, 110);
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(this.arena.meta.subtitle, 46, 122);
+        }
+
+        if (this.state === 'phase_clear') {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+          ctx.fillRect(54, 98, 148, 34);
+          ctx.font = '8px "Press Start 2P", monospace';
+          ctx.fillStyle = '#00ff68';
+          ctx.fillText('PHASE CLEAR!', 80, 111);
+        }
+
+        if (this.state === 'gameover') {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+          ctx.fillRect(44, 88, 168, 56);
+          ctx.strokeStyle = '#ff3820';
+          ctx.strokeRect(44, 88, 168, 56);
+
+          ctx.font = '10px "Press Start 2P", monospace';
+          ctx.fillStyle = '#ff3820';
+          ctx.fillText('GAME OVER', 83, 100);
+
+          ctx.font = '6px "Press Start 2P", monospace';
+          ctx.fillStyle = '#ffe600';
+          ctx.fillText('PRESS [ENTER] TO PLAY AGAIN', 49, 122);
+        }
+
+        if (this.paused) {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+          ctx.fillRect(76, 102, 104, 28);
+          ctx.font = '8px "Press Start 2P", monospace';
+          ctx.fillStyle = '#ffe600';
+          ctx.fillText('PAUSED', 104, 112);
+        }
+      }
+    }
+
+    const game = new MarioBrosArcade();
+
+    /**************************************************************************
+     * UI BUTTONS & MOBILE TOUCH BINDINGS
+     **************************************************************************/
+    document.getElementById('btnMode1P').addEventListener('click', () => {
+      game.paused = false;
+      game.startNewGame(false);
+    });
+
+    document.getElementById('btnMode2P').addEventListener('click', () => {
+      game.paused = false;
+      game.startNewGame(true);
+    });
+
+    document.getElementById('arenaSelect').addEventListener('change', (e) => {
+      const targetPhase = parseInt(e.target.value, 10) || 1;
+      sfx.init();
+      game.paused = false;
+      if (game.state === 'title' || game.state === 'gameover') {
+        game.startNewGame(game.twoPlayerMode, targetPhase);
+      } else {
+        game.setupPhase(targetPhase, targetPhase === 3, true);
+      }
+      e.target.blur();
+    });
+
+    document.getElementById('btnNextPhase').addEventListener('click', () => {
+      sfx.init();
+      game.paused = false;
+      if (game.state === 'title' || game.state === 'gameover') {
+        game.startNewGame(game.twoPlayerMode);
+      } else {
+        game.setupPhase(game.phase + 1);
+      }
+    });
+
+    document.getElementById('btnCheatBoost').addEventListener('click', () => {
+      sfx.init();
+      game.arena.powHitsLeft = 3;
+      game.mario.lives = Math.min(9, game.mario.lives + 1);
+      if (game.luigi.active) {
+        game.luigi.lives = Math.min(9, game.luigi.lives + 1);
+      }
+      sfx.coin();
+      game.addPopup(88, 148, 'POW+1UP!', '#ffe600');
+    });
+
+    document.getElementById('btnCheatPacman').addEventListener('click', () => {
+      game.togglePacmanMode();
+    });
+
+    function toggleFullPageMode(forceState) {
+      const btn = document.getElementById('btnFullPage');
+      const isNowFull = typeof forceState === 'boolean'
+        ? forceState
+        : !document.body.classList.contains('page-fullscreen');
+
+      document.body.classList.toggle('page-fullscreen', isNowFull);
+      if (btn) {
+        btn.textContent = isNowFull ? 'EXIT FULL PAGE' : 'FULL PAGE';
+        btn.classList.toggle('bg-purple-600', !isNowFull);
+        btn.classList.toggle('hover:bg-purple-500', !isNowFull);
+        btn.classList.toggle('bg-rose-600', isNowFull);
+        btn.classList.toggle('hover:bg-rose-500', isNowFull);
+      }
+    }
+
+    document.getElementById('btnFullPage').addEventListener('click', () => {
+      toggleFullPageMode();
+    });
+
+    document.getElementById('btnPause').addEventListener('click', (e) => {
+      if (game.state === 'playing') {
+        game.paused = !game.paused;
+        e.currentTarget.textContent = game.paused ? 'RESUME' : 'PAUSE';
+      }
+    });
+
+    document.getElementById('btnAudio').addEventListener('click', (e) => {
+      const on = sfx.toggle();
+      e.currentTarget.textContent = on ? 'SFX:ON' : 'SFX:OFF';
+    });
+
+    document.getElementById('btnCRT').addEventListener('click', () => {
+      document.getElementById('crtScreen').classList.toggle('crt-scanlines');
+    });
+
+    function bindTouchHold(btnId, field) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      const setVal = (val) => {
+        game.touchInput[field] = val;
+        btn.classList.toggle('active-touch', val);
+      };
+      btn.addEventListener('touchstart', (e) => { e.preventDefault(); setVal(true); }, { passive: false });
+      btn.addEventListener('touchend', (e) => { e.preventDefault(); setVal(false); }, { passive: false });
+      btn.addEventListener('mousedown', () => setVal(true));
+      btn.addEventListener('mouseup', () => setVal(false));
+      btn.addEventListener('mouseleave', () => setVal(false));
+    }
+
+    bindTouchHold('touchLeft', 'left');
+    bindTouchHold('touchRight', 'right');
+    bindTouchHold('touchJump', 'jump');
+
+    document.getElementById('touchStart').addEventListener('click', () => {
+      game.startNewGame(game.twoPlayerMode);
+    });
+
+    // Main 60FPS Game Loop started on window load
+    window.onload = function () {
+      function gameLoop() {
+        game.update();
+        game.draw();
+        requestAnimationFrame(gameLoop);
+      }
+      requestAnimationFrame(gameLoop);
+    };
+  </script>
+</body>
+</html>
