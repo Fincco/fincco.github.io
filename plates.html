@@ -2,6 +2,16 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Plate Spinner</title>
+<meta name="description" content="Spin license plates from 20 countries, sell the rare ones and upgrade your luck.">
+<meta name="theme-color" content="#f2c230">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plate Spinner">
+<meta property="og:title" content="Plate Spinner">
+<meta property="og:description" content="Spin license plates from 20 countries, sell the rare ones and upgrade your luck.">
+<meta property="og:image" content="https://fincco.github.io/assets/spinner-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -84,6 +94,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .fx .rn{letter-spacing:.25em;font-weight:600;margin-bottom:12px}
 .fx .pr{font:700 54px/1 'Barlow Condensed',sans-serif;margin:14px 0 6px}
 .fx p{margin:2px 0;color:#c4cad4}
+.dform{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:12px 0}
+.dform label{display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--mute)}
+.dform .chk{flex-direction:row;align-items:center;gap:6px}
+.dform input,.dform select{font:500 15px Barlow,sans-serif;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.dgal{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.dgal button{display:flex;flex-direction:column;gap:4px;align-items:flex-start;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;font:600 13px Barlow,sans-serif;cursor:pointer;text-align:left}
+.dgal .plate{--fs:17px}
 .plate.mis .mid>span:last-child{display:inline-block;transform:rotate(-2.5deg) skewX(-8deg);text-shadow:.05em .04em 0 #0007;opacity:.85}
 </style></head>
 <body>
@@ -105,7 +122,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 <div class="bulk" id="bulk"><button data-t="0"></button><button data-t="1"></button><button data-t="2"></button></div>
 <div class="grid" id="inv"></div></section>
 </div>
+<div class="ov" id="dbg" hidden role="dialog" aria-modal="true" aria-label="Debug mode"><div class="insc" style="width:min(720px,100%)"><h2>Debug mode</h2><p class="empty" style="margin-bottom:10px">Nothing here changes your money, plates or saved progress.</p><div class="stage2" id="dpv"></div>
+<div class="dform"><label>Country <select id="dc"></select></label><label>Variant <select id="dv"></select></label><label>Rarity <select id="dt"></select></label><label>Plate text <input id="dn" autocomplete="off"></label><label>State or region <input id="dx" autocomplete="off"></label><label class="chk"><input type="checkbox" id="dm"> Misprint</label></div>
+<div class="bulk"><button id="dr">Randomize text</button><button id="di">Inspect and flex</button><button id="dz">Close</button></div>
+<h2 style="margin-top:14px">All plates</h2><div class="dgal" id="dg"></div></div></div>
 <div class="ov" id="ins" hidden role="dialog" aria-modal="true" aria-label="Plate details"><div class="insc" id="insc"></div></div>
+<div class="ov" id="cr" hidden role="dialog" aria-modal="true" aria-label="Crossy plate minigame"><div class="insc" style="width:min(380px,100%)"><canvas id="cv" width="320" height="400" style="width:100%;border-radius:8px;display:block;touch-action:none"></canvas><div class="bulk" style="margin:10px 0 0"><span id="crs" style="margin-right:auto;align-self:center;font-weight:600"></span><button id="crx">Close</button></div><p class="empty" style="margin-top:6px">Arrow keys or WASD to hop. Swipe or tap on a phone.</p></div></div>
 <script>
 const g=id=>document.getElementById(id),R=n=>Math.floor(Math.random()*n),usd=n=>'$'+Math.round(n).toLocaleString('en-US');
 const T=[{n:'Common',c:'#9aa0a6',v:4},{n:'Uncommon',c:'#2fb877',v:14},{n:'Rare',c:'#3d93f5',v:45},{n:'Epic',c:'#a56bff',v:160},{n:'Legendary',c:'#f0a000',v:800},{n:'Mythic',c:'#ff4d6d',v:6000}];
@@ -144,7 +166,8 @@ function gl(n,t,L){let a=Array.from({length:n},()=>L[R(L.length)]);
  if(t>=4)a=a.map(()=>a[0]);else if(t==3)a[n-1]=a[0];else if(t==2&&n>1)a[1]=a[0];return a.join('')}
 const VR={gold:{n:'Gold edition',m:6,w:.8,pb:'#e7c64d',pf:'#3a2e00'},
  BR:[{n:'Collector black',m:3,w:3,pb:'#14161a',pf:'#e9e9e9'},{n:'Commercial',m:1.3,w:10,pf:'#c8102e'}],
- RU:[{n:'Diplomatic',m:3,w:1.5,pb:'#b3202a',pf:'#fff'},{n:'Taxi',m:1.2,w:6,pb:'#f2c230'}],
+ UA:[{n:'Electric',m:1.4,w:8,pf:'#13a04b'},{n:'Military',m:2.2,w:3,pb:'#55633f',pf:'#ecebd9'},{n:'Taxi',m:1.2,w:6,pb:'#f2c230'},{n:'Police',m:1.8,w:2,pb:'#1f4fa8',pf:'#fff'}],
+ RU:[{n:'Diplomatic',m:3,w:1.5,pb:'#b3202a',pf:'#fff'},{n:'Taxi',m:1.2,w:6,pb:'#f2c230'},{n:'Military',m:2.2,w:3,pb:'#14161a',pf:'#ecebd9'}],
  GB:[{n:'Historic black',m:2.5,w:3,pb:'#14161a',pf:'#e9e9e9'},{n:'Electric',m:1.2,w:8,bb:'#1f9d55'}],
  US:[{n:'Legacy yellow',m:3,w:3,pb:'#f0cf4a',pf:'#1a1a1a'}],
  PL:[{n:'Electric',m:1.6,w:8,pb:'#2ea35f',pf:'#0b1a0f'}],
@@ -167,7 +190,7 @@ function openIns(p){if(!p)return;INS=p;FX=false;insUI()}
 function closeIns(){INS=null;g('ins').hidden=true}
 function insUI(){
  const p=INS;if(!p)return;
- const t=T[p.t],cn=C[p.c].n,tags=[p.mp?'Misprint':'',p.vr||'',p.rr?'Rerolled':''].filter(Boolean),
+ const t=T[p.t],cn=C[p.c].n,tags=[p.id==-1?'Debug plate':'',p.mp?'Misprint':'',p.vr||'',p.rr?'Rerolled':''].filter(Boolean),
   ord=[...S.inv].sort((a,b)=>sellV(b)-sellV(a)),gr=ord.findIndex(x=>x.id==p.id)+1,
   ph=`<div class="stage2">${plate(p)}</div>`,
   sh=navigator.share?'<button data-a="share">Share</button>':'';
@@ -271,6 +294,88 @@ g('ins').onclick=e=>{const b=e.target.closest('button');
  if(a=='flex'){FX=true;insUI()}else if(a=='back'){FX=false;insUI()}else if(a=='x')closeIns();
  else if(a=='share'){try{navigator.share({title:'Plate Spinner',text:`My ${T[INS.t].n} ${C[INS.c].n} plate is worth ${usd(sellV(INS))} in Plate Spinner!`}).catch(()=>{})}catch(x){}}};
 document.addEventListener('keydown',e=>{if(e.key=='Escape')closeIns()});
+let CR=null,crRaf=0,KB='',pt0=null;
+function crRow(y){
+ if(CR.rows[y])return;
+ const road=y>1&&Math.random()<.65,r={type:road?'r':'g'};
+ if(road){r.dir=Math.random()<.5?1:-1;r.sp=(30+Math.random()*60)*(1+Math.min(y,60)/60);r.cars=[];
+  const n=1+R(3);for(let i=0;i<n;i++)r.cars.push({x:i*(320/n)+R(60),w:R(2)?60:40,c:['#e5484d','#3d93f5','#f2c230','#a56bff','#2fb877'][R(5)]})}
+ else{r.trees=[];if(y>1)for(let x=0;x<8;x++)if(Math.random()<.17)r.trees.push(x)}
+ CR.rows[y]=r}
+function crNew(){CR={px:4,py:0,max:0,cam:-2,t:0,dead:false,rows:{}};for(let i=-4;i<14;i++)crRow(i)}
+function crOpen(){crNew();g('cr').hidden=false;cancelAnimationFrame(crRaf);crRaf=requestAnimationFrame(crLoop)}
+function crClose(){g('cr').hidden=true;cancelAnimationFrame(crRaf)}
+function crMove(m){
+ if(!CR||CR.dead)return;
+ let x=CR.px,y=CR.py;
+ if(m=='u')y++;else if(m=='d')y--;else if(m=='l')x--;else x++;
+ if(x<0||x>7||y<CR.max-3)return;
+ crRow(y);const r=CR.rows[y];if(r.type=='g'&&r.trees.includes(x))return;
+ CR.px=x;CR.py=y;if(y>CR.max){CR.max=y;for(let i=y;i<y+13;i++)crRow(i)}}
+function crLoop(ts){
+ if(g('cr').hidden)return;
+ const dt=Math.min(.05,(ts-(CR.t||ts))/1000);CR.t=ts;
+ for(let y=Math.floor(CR.cam)-1;y<CR.cam+12;y++){const r=CR.rows[y];if(r&&r.cars)r.cars.forEach(a=>{a.x+=r.dir*r.sp*dt;if(r.dir>0&&a.x>320)a.x=-a.w;if(r.dir<0&&a.x<-a.w)a.x=320})}
+ const r=CR.rows[CR.py];
+ if(!CR.dead&&r&&r.cars&&r.cars.some(a=>a.x<CR.px*40+34&&a.x+a.w>CR.px*40+6)){CR.dead=true;if(CR.max>(S.cr||0)){S.cr=CR.max;save()}}
+ crDraw();crRaf=requestAnimationFrame(crLoop)}
+function crDraw(){
+ const c=g('cv').getContext('2d'),H=400;
+ CR.cam+=(CR.py-2-CR.cam)*.15;
+ for(let y=Math.floor(CR.cam)-1;y<CR.cam+11;y++){
+  const r=CR.rows[y];if(!r)continue;const Y=H-(y-CR.cam+1)*40;
+  c.fillStyle=r.type=='g'?(y&1?'#79c850':'#6cbd45'):'#3b3e45';c.fillRect(0,Y,320,40);
+  if(r.type=='g')r.trees.forEach(x=>{c.fillStyle='#5b3a1e';c.fillRect(x*40+16,Y+24,8,12);c.fillStyle='#2f8f3a';c.fillRect(x*40+6,Y+4,28,24)});
+  else{c.fillStyle='rgba(255,255,255,.35)';for(let x=0;x<320;x+=40)c.fillRect(x+8,Y+19,24,2);
+   r.cars.forEach(a=>{c.fillStyle=a.c;c.fillRect(a.x,Y+7,a.w,26);c.fillStyle='rgba(255,255,255,.6)';c.fillRect(a.x+(r.dir>0?a.w-14:4),Y+11,10,18)})}}
+ const Y=H-(CR.py-CR.cam+1)*40,X=CR.px*40;
+ c.fillStyle='#fff';c.fillRect(X+6,Y+10,28,20);c.strokeStyle='#14171c';c.lineWidth=2;c.strokeRect(X+7,Y+11,26,18);
+ c.fillStyle='#14171c';c.font='700 11px sans-serif';c.textAlign='center';c.fillText('CRSY',X+20,Y+25);
+ if(CR.dead){c.fillStyle='rgba(0,0,0,.65)';c.fillRect(0,0,320,H);c.fillStyle='#fff';c.font='700 34px sans-serif';c.fillText('Flattened!',160,170);
+  c.font='600 18px sans-serif';c.fillText('Score '+CR.max+', best '+Math.max(CR.max,S.cr||0),160,205);c.fillText('Press Space or tap to retry',160,240)}
+ g('crs').textContent='Score '+CR.max}
+document.addEventListener('keydown',e=>{
+ if(!g('cr').hidden){
+  const k=e.key.toLowerCase(),m={arrowup:'u',w:'u',arrowdown:'d',s:'d',arrowleft:'l',a:'l',arrowright:'r',d:'r'}[k];
+  if(m){e.preventDefault();crMove(m)}else if(k==' '||k=='enter'){e.preventDefault();if(CR.dead)crNew()}else if(k=='escape')crClose();
+  return}
+ if(e.key.length==1&&!e.target.matches('input,select,textarea')&&g('dbg').hidden){KB=(KB+e.key.toLowerCase()).slice(-6);if(KB=='crossy'){KB='';crOpen()}else if(KB.endsWith('debug')){KB='';dbgOpen()}}});
+g('cv').onpointerdown=e=>{pt0=[e.clientX,e.clientY]};
+g('cv').onpointerup=e=>{
+ if(!pt0||!CR)return;const dx=e.clientX-pt0[0],dy=e.clientY-pt0[1];pt0=null;
+ if(CR.dead){crNew();return}
+ if(Math.abs(dx)<12&&Math.abs(dy)<12)crMove('u');else crMove(Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u'))};
+g('crx').onclick=crClose;
+g('cr').onclick=e=>{if(e.target==g('cr'))crClose()};
+let D={c:'UA',t:0,vr:'',mp:0,n:'',x:''},DG=[];
+const dval=()=>{const v=vo(D);return Math.round(T[D.t].v*C[D.c].m*(v?v.m:1)*(D.mp?3:1))};
+function dbgPlate(){return{...D,id:-1,v:dval()}}
+function dbgShow(){g('dpv').innerHTML=plate(dbgPlate())}
+function dbgRand(){const p=make(D.c,D.t);D.n=p.n;D.x=p.x;g('dn').value=D.n;g('dx').value=D.x;dbgShow()}
+function dbgVars(){g('dv').innerHTML=['',...vrs(D.c).map(v=>v.n)].map(n=>`<option value="${n}"${n==D.vr?' selected':''}>${n||'Standard'}</option>`).join('')}
+function dbgClose(){g('dbg').hidden=true}
+function dbgOpen(){
+ g('dc').innerHTML=ORDER.map(c=>`<option value="${c}">${C[c].n}</option>`).join('');
+ g('dt').innerHTML=T.map((t,i)=>`<option value="${i}">${t.n}</option>`).join('');
+ g('dc').value=D.c;g('dt').value=D.t;g('dm').checked=!!D.mp;dbgVars();dbgRand();
+ const items=[];
+ ORDER.forEach(c=>['',...(VR[c]||[]).map(v=>v.n)].forEach(vr=>items.push({c,vr,mp:0})));
+ items.push({c:'UA',vr:'Gold edition',mp:0},{c:'UA',vr:'',mp:1});
+ DG=items;
+ g('dg').innerHTML=items.map((it,i)=>`<button data-g="${i}">${plate({...make(it.c,0),...it})}<span>${C[it.c].n}: ${it.mp?'Misprint':it.vr||'Standard'}</span></button>`).join('');
+ g('dbg').hidden=false}
+g('dc').onchange=e=>{D.c=e.target.value;D.vr='';dbgVars();dbgRand()};
+g('dv').onchange=e=>{D.vr=e.target.value;dbgShow()};
+g('dt').onchange=e=>{D.t=+e.target.value;dbgShow()};
+g('dm').onchange=e=>{D.mp=e.target.checked?1:0;dbgShow()};
+g('dn').oninput=e=>{e.target.value=e.target.value.toUpperCase();D.n=e.target.value;dbgShow()};
+g('dx').oninput=e=>{D.x=e.target.value;dbgShow()};
+g('dr').onclick=dbgRand;
+g('di').onclick=()=>openIns(dbgPlate());
+g('dz').onclick=dbgClose;
+g('dbg').onclick=e=>{if(e.target==g('dbg'))dbgClose()};
+g('dg').onclick=e=>{const b=e.target.closest('button');if(!b)return;const it=DG[+b.dataset.g];D.c=it.c;D.vr=it.vr;D.mp=it.mp;g('dc').value=D.c;g('dm').checked=!!D.mp;dbgVars();dbgRand();g('dbg').scrollTop=0};
+document.addEventListener('keydown',e=>{if(e.key=='Escape'&&!g('dbg').hidden&&g('ins').hidden)dbgClose()},true);
 g('bgo').onclick=()=>{
  const p=W&&S.inv.find(x=>x.id==W.id),c=rcost();if(!p||S.money<c)return;
  S.money-=c;
