@@ -56,6 +56,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .plate .sub{font-size:.3em;letter-spacing:.14em;font-weight:600;margin-bottom:.12em}
 .plate .reg{border-left:.05em solid var(--pf);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 .3em}
 .plate .reg span{font-size:.62em}.plate .reg small{font-size:.24em;letter-spacing:.1em}
+.plate .band.bx{flex-direction:column;justify-content:center;gap:.25em;padding:0 .55em;border-right:.06em solid var(--pf);font-size:.4em;font-weight:700}
+.plate .band u{display:block;width:1.5em;height:1em;background:linear-gradient(#0057b8 50%,#ffd700 50%)}
 #show[data-t] .plate{box-shadow:0 0 0 3px var(--rc),0 0 34px var(--rc)}
 #show.pop .plate{animation:land .28s ease-out}
 @keyframes land{from{transform:translateY(-16px) scale(.93)}to{transform:none}}
@@ -123,7 +125,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 <div class="grid" id="inv"></div></section>
 </div>
 <div class="ov" id="dbg" hidden role="dialog" aria-modal="true" aria-label="Debug mode"><div class="insc" style="width:min(720px,100%)"><h2>Debug mode</h2><p class="empty" style="margin-bottom:10px">Nothing here changes your money, plates or saved progress.</p><div class="stage2" id="dpv"></div>
-<div class="dform"><label>Country <select id="dc"></select></label><label>Variant <select id="dv"></select></label><label>Rarity <select id="dt"></select></label><label>Plate text <input id="dn" autocomplete="off"></label><label>State or region <input id="dx" autocomplete="off"></label><label class="chk"><input type="checkbox" id="dm"> Misprint</label></div>
+<div class="dform"><label>Country <select id="dc"></select></label><label>Variant <select id="dv"></select></label><label>Format <select id="df"></select></label><label>Rarity <select id="dt"></select></label><label>Plate text <input id="dn" autocomplete="off"></label><label>State or region <input id="dx" autocomplete="off"></label><label class="chk"><input type="checkbox" id="dm"> Misprint</label></div>
 <div class="bulk"><button id="dr">Randomize text</button><button id="di">Inspect and flex</button><button id="dz">Close</button></div>
 <h2 style="margin-top:14px">All plates</h2><div class="dgal" id="dg"></div></div></div>
 <div class="ov" id="ins" hidden role="dialog" aria-modal="true" aria-label="Plate details"><div class="insc" id="insc"></div></div>
@@ -133,26 +135,26 @@ const g=id=>document.getElementById(id),R=n=>Math.floor(Math.random()*n),usd=n=>
 const T=[{n:'Common',c:'#9aa0a6',v:4},{n:'Uncommon',c:'#2fb877',v:14},{n:'Rare',c:'#3d93f5',v:45},{n:'Epic',c:'#a56bff',v:160},{n:'Legendary',c:'#f0a000',v:800},{n:'Mythic',c:'#ff4d6d',v:6000}];
 const B=[62,25,9,3.2,.7,.08],AZ='ABCDEFGHIJKLMNOPQRSTUVWXYZ',CY='ABEKMHOPCTX';
 const C={
-UA:{n:'Ukraine',m:1,L:CY,nl:4,nd:4,bb:'#0057b8',bf:'#ffd700',band:'UA',f:(d,l)=>l.slice(0,2)+' '+d+' '+l.slice(2)},
-RU:{n:'Russia',m:1,L:CY,nl:3,nd:3,reg:1,x:()=>['77','78','99','50','02','16','161','197','777'][R(9)],f:(d,l)=>l[0]+d+l.slice(1)},
+UA:{n:'Ukraine',m:1,L:CY,nl:4,nd:4,wl:2,alts:{old:{n:'Old format',m:1.5,nl:2,nd:5,wl:2,bb:'#fff',bf:'#0b3d91',bx:1,x:()=>String(1+R(27)).padStart(2,'0'),f:(d,l)=>d.slice(0,3)+'-'+d.slice(3)+' '+l}},bb:'#0057b8',bf:'#ffd700',band:'UA',f:(d,l)=>l.slice(0,2)+' '+d+' '+l.slice(2)},
+RU:{n:'Russia',m:1,L:CY,nl:3,nd:3,reg:1,wl:2,x:()=>['77','78','99','50','02','16','161','197','777'][R(9)],f:(d,l)=>l[0]+d+l.slice(1)},
 KZ:{n:'Kazakhstan',m:1.2,L:AZ,nl:3,nd:3,bb:'#00a3c4',bf:'#ffd100',band:'KZ',x:()=>'0'+(1+R(9)),f:(d,l,x)=>d+' '+l+' '+x},
 US:{n:'USA',m:1,L:AZ,nl:3,nd:4,pf:'#1d3f8f',sub:1,x:()=>['California','Texas','Florida','New York','Nevada','Alaska','Hawaii','Utah','Ohio','Maine'][R(10)],f:(d,l)=>l+' '+d},
 DE:{n:'Germany',m:1.3,L:'ABCDEFGHKLMNPRSTUVWZ',nl:3,nd:4,bb:'#003399',bf:'#fc0',band:'D',f:(d,l)=>l[0]+' '+l.slice(1)+' '+d},
-GB:{n:'United Kingdom',m:1.5,L:AZ,nl:5,nd:2,pb:'#f7c600',bb:'#003399',bf:'#fc0',band:'GB',f:(d,l)=>l.slice(0,2)+d+' '+l.slice(2)},
+GB:{n:'United Kingdom',m:1.5,L:AZ,nl:5,nd:2,wl:3,wo:2,pb:'#f7c600',bb:'#003399',bf:'#fc0',band:'GB',f:(d,l)=>l.slice(0,2)+d+' '+l.slice(2)},
 PL:{n:'Poland',m:1.2,L:AZ,nl:2,nd:5,bb:'#003399',bf:'#fff',band:'PL',f:(d,l)=>l+' '+d},
 BY:{n:'Belarus',m:1.6,L:CY,nl:2,nd:4,bb:'#c8313e',bf:'#fff',band:'BY',x:()=>''+(1+R(7)),f:(d,l,x)=>d+' '+l+'-'+x},
-SU:{n:'Soviet Union',m:2,L:'АВЕКМНОРСТУХ',nl:3,nd:4,pb:'#efece0',f:(d,l)=>d.slice(0,2)+'-'+d.slice(2)+' '+l},
-BR:{n:'Brazil',m:1.2,L:AZ,nl:4,nd:3,pf:'#1a1a1a',sub:1,x:()=>'BRASIL',f:(d,l)=>l.slice(0,3)+d[0]+l[3]+d.slice(1)},
+SU:{n:'Soviet Union',m:2,alts:{late:{n:'Newer format',m:2.4,L:'АБВГДЕЖИКЛМНОПРСТУХЦЧШЭЮЯ',wl:2,f:(d,l)=>l[0]+' '+d+' '+l.slice(1)}},L:'АВЕКМНОРСТУХ',nl:3,nd:4,pb:'#efece0',f:(d,l)=>d.slice(0,2)+'-'+d.slice(2)+' '+l},
+BR:{n:'Brazil',m:1.2,L:AZ,nl:4,nd:3,wl:3,wd:2,pf:'#1a1a1a',sub:1,x:()=>'BRASIL',f:(d,l)=>l.slice(0,3)+d[0]+l[3]+d.slice(1)},
 SA:{n:'Saudi Arabia',m:1.8,L:'ABDEGHJKLNRSTUXZ',nl:3,nd:4,bb:'#006c35',bf:'#fff',band:'KSA',f:(d,l)=>l+' '+d},
 AE:{n:'UAE',m:2.5,L:AZ,nl:2,nd:4,sub:1,x:()=>['DUBAI','ABU DHABI','SHARJAH','AJMAN'][R(4)],f:(d,l)=>l+' '+d},
 MA:{n:'Morocco',m:1.5,L:'أبجدهوط',nl:1,nd:5,bb:'#c1272d',bf:'#fff',band:'MA',x:()=>''+(1+R(89)),f:(d,l,x)=>d+'-'+l+'-'+x},
 TR:{n:'Turkey',m:1.2,L:'ABCDEFGHJKLMNPRSTUVYZ',nl:3,nd:3,rg:1,bb:'#003399',bf:'#fff',band:'TR',x:()=>String(1+R(81)).padStart(2,'0'),f:(d,l,x)=>x+' '+l+' '+d},
-FR:{n:'France',m:1.1,L:'ABCDEFGHJKLMNPQRSTVWXYZ',nl:4,nd:3,bb:'#003399',bf:'#fff',band:'F',f:(d,l)=>l.slice(0,2)+'-'+d+'-'+l.slice(2)},
-IT:{n:'Italy',m:1.1,L:'ABCDEFGHJKLMNPRSTVWXYZ',nl:4,nd:3,bb:'#003399',bf:'#fff',band:'I',f:(d,l)=>l.slice(0,2)+' '+d+' '+l.slice(2)},
+FR:{n:'France',m:1.1,L:'ABCDEFGHJKLMNPQRSTVWXYZ',nl:4,nd:3,wl:2,bb:'#003399',bf:'#fff',band:'F',f:(d,l)=>l.slice(0,2)+'-'+d+'-'+l.slice(2)},
+IT:{n:'Italy',m:1.1,L:'ABCDEFGHJKLMNPRSTVWXYZ',nl:4,nd:3,wl:2,bb:'#003399',bf:'#fff',band:'I',f:(d,l)=>l.slice(0,2)+' '+d+' '+l.slice(2)},
 ES:{n:'Spain',m:1.1,L:'BCDFGHJKLMNPRSTVWXYZ',nl:3,nd:4,bb:'#003399',bf:'#fff',band:'E',f:(d,l)=>d+' '+l},
 IN:{n:'India',m:1,L:AZ,nl:2,nd:4,rg:1,x:()=>['MH','DL','KA','TN','UP','GJ'][R(6)],f:(d,l,x)=>x+' '+String(1+R(99)).padStart(2,'0')+' '+l+' '+d},
 CA:{n:'Canada',m:1.1,L:'ABCDEFGHJKLMNPRSTVWXYZ',nl:4,nd:3,pf:'#1a3d7c',sub:1,x:()=>['Ontario','Quebec','Alberta','British Columbia'][R(4)],f:(d,l)=>l+' '+d},
-AU:{n:'Australia',m:1.2,L:'ABCDEFGHJKLMNPRSTUVWXYZ',nl:4,nd:2,pf:'#0b2e6b',sub:1,x:()=>['New South Wales','Victoria','Queensland'][R(3)],f:(d,l)=>l.slice(0,2)+' '+d+' '+l.slice(2)}};
+AU:{n:'Australia',m:1.2,L:'ABCDEFGHJKLMNPRSTUVWXYZ',nl:4,nd:2,wl:2,pf:'#0b2e6b',sub:1,x:()=>['New South Wales','Victoria','Queensland'][R(3)],f:(d,l)=>l.slice(0,2)+' '+d+' '+l.slice(2)}};
 const ORDER=Object.keys(C);
 const dg=n=>Array.from({length:n},()=>R(10)).join('');
 function gd(n,t){
@@ -165,6 +167,7 @@ function gd(n,t){
 function gl(n,t,L){let a=Array.from({length:n},()=>L[R(L.length)]);
  if(t>=4)a=a.map(()=>a[0]);else if(t==3)a[n-1]=a[0];else if(t==2&&n>1)a[1]=a[0];return a.join('')}
 const VR={gold:{n:'Gold edition',m:6,w:.8,pb:'#e7c64d',pf:'#3a2e00'},
+ police:{n:'Police',m:1.8,w:2,pb:'#1f4fa8',pf:'#fff'},
  BR:[{n:'Collector black',m:3,w:3,pb:'#14161a',pf:'#e9e9e9'},{n:'Commercial',m:1.3,w:10,pf:'#c8102e'}],
  UA:[{n:'Electric',m:1.4,w:8,pf:'#13a04b'},{n:'Military',m:2.2,w:3,pb:'#55633f',pf:'#ecebd9'},{n:'Taxi',m:1.2,w:6,pb:'#f2c230'},{n:'Police',m:1.8,w:2,pb:'#1f4fa8',pf:'#fff'}],
  RU:[{n:'Diplomatic',m:3,w:1.5,pb:'#b3202a',pf:'#fff'},{n:'Taxi',m:1.2,w:6,pb:'#f2c230'},{n:'Military',m:2.2,w:3,pb:'#14161a',pf:'#ecebd9'}],
@@ -172,16 +175,16 @@ const VR={gold:{n:'Gold edition',m:6,w:.8,pb:'#e7c64d',pf:'#3a2e00'},
  US:[{n:'Legacy yellow',m:3,w:3,pb:'#f0cf4a',pf:'#1a1a1a'}],
  PL:[{n:'Electric',m:1.6,w:8,pb:'#2ea35f',pf:'#0b1a0f'}],
  IN:[{n:'Commercial',m:1.3,w:10,pb:'#f2c230'},{n:'Electric',m:1.4,w:5,pb:'#1f9d55',pf:'#fff'}]};
-const vrs=c=>[...(VR[c]||[]),VR.gold],vo=p=>p.vr?vrs(p.c).find(v=>v.n==p.vr):null,vmul=p=>(vo(p)?vo(p).m:1)*(p.mp?3:1),rcost=()=>Math.max(5,Math.round(cost()/2));
+const vrs=c=>[...(VR[c]||[]),...((VR[c]||[]).some(v=>v.n=='Police')?[]:[VR.police]),VR.gold],vo=p=>p.vr?vrs(p.c).find(v=>v.n==p.vr):null,vmul=p=>(vo(p)?vo(p).m:1)*(p.mp?3:1),rcost=()=>Math.max(5,Math.round(cost()/2));
 function rollVr(c){const f=1+.05*S.luck;return vrs(c).find(v=>Math.random()*100<v.w*f)||null}
-function tierOf(n,c){
- const k=C[c],ad=n.replace(/\D/g,''),d=k.rg?ad.slice(-k.nd):ad.slice(0,k.nd),l=n.replace(/[\d\s-]/g,''),z=d.length,v=+d,p=(v+1)/10**z,
+function tierOf(n,c,fm){
+ const k=fm?{...C[c],...C[c].alts[fm]}:C[c],ad=n.replace(/\D/g,''),d=k.rg?ad.slice(-k.nd):ad.slice(0,k.nd),l=n.replace(/[\d\s-]/g,''),z=d.length,v=+d,p=(v+1)/10**z,
   same=s=>s.length>1&&[...s].every(x=>x==s[0]);
  let a=p<=.002?4:p<=.01?3:/(\d)\1\1/.test(d)?2:/(\d)\1/.test(d)?1:0;
  if(z>2&&same(d))a=Math.max(a,z>3?4:3);
  if(z>3&&d==[...d].reverse().join(''))a=Math.max(a,3);
  const b=same(l)?(l.length>3?4:l.length>2?3:1):l.length>2&&l[0]==l[l.length-1]?1:0;
- return Math.min(5,Math.max(a,b)+(a&&b?1:0))}
+ return Math.min(5,Math.max(a,b)+(a&&b?1:0)+(special(n)?1:0))}
 let W=null;
 const RK=['D','C','B','A','S','SS'];
 let LAST=null,INS=null,FX=false;
@@ -190,13 +193,13 @@ function openIns(p){if(!p)return;INS=p;FX=false;insUI()}
 function closeIns(){INS=null;g('ins').hidden=true}
 function insUI(){
  const p=INS;if(!p)return;
- const t=T[p.t],cn=C[p.c].n,tags=[p.id==-1?'Debug plate':'',p.mp?'Misprint':'',p.vr||'',p.rr?'Rerolled':''].filter(Boolean),
+ const t=T[p.t],cn=C[p.c].n,tags=[p.id==-1?'Debug plate':'',p.mp?'Misprint':'',p.vr||'',p.fm?C[p.c].alts[p.fm].n:'',p.sp?'Combo '+p.sp:'',p.rr?'Rerolled':''].filter(Boolean),
   ord=[...S.inv].sort((a,b)=>sellV(b)-sellV(a)),gr=ord.findIndex(x=>x.id==p.id)+1,
   ph=`<div class="stage2">${plate(p)}</div>`,
   sh=navigator.share?'<button data-a="share">Share</button>':'';
  g('insc').innerHTML=FX?
  `<div class="fx" style="--rc:${t.c}"><small>PLATE SPINNER</small><div class="rk">${RK[p.t]}</div><div class="rn">${t.n.toUpperCase()}</div>${ph}<div class="pr">${usd(sellV(p))}</div><p>${cn}${tags.length?', '+tags.join(', '):''}</p><p>${odds(p)} plates${gr?', #'+gr+' of '+ord.length+' in my garage':''}</p></div><div class="bulk" style="margin:12px 0 0"><button data-a="back">Back</button>${sh}<button data-a="x">Close</button></div><p class="empty" style="margin-top:8px">Screenshot the card above to share it.</p>`
- :`${ph}<dl class="facts"><dt>Country</dt><dd>${cn}</dd><dt>Rarity</dt><dd style="color:${t.c}">${t.n}, rank ${RK[p.t]}</dd><dt>Variant</dt><dd>${p.vr||'Standard'}</dd><dt>Misprint</dt><dd>${p.mp?'Yes, worth 3x':'No'}</dd><dt>Rerolled</dt><dd>${p.rr?'Yes':'No'}</dd><dt>Worth</dt><dd>${usd(sellV(p))}</dd><dt>Odds</dt><dd>${odds(p)} plates</dd>${gr?`<dt>Garage rank</dt><dd>#${gr} of ${ord.length}</dd>`:''}</dl><div class="bulk" style="margin:0"><button data-a="flex">Flex</button><button data-a="x">Close</button></div>`;
+ :`${ph}<dl class="facts"><dt>Country</dt><dd>${cn}</dd><dt>Rarity</dt><dd style="color:${t.c}">${t.n}, rank ${RK[p.t]}</dd><dt>Format</dt><dd>${p.fm?C[p.c].alts[p.fm].n:'Current'}</dd><dt>Variant</dt><dd>${p.vr||'Standard'}</dd><dt>Misprint</dt><dd>${p.mp?'Yes, worth 3x':'No'}</dd><dt>Special combo</dt><dd>${p.sp||'None'}</dd><dt>Rerolled</dt><dd>${p.rr?'Yes':'No'}</dd><dt>Worth</dt><dd>${usd(sellV(p))}</dd><dt>Odds</dt><dd>${odds(p)} plates</dd>${gr?`<dt>Garage rank</dt><dd>#${gr} of ${ord.length}</dd>`:''}</dl><div class="bulk" style="margin:0"><button data-a="flex">Flex</button><button data-a="x">Close</button></div>`;
  g('ins').hidden=false;g('insc').querySelector('button').focus()}
 function bench(){
  const b=g('bench'),p=W&&S.inv.find(x=>x.id==W.id);
@@ -207,10 +210,16 @@ function bench(){
  g('bpl').innerHTML=plate({...p,h});
  g('bgo').textContent='Reroll the rest for '+usd(rcost());
  g('bgo').disabled=!(W.k.size>0&&W.k.size<n&&S.money>=rcost())}
-function make(code,t){const c=C[code],x=c.x?c.x():'',vr=rollVr(code),mp=Math.random()<.004*(1+.05*S.luck);
- return{c:code,t,x,mp:mp?1:0,vr:vr?vr.n:'',n:c.f(gd(c.nd,t),gl(c.nl,t,c.L),x),v:Math.round(T[t].v*c.m*(vr?vr.m:1)*(mp?3:1)*(.85+Math.random()*.3))}}
-function plate(p,cls){const c={...C[p.c],...(vo(p)||{})};
- return `<div class="plate ${cls||''}${p.mp?' mis':''}" style="--pb:${c.pb||'#fff'};--pf:${c.pf||'#14171c'};--bb:${c.bb||'#000'};--bf:${c.bf||'#fff'}">${c.band?`<div class="band">${c.band}</div>`:''}<div class="mid">${c.sub?`<span class="sub">${p.x}</span>`:''}<span>${p.h||p.n}</span></div>${c.reg?`<div class="reg"><span>${p.x}</span><small>RUS</small></div>`:''}</div>`}
+const WD=['BOSS','KING','COOL','RICH','FAST','GOLD','LOVE','HERO','LUCKY','TURBO','SPEED','MAX','TOP','CAT','DOG','FOX','WOW','POP','ACE','BIG','HOT','ICE','PRO','SUN','OMG','LOL','FBI','BAD','MOM','CAR','BAT','КОТ','СОН','МАК','РОК','ТОМ','МАМА','РАМА','МОРЕ'],NM=['007','777','888','1337','101','123','321','666'];
+const special=n=>{const s=n.replace(/[\s-]/g,'');return WD.find(w=>s.includes(w))||NM.find(m=>s.includes(m))||''};
+function pickSp(c){const wl=c.wl||c.nl,wd=c.wd||c.nd,a=[...WD.filter(w=>w.length>2&&w.length<=wl&&[...w].every(ch=>c.L.includes(ch))).map(w=>({w})),...NM.filter(m=>m.length<=wd).map(m=>({m}))];return a.length?a[R(a.length)]:null}
+function make(code,t,fm){const b=C[code],al=b.alts?Object.keys(b.alts)[0]:'',fk=fm===undefined?(al&&Math.random()<.12?al:''):fm,c=fk?{...b,...b.alts[fk]}:b,x=c.x?c.x():'',vr=rollVr(code),mp=Math.random()<.004*(1+.05*S.luck);
+ let d=gd(c.nd,t),l=gl(c.nl,t,c.L);
+ if(Math.random()<.07*(1+.05*S.luck)){const s=pickSp(c);if(s){if(s.w){const i=(c.wo||0)+R((c.wl||c.nl)-s.w.length+1);l=l.slice(0,i)+s.w+l.slice(i+s.w.length)}else{const i=R(d.length-s.m.length+1);d=d.slice(0,i)+s.m+d.slice(i+s.m.length)}}}
+ const n=c.f(d,l,x),sp=special(n),tt=Math.min(5,t+(sp?1:0));
+ return{c:code,t:tt,x,fm:fk,mp:mp?1:0,sp,vr:vr?vr.n:'',n,v:Math.round(T[tt].v*c.m*(vr?vr.m:1)*(mp?3:1)*(.85+Math.random()*.3))}}
+function plate(p,cls){const c={...C[p.c],...(p.fm?C[p.c].alts[p.fm]:{}),...(vo(p)||{})};
+ return `<div class="plate ${cls||''}${p.mp?' mis':''}" style="--pb:${c.pb||'#fff'};--pf:${c.pf||'#14171c'};--bb:${c.bb||'#000'};--bf:${c.bf||'#fff'}">${c.band||c.bx?`<div class="band${c.bx?' bx':''}">${c.bx?'<u></u>'+p.x:c.band}</div>`:''}<div class="mid">${c.sub?`<span class="sub">${p.x}</span>`:''}<span>${p.h||p.n}</span></div>${c.reg?`<div class="reg"><span>${p.x}</span><small>RUS</small></div>`:''}</div>`}
 
 let S={money:60,spins:0,pick:'ANY',luck:0,hag:0,cheap:0,speed:0,reach:0,auto:0,as:false,inv:[],uid:1,orders:[],oid:1};
 try{const s=JSON.parse(localStorage.getItem('plates1')||'null');if(s)S=Object.assign(S,s)}catch(e){}
@@ -231,7 +240,8 @@ const F={
  tri:{n:'three matching digits in a row',m:3,t:p=>/(\d)\1\1/.test(p.n)},
  low:{n:'a number starting with 00',m:3,t:p=>p.n.replace(/\D/g,'').startsWith('00')},
  mir:{n:'a mirrored number such as 1221',m:4,t:p=>{const d=p.n.replace(/\D/g,'');return d.length>3&&d==[...d].reverse().join('')}},
- rar:{n:'rarity Rare or better',m:1.5,t:p=>p.t>=2}};
+ rar:{n:'rarity Rare or better',m:1.5,t:p=>p.t>=2},
+ cmb:{n:'a special word or number combo',m:3,t:p=>!!p.sp}};
 const match=(o,p)=>(!o.c||p.c==o.c)&&F[o.f].t(p),hold=p=>S.orders.some(o=>match(o,p)),pay=(o,p)=>Math.round((sellV(p)+8)*o.m),sellable=t=>S.inv.filter(p=>p.t<=t&&!hold(p));
 function newOrder(){const ks=Object.keys(F),f=ks[R(ks.length)],a=avail(),bad={tri:['GB','BR','AU'],low:['TR','IN'],mir:['GB','BR','RU','KZ','TR','FR','IT','CA','AU']};let c=R(2)?a[R(a.length)]:null;if(c&&(bad[f]||[]).includes(c))c=null;S.orders.push({id:S.oid++,f,c,m:+(F[f].m*(c?1.3:1)).toFixed(1),left:14})}
 function tickOrders(){S.orders.forEach(o=>o.left--);S.orders=S.orders.filter(o=>o.left>0);if(!S.orders.length||(S.orders.length<3&&Math.random()<.4))newOrder()}
@@ -253,7 +263,7 @@ function spin(){
 function land(p){
  LAST=p;const t=T[p.t],sh=g('show'),auto=S.as&&p.t<=1&&!hold(p);
  sh.innerHTML=plate(p);sh.style.setProperty('--rc',t.c);sh.dataset.t=p.t;void sh.offsetWidth;sh.classList.add('pop');
- let msg=`<b style="color:${t.c}">${t.n}</b> ${p.mp?'misprinted ':''}${p.vr?p.vr+' ':''}${C[p.c].n} plate, worth ${usd(sellV(p))}.`;
+ let msg=`<b style="color:${t.c}">${t.n}</b> ${p.mp?'misprinted ':''}${p.vr?p.vr+' ':''}${p.fm?C[p.c].alts[p.fm].n.toLowerCase()+' ':''}${C[p.c].n} plate, worth ${usd(sellV(p))}.${p.sp?' Special combo: '+p.sp+'.':''}`;
  if(auto){S.money+=sellV(p);msg+=' Auto-sold.'}else S.inv.unshift(p);
  tickOrders();g('res').innerHTML=msg;ui();save()}
 function sell(id){const i=S.inv.findIndex(p=>p.id==id);if(i<0)return;S.money+=sellV(S.inv[i]);S.inv.splice(i,1);ui();save()}
@@ -268,7 +278,7 @@ function ui(){
  g('ords').innerHTML=S.orders.length?S.orders.map(o=>{const m=S.inv.filter(p=>match(o,p)).sort((a,b)=>sellV(a)-sellV(b))[0];return `<div class="up"><div><b>Wants ${o.c?'a plate from '+C[o.c].n:'any plate'} with ${F[o.f].n}</b><span class="lv">${o.left} spin${o.left>1?'s':''} left</span><p>Pays ${o.m}x the plate price plus a bonus</p></div><button data-o="${o.id}" ${m?'':'disabled'}>${m?'Sell for '+usd(pay(o,m)):'No match yet'}</button></div>`}).join(''):'<p class="empty">No buyers right now. New ones show up as you spin.</p>';
  const inv=[...S.inv].sort((a,b)=>b.t-a.t||b.v-a.v);
  g('cnt').textContent=inv.length+' plates';
- g('inv').innerHTML=inv.length?inv.map(p=>`<div class="card" data-pid="${p.id}" style="--rc:${T[p.t].c}">${plate(p)}<span>${p.mp?'Misprint ':''}${p.vr?p.vr+' ':''}${T[p.t].n}, ${usd(sellV(p))}${hold(p)?' (a buyer wants this)':''}</span><div class="act"><button data-id="${p.id}">Sell</button><button data-in="${p.id}">Inspect</button>${p.rr?'<small>Rerolled</small>':`<button data-rr="${p.id}">Reroll</button>`}</div></div>`).join(''):'<p class="empty">No plates yet. Spin one.</p>';
+ g('inv').innerHTML=inv.length?inv.map(p=>`<div class="card" data-pid="${p.id}" style="--rc:${T[p.t].c}">${plate(p)}<span>${p.mp?'Misprint ':''}${p.vr?p.vr+' ':''}${p.sp?p.sp+' combo, ':''}${T[p.t].n}, ${usd(sellV(p))}${hold(p)?' (a buyer wants this)':''}</span><div class="act"><button data-id="${p.id}">Sell</button><button data-in="${p.id}">Inspect</button>${p.rr?'<small>Rerolled</small>':`<button data-rr="${p.id}">Reroll</button>`}</div></div>`).join(''):'<p class="empty">No plates yet. Spin one.</p>';
  g('bulk').querySelectorAll('button').forEach(b=>{const t=+b.dataset.t,l=sellable(t);
   b.textContent=`Sell up to ${T[t].n} (${usd(l.reduce((a,p)=>a+sellV(p),0))})`;b.disabled=!l.length});bench()}
 g('spin').onclick=spin;
@@ -347,24 +357,27 @@ g('cv').onpointerup=e=>{
  if(Math.abs(dx)<12&&Math.abs(dy)<12)crMove('u');else crMove(Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u'))};
 g('crx').onclick=crClose;
 g('cr').onclick=e=>{if(e.target==g('cr'))crClose()};
-let D={c:'UA',t:0,vr:'',mp:0,n:'',x:''},DG=[];
-const dval=()=>{const v=vo(D);return Math.round(T[D.t].v*C[D.c].m*(v?v.m:1)*(D.mp?3:1))};
-function dbgPlate(){return{...D,id:-1,v:dval()}}
+let D={c:'UA',t:0,vr:'',mp:0,n:'',x:'',fm:''},DG=[];
+const dval=()=>{const v=vo(D);return Math.round(T[D.t].v*(D.fm?C[D.c].alts[D.fm].m:C[D.c].m)*(v?v.m:1)*(D.mp?3:1))};
+function dbgPlate(){return{...D,id:-1,sp:special(D.n),v:dval()}}
 function dbgShow(){g('dpv').innerHTML=plate(dbgPlate())}
-function dbgRand(){const p=make(D.c,D.t);D.n=p.n;D.x=p.x;g('dn').value=D.n;g('dx').value=D.x;dbgShow()}
+function dbgRand(){const p=make(D.c,D.t,D.fm);D.n=p.n;D.x=p.x;g('dn').value=D.n;g('dx').value=D.x;dbgShow()}
 function dbgVars(){g('dv').innerHTML=['',...vrs(D.c).map(v=>v.n)].map(n=>`<option value="${n}"${n==D.vr?' selected':''}>${n||'Standard'}</option>`).join('')}
+function dbgFm(){g('df').innerHTML=['',...(C[D.c].alts?Object.keys(C[D.c].alts):[])].map(k=>`<option value="${k}"${k==D.fm?' selected':''}>${k?C[D.c].alts[k].n:'Current'}</option>`).join('')}
 function dbgClose(){g('dbg').hidden=true}
 function dbgOpen(){
  g('dc').innerHTML=ORDER.map(c=>`<option value="${c}">${C[c].n}</option>`).join('');
  g('dt').innerHTML=T.map((t,i)=>`<option value="${i}">${t.n}</option>`).join('');
- g('dc').value=D.c;g('dt').value=D.t;g('dm').checked=!!D.mp;dbgVars();dbgRand();
+ g('dc').value=D.c;g('dt').value=D.t;g('dm').checked=!!D.mp;dbgVars();dbgFm();dbgRand();
  const items=[];
- ORDER.forEach(c=>['',...(VR[c]||[]).map(v=>v.n)].forEach(vr=>items.push({c,vr,mp:0})));
+ ORDER.forEach(c=>['',...vrs(c).filter(v=>v!=VR.gold).map(v=>v.n)].forEach(vr=>items.push({c,vr,mp:0})));
  items.push({c:'UA',vr:'Gold edition',mp:0},{c:'UA',vr:'',mp:1});
+ ORDER.forEach(c=>C[c].alts&&Object.keys(C[c].alts).forEach(fm=>items.push({c,vr:'',mp:0,fm})));
  DG=items;
- g('dg').innerHTML=items.map((it,i)=>`<button data-g="${i}">${plate({...make(it.c,0),...it})}<span>${C[it.c].n}: ${it.mp?'Misprint':it.vr||'Standard'}</span></button>`).join('');
+ g('dg').innerHTML=items.map((it,i)=>`<button data-g="${i}">${plate({...make(it.c,0,it.fm||''),...it})}<span>${C[it.c].n}: ${it.mp?'Misprint':it.fm?C[it.c].alts[it.fm].n:it.vr||'Standard'}</span></button>`).join('');
  g('dbg').hidden=false}
-g('dc').onchange=e=>{D.c=e.target.value;D.vr='';dbgVars();dbgRand()};
+g('dc').onchange=e=>{D.c=e.target.value;D.vr='';D.fm='';dbgVars();dbgFm();dbgRand()};
+g('df').onchange=e=>{D.fm=e.target.value;dbgRand()};
 g('dv').onchange=e=>{D.vr=e.target.value;dbgShow()};
 g('dt').onchange=e=>{D.t=+e.target.value;dbgShow()};
 g('dm').onchange=e=>{D.mp=e.target.checked?1:0;dbgShow()};
@@ -374,15 +387,15 @@ g('dr').onclick=dbgRand;
 g('di').onclick=()=>openIns(dbgPlate());
 g('dz').onclick=dbgClose;
 g('dbg').onclick=e=>{if(e.target==g('dbg'))dbgClose()};
-g('dg').onclick=e=>{const b=e.target.closest('button');if(!b)return;const it=DG[+b.dataset.g];D.c=it.c;D.vr=it.vr;D.mp=it.mp;g('dc').value=D.c;g('dm').checked=!!D.mp;dbgVars();dbgRand();g('dbg').scrollTop=0};
+g('dg').onclick=e=>{const b=e.target.closest('button');if(!b)return;const it=DG[+b.dataset.g];D.c=it.c;D.vr=it.vr;D.mp=it.mp;D.fm=it.fm||'';g('dc').value=D.c;g('dm').checked=!!D.mp;dbgVars();dbgFm();dbgRand();g('dbg').scrollTop=0};
 document.addEventListener('keydown',e=>{if(e.key=='Escape'&&!g('dbg').hidden&&g('ins').hidden)dbgClose()},true);
 g('bgo').onclick=()=>{
  const p=W&&S.inv.find(x=>x.id==W.id),c=rcost();if(!p||S.money<c)return;
  S.money-=c;
- const L=C[p.c].L,K=1+Math.floor(S.luck/3);let best=null;
+ const cf=p.fm?{...C[p.c],...C[p.c].alts[p.fm]}:C[p.c],L=cf.L,K=1+Math.floor(S.luck/3);let best=null;
  for(let j=0;j<K;j++){
-  const n=[...p.n].map((ch,i)=>W.k.has(i)||ch==' '||ch=='-'?ch:/\d/.test(ch)?''+R(10):L[R(L.length)]).join(''),t=tierOf(n,p.c),v=Math.round(T[t].v*C[p.c].m*vmul(p)*(.85+Math.random()*.3));
-  if(!best||t>best.t||(t==best.t&&v>best.v))best={n,t,v}}
+  const n=[...p.n].map((ch,i)=>W.k.has(i)||ch==' '||ch=='-'?ch:/\d/.test(ch)?''+R(10):L[R(L.length)]).join(''),t=tierOf(n,p.c,p.fm),v=Math.round(T[t].v*cf.m*vmul(p)*(.85+Math.random()*.3));
+  if(!best||t>best.t||(t==best.t&&v>best.v))best={n,t,v,sp:special(n)}}
  Object.assign(p,best,{rr:1});W=null;
  g('res').innerHTML=`Rerolled into a <b style="color:${T[p.t].c}">${T[p.t].n}</b> plate worth ${usd(sellV(p))}.`;ui();save()};
 g('bulk').onclick=e=>{const b=e.target.closest('button');if(!b)return;const t=+b.dataset.t;
